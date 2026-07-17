@@ -276,6 +276,7 @@ function segInit(id, key){
       $(id).querySelectorAll("button").forEach(x=>x.classList.remove("on"));
       b.classList.add("on");
       state[key] = b.dataset.v;
+      if(key==="depot") setDefaultSender();
       renderSlipHead();
       if(state.mode==="view") renderView();
     };
@@ -283,6 +284,11 @@ function segInit(id, key){
 }
 segInit("segDepot","depot");
 segInit("segType","type");
+
+function setDefaultSender(){
+  $("nguoi").value = state.depot==="DP1" ? "Quỳnh (DP1)" : "Tâm (DP3)";
+}
+setDefaultSender();
 
 $("adjustChk").onchange = ()=>{
   document.body.classList.toggle("adjusting", $("adjustChk").checked);
@@ -376,11 +382,13 @@ $("btnSend").onclick = ()=>{
   const dateVN = d[2]+"/"+d[1]+"/"+d[0];
   $("cfTitle").textContent = "Xác nhận PHIẾU "+($("adjustChk").checked?"ĐIỀU CHỈNH ":"")+(state.type==="XUAT"?"XUẤT":"NHẬP")+" — "+state.depot+" — "+dateVN;
   $("cfSummary").innerHTML = list.map(r=>"• "+r.ten+" — <b>"+r.qty+" "+r.dvt+"</b>").join("<br>");
+  loadPin();
   $("ovConfirm").classList.add("show");
 };
 $("btnCancel").onclick = e=>{ e.preventDefault(); $("ovConfirm").classList.remove("show"); };
 
-try{ $("pin").value = localStorage.getItem("kho_pin") || ""; }catch(_){}
+function loadPin(){ try{ $("pin").value = localStorage.getItem("kho_pin_"+state.depot) || ""; }catch(_){} }
+loadPin();
 
 $("btnConfirm").onclick = async ()=>{
   const pinVal = $("pin").value.trim();
@@ -405,13 +413,13 @@ $("btnConfirm").onclick = async ()=>{
     try{ const j = await res.json(); ok = j.status==="ok"; wrongPin = j.status==="wrong_pin"; }catch(_){}
     $("ovSending").classList.remove("show");
     if(wrongPin){
-      try{ localStorage.removeItem("kho_pin"); }catch(_){}
+      try{ localStorage.removeItem("kho_pin_"+state.depot); }catch(_){}
       $("pin").value=""; $("pinErr").textContent="Mã PIN không đúng — nhập lại."; $("pinErr").style.display="block";
       $("ovConfirm").classList.add("show");
       return;
     }
     if(ok){
-      try{ localStorage.setItem("kho_pin", pinVal); }catch(_){}
+      try{ localStorage.setItem("kho_pin_"+state.depot, pinVal); }catch(_){}
       $("doneIcon").textContent="✅";
       $("doneTitle").textContent="Đã gửi thành công";
       $("doneMsg").textContent = payload.items.length+" mã vật tư đã được ghi vào sổ "+(state.type==="XUAT"?"xuất":"nhập")+" "+state.depot+".";
