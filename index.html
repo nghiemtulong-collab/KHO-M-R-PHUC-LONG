@@ -1,157 +1,434 @@
-/**
- * APPS SCRIPT v2 — KHO VẬT TƯ M&R (PIN + XEM KHO)
- * ------------------------------------------------
- * NÂNG CẤP TỪ v1:
- *  - Gửi phiếu phải kèm PIN đúng (kiểm tra phía server).
- *  - doGet trả dữ liệu tồn kho + lịch sử để trang web hiển thị tab "Xem kho".
- *
- * CÀI PIN (làm 1 lần):
- * 1. Trong Apps Script editor: bấm icon bánh răng "Project Settings" (trái).
- * 2. Kéo xuống "Script Properties" > Add script property:
- *      Property: PIN        Value: <6 số Leon tự đặt, vd 250719>
- * 3. Save.
- * ĐỔI PIN sau này: sửa Value đó — có hiệu lực NGAY, không cần deploy lại.
- *
- * DEPLOY LẠI CODE (bắt buộc vì code đổi):
- *   Deploy > Manage deployments > icon bút ✏️ > Version: New version > Deploy.
- *   URL giữ nguyên — không phải sửa HTML.
- */
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Phiếu kho vật tư M&R — ICD Phúc Long</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#14263F; --navy-2:#1F3864; --amber:#F5A623; --amber-dark:#D98E0B;
+  --paper:#F7F5F0; --line:#D9D4C8; --ink:#1B2430; --muted:#6B7280;
+  --ok:#1E7F4F; --danger:#B3261E; --white:#FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(--paper);color:var(--ink);font-size:16px;line-height:1.45}
+.wrap{max-width:520px;margin:0 auto;padding:0 14px 120px}
 
-var TAB_NAMES = {
-  "XUAT_DP1": "XUAT_DP1_RESP",
-  "NHAP_DP1": "NHAP_DP1_RESP",
-  "XUAT_DP3": "XUAT_DP3_RESP",
-  "NHAP_DP3": "NHAP_DP3_RESP"
+/* Header */
+header{background:var(--navy);color:var(--white);padding:16px 14px 14px;position:sticky;top:0;z-index:30;box-shadow:0 2px 8px rgba(20,38,63,.25)}
+.hd-inner{max-width:520px;margin:0 auto}
+.hd-title{font-weight:800;font-size:17px;letter-spacing:.2px}
+.hd-sub{font-size:12px;color:#B8C4D6;margin-top:2px}
+.hd-accent{color:var(--amber)}
+
+/* Toggle groups */
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.seg{display:flex;background:#0E1B30;border-radius:10px;padding:3px}
+.seg button{flex:1;border:0;background:transparent;color:#9FB0C7;font-family:inherit;font-weight:700;font-size:15px;padding:10px 0;border-radius:8px;cursor:pointer;transition:background .15s,color .15s}
+.seg button.on{background:var(--amber);color:var(--navy)}
+.date-row{margin-top:10px;display:flex;align-items:center;gap:10px}
+.date-row label{font-size:13px;color:#B8C4D6;font-weight:600;white-space:nowrap}
+.date-row input{flex:1;border:0;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:16px;background:#0E1B30;color:var(--white)}
+
+/* Search */
+.search-box{position:sticky;top:158px;z-index:20;background:var(--paper);padding:12px 0 8px}
+.search-box input{width:100%;border:2px solid var(--line);border-radius:12px;padding:13px 14px;font-family:inherit;font-size:16px;background:var(--white)}
+.search-box input:focus{outline:none;border-color:var(--amber)}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+
+/* Item list */
+.results{margin-top:6px}
+.item{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.item:active{background:#FDF6E8}
+.item .nm{font-size:14.5px;font-weight:500}
+.item .cd{font-size:12px;color:var(--muted);margin-top:2px}
+.item .add{flex-shrink:0;width:38px;height:38px;border-radius:10px;background:var(--navy-2);color:var(--white);border:0;font-size:22px;font-weight:700;cursor:pointer;line-height:1}
+.item.added{border-color:var(--amber);background:#FFF9EC}
+.item.added .add{background:var(--amber);color:var(--navy)}
+.empty-note{color:var(--muted);font-size:14px;text-align:center;padding:18px 0}
+
+/* Slip (phiếu) */
+.slip{margin-top:14px;background:var(--white);border:2px solid var(--navy-2);border-radius:14px;overflow:hidden}
+.slip-head{background:var(--navy-2);color:var(--white);padding:10px 14px;font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.slip-head .badge{background:var(--amber);color:var(--navy);border-radius:20px;padding:2px 10px;font-size:13px}
+.slip-row{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px dashed var(--line)}
+.slip-row:last-child{border-bottom:0}
+.slip-row .info{flex:1;min-width:0}
+.slip-row .nm{font-size:13.5px;font-weight:600;overflow-wrap:break-word}
+.slip-row .cd{font-size:11.5px;color:var(--muted)}
+.qty{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.qty button{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line);background:var(--white);font-size:19px;font-weight:700;cursor:pointer;color:var(--navy-2)}
+.qty input{width:52px;height:34px;text-align:center;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:15px;font-weight:700}
+.qty input:focus{outline:none;border-color:var(--amber)}
+.slip-row .rm{width:30px;height:30px;border:0;background:transparent;color:var(--danger);font-size:19px;cursor:pointer;flex-shrink:0}
+.slip-empty{padding:16px;text-align:center;color:var(--muted);font-size:13.5px}
+.note-row{padding:10px 12px;border-top:1px solid var(--line)}
+.note-row input{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:9px 11px;font-family:inherit;font-size:14px}
+
+/* Bottom bar */
+.bar{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--line);padding:12px 14px calc(12px + env(safe-area-inset-bottom));z-index:40}
+.bar-inner{max-width:520px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.bar .sum{font-size:13px;color:var(--muted);flex:1}
+.bar .sum b{color:var(--ink);font-size:15px}
+.send{border:0;border-radius:12px;background:var(--amber);color:var(--navy);font-family:inherit;font-weight:800;font-size:16px;padding:14px 22px;cursor:pointer;box-shadow:0 2px 6px rgba(217,142,11,.4)}
+.send:disabled{background:#E5DFD2;color:#A8A090;box-shadow:none;cursor:default}
+
+/* Overlay */
+.overlay{position:fixed;inset:0;background:rgba(20,38,63,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.overlay.show{display:flex}
+.card{background:var(--white);border-radius:16px;max-width:420px;width:100%;padding:24px 20px;text-align:center}
+.card .big{font-size:44px;line-height:1;margin-bottom:10px}
+.card h2{font-size:18px;font-weight:800;margin-bottom:8px}
+.card p{font-size:14px;color:var(--muted);margin-bottom:16px}
+.card .summary{background:var(--paper);border-radius:10px;padding:10px 12px;font-size:13px;text-align:left;margin-bottom:16px;max-height:180px;overflow:auto}
+.card button{border:0;border-radius:10px;font-family:inherit;font-weight:700;font-size:15px;padding:12px 20px;cursor:pointer}
+.card .primary{background:var(--navy-2);color:var(--white);width:100%}
+.spinner{width:36px;height:36px;border:4px solid var(--line);border-top-color:var(--amber);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+/* Mode switch */
+.mode{display:flex;background:#0E1B30;border-radius:10px;padding:3px;margin-top:10px}
+.mode button{flex:1;border:0;background:transparent;color:#9FB0C7;font-family:inherit;font-weight:700;font-size:14px;padding:9px 0;border-radius:8px;cursor:pointer}
+.mode button.on{background:var(--white);color:var(--navy)}
+/* View mode */
+.viewwrap{display:none}
+body.viewing .viewwrap{display:block}
+body.viewing .slip, body.viewing .bar, body.viewing .search-box, body.viewing .results{display:none}
+.vw-note{background:#FFF9EC;border:1px solid var(--amber);border-radius:10px;padding:9px 12px;font-size:12.5px;color:#7A5A10;margin:12px 0 10px}
+.vw-search{margin:10px 0}
+.vw-search input{width:100%;border:2px solid var(--line);border-radius:12px;padding:12px 14px;font-family:inherit;font-size:16px;background:var(--white)}
+.vw-search input:focus{outline:none;border-color:var(--amber)}
+.stock-row{display:flex;justify-content:space-between;align-items:center;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px}
+.stock-row .nm{font-size:13.5px;font-weight:500}
+.stock-row .cd{font-size:11.5px;color:var(--muted)}
+.stock-row .ton{font-size:17px;font-weight:800;color:var(--navy-2);white-space:nowrap;margin-left:10px}
+.stock-row .ton small{font-size:11px;color:var(--muted);font-weight:600}
+.stock-row.zero .ton{color:var(--danger)}
+.vw-sec{font-weight:800;font-size:14px;color:var(--navy-2);margin:16px 0 8px}
+.hist-row{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:6px;font-size:12.5px}
+.hist-row .top{display:flex;justify-content:space-between;font-weight:600}
+.hist-row .sub{color:var(--muted);margin-top:2px}
+.hist-tag{font-size:11px;font-weight:800;border-radius:6px;padding:1px 7px;margin-right:6px}
+.hist-tag.x{background:#FDE8E6;color:var(--danger)}
+.hist-tag.n{background:#E3F2E9;color:var(--ok)}
+.vw-load{text-align:center;color:var(--muted);padding:20px 0;font-size:14px}
+/* PIN */
+.pin-row{margin-bottom:14px}
+.pin-row label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;text-align:left}
+.pin-row input{width:100%;border:2px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:20px;text-align:center;letter-spacing:6px}
+.pin-row input:focus{outline:none;border-color:var(--amber)}
+.pin-err{color:var(--danger);font-size:12.5px;margin-top:5px;display:none;text-align:left}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="hd-inner">
+    <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
+    <div class="hd-sub">ICD Phúc Long — chọn vật tư, nhập số lượng, gửi 1 lần</div>
+    <div class="controls">
+      <div class="seg" id="segDepot">
+        <button data-v="DP1" class="on">Tổ DP1</button>
+        <button data-v="DP3">Tổ DP3</button>
+      </div>
+      <div class="seg" id="segType">
+        <button data-v="XUAT" class="on">Xuất kho</button>
+        <button data-v="NHAP">Nhập kho</button>
+      </div>
+    </div>
+    <div class="date-row">
+      <label for="ngay">Ngày:</label>
+      <input type="date" id="ngay">
+    </div>
+    <div class="mode" id="modeSwitch">
+      <button data-m="write" class="on">📝 Lập phiếu</button>
+      <button data-m="view">📦 Xem kho</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="search-box">
+    <input type="search" id="q" placeholder="Gõ tên vật tư… (vd: bat khoa, ton noc)" autocomplete="off">
+    <div class="hint">Gõ không dấu cũng tìm được. Bấm vào vật tư để thêm vào phiếu.</div>
+  </div>
+  <div class="results" id="results"></div>
+
+  <div class="slip">
+    <div class="slip-head">
+      <span id="slipTitle">PHIẾU XUẤT — DP1</span>
+      <span class="badge" id="slipCount">0 mã</span>
+    </div>
+    <div id="slipRows"><div class="slip-empty">Chưa có vật tư nào trong phiếu.<br>Tìm và bấm chọn ở trên.</div></div>
+    <div class="note-row"><input type="text" id="note" placeholder="Ghi chú (không bắt buộc)"></div>
+  </div>
+
+  <div class="viewwrap">
+    <div class="vw-note">⚠️ Số liệu ghi nhận từ phiếu — <b>chưa phải kết quả kiểm kê</b>. Số chính thức theo đối chiếu định kỳ với sổ và đếm thực tế.</div>
+    <div class="vw-search"><input type="search" id="vwq" placeholder="Tìm vật tư trong kho…" autocomplete="off"></div>
+    <div class="vw-sec" id="vwStockTitle">TỒN KHO DP1</div>
+    <div id="vwStock" class="vw-load">Bấm "Xem kho" để tải dữ liệu…</div>
+    <div class="vw-sec">LỊCH SỬ GẦN NHẤT</div>
+    <div id="vwHist" class="vw-load">—</div>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="bar-inner">
+    <div class="sum" id="barSum"><b>0</b> mã vật tư</div>
+    <button class="send" id="btnSend" disabled>Gửi phiếu</button>
+  </div>
+</div>
+
+<div class="overlay" id="ovConfirm">
+  <div class="card">
+    <div class="big">🧾</div>
+    <h2 id="cfTitle">Xác nhận gửi phiếu</h2>
+    <div class="summary" id="cfSummary"></div>
+    <div class="pin-row">
+      <label for="pin">Mã PIN kho (hỏi Leon nếu chưa có)</label>
+      <input type="password" id="pin" inputmode="numeric" maxlength="8" placeholder="••••••">
+      <div class="pin-err" id="pinErr">Mã PIN không đúng — nhập lại.</div>
+    </div>
+    <button class="primary" id="btnConfirm">Gửi ngay</button>
+    <p style="margin-top:10px"><a href="#" id="btnCancel" style="color:var(--muted)">Quay lại sửa</a></p>
+  </div>
+</div>
+
+<div class="overlay" id="ovSending">
+  <div class="card"><div class="spinner"></div><h2>Đang gửi…</h2><p>Giữ nguyên màn hình, đừng tắt.</p></div>
+</div>
+
+<div class="overlay" id="ovDone">
+  <div class="card">
+    <div class="big" id="doneIcon">✅</div>
+    <h2 id="doneTitle">Đã gửi thành công</h2>
+    <p id="doneMsg"></p>
+    <button class="primary" onclick="resetAll()">Làm phiếu mới</button>
+  </div>
+</div>
+
+<script>
+// ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
+// =================================================================================
+
+const ITEMS = [{"ma": "MRVT01", "ten": "Bát khóa seal tay cửa gân container", "dvt": "Cái"}, {"ma": "MRVT02", "ten": "Bát khóa seal tay cửa trơn container", "dvt": "Cái"}, {"ma": "MRVT03", "ten": "Bát tay cửa container", "dvt": "Cái"}, {"ma": "MRVT04", "ten": "Bù lon 10*4", "dvt": "Bộ"}, {"ma": "MRVT05", "ten": "Bù lon đầu dù 10*40", "dvt": "Bộ"}, {"ma": "MRVT06", "ten": "Cam cửa container", "dvt": "Cái"}, {"ma": "MRVT07", "ten": "Cam cửa container có lỗ", "dvt": "Cái"}, {"ma": "MRVT08", "ten": "Chốt bản lề container", "dvt": "Cái"}, {"ma": "MRVT09", "ten": "Chốt tay cửa container", "dvt": "Cái"}, {"ma": "MRVT10", "ten": "CO2", "dvt": "Chai"}, {"ma": "MRVT11", "ten": "Đà cổ ngỗng(4*40*146*2400)mm", "dvt": "Cây"}, {"ma": "MRVT12", "ten": "Đà dọc dưới chữ C container(4.5*30*50*162*2400)mm", "dvt": "Cây"}, {"ma": "MRVT13", "ten": "Đà dọc dưới chữ Z( 4.5*30*80*158*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT14", "ten": "Đà dọc trên  container(3*60*60*5702)mm", "dvt": "Cây"}, {"ma": "MRVT15", "ten": "Đà dưới cửa container(4.5*150*165*2400)mm", "dvt": "Cây"}, {"ma": "MRVT16", "ten": "Đà dưới mặt trước container(4.5*95*154*2400)mm", "dvt": "Cây"}, {"ma": "MRVT17", "ten": "Đà gầm U containet(4*45*45*122*2350)mm đơn", "dvt": "Cây"}, {"ma": "MRVT18", "ten": "Đà gầm U containet(4*45*75*122*2350)mm đôi", "dvt": "Cây"}, {"ma": "MRVT19", "ten": "Đà L (4*30*120*2400)mm", "dvt": "Cây"}, {"ma": "MRVT20", "ten": "Đà L(4*50*120*2400)mm", "dvt": "Cây"}, {"ma": "MRVT21", "ten": "Đà L(4*70*120*2400)mm", "dvt": "Cây"}, {"ma": "MRVT22", "ten": "Đà L(4*70*140*2400)mm", "dvt": "Cây"}, {"ma": "MRVT23", "ten": "Đà L(6*120*150*2400)mm", "dvt": "Cây"}, {"ma": "MRVT24", "ten": "Đà L(6*120*150*2700)mm", "dvt": "Cây"}, {"ma": "MRVT25", "ten": "Đà trên cửa  container(4*112.5*113*137.5*2400)mm", "dvt": "Cây"}, {"ma": "MRVT26", "ten": "Đà trên cửa container(4*110*110*130*2400)mm", "dvt": "Cây"}, {"ma": "MRVT27", "ten": "Đà trên mặt trước container(4*60*104*380*2400)mm", "dvt": "Cây"}, {"ma": "MRVT28", "ten": "Đà trên mặt trước container(4*60*89*380*2400)mm", "dvt": "Cây"}, {"ma": "MRVT29", "ten": "Dây hàn", "dvt": "M"}, {"ma": "MRVT30", "ten": "Dây hàn MAG GM70S D0.8 GEMINI ( 1 cuộn 15 kg)", "dvt": "Kg"}, {"ma": "MRVT31", "ten": "Đinh Thép 3 phân", "dvt": "Kg"}, {"ma": "MRVT32", "ten": "Dung môi M", "dvt": "Lit"}, {"ma": "MRVT33", "ten": "Dung môi sơn AlKyd", "dvt": "Lit"}, {"ma": "MRVT34", "ten": "Gas công nghiệp 12 kg", "dvt": "Bình"}, {"ma": "MRVT35", "ten": "Gia cố nóc(3*335*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT36", "ten": "Gia cố nóc(3*397*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT37", "ten": "Gia cố nóc(3*427*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT38", "ten": "Hộp cửa container(3.2*50*100*2560)mm", "dvt": "Cây"}, {"ma": "MRVT39", "ten": "Hộp Gù  container", "dvt": "Cái"}, {"ma": "MRVT40", "ten": "Khóa cam  container có lỗ", "dvt": "Cái"}, {"ma": "MRVT41", "ten": "Khóa cam container", "dvt": "Cái"}, {"ma": "MRVT42", "ten": "Long đền bản lề contai ner", "dvt": "Cái"}, {"ma": "MRVT43", "ten": "Long đền chống bó container", "dvt": "Cái"}, {"ma": "MRVT44", "ten": "Máy hàn Mig 250 đầu rời 250V Jasic J44", "dvt": "Máy"}, {"ma": "MRVT45", "ten": "Nẹp ron container(1*30*2549)m", "dvt": "Cây"}, {"ma": "MRVT46", "ten": "Nhựa lót ốp lớn container", "dvt": "Cái"}, {"ma": "MRVT47", "ten": "Nhựa lót ốp nhỏ contai ner", "dvt": "Cái"}, {"ma": "MRVT48", "ten": "Ổ khóa Việt Tiệp", "dvt": "Cái"}, {"ma": "MRVT49", "ten": "Ống phi 34(phi 34*2345)mm (Thanh bar)", "dvt": "Cây"}, {"ma": "MRVT50", "ten": "Ốp lớn container", "dvt": "Cái"}, {"ma": "MRVT51", "ten": "Ốp nhỏ container", "dvt": "Cái"}, {"ma": "MRVT52", "ten": "Oxy", "dvt": "Chai"}, {"ma": "MRVT53", "ten": "Ron container 566 EDPM( 1 sợi =2.4m) I*2400mm", "dvt": "Sợi"}, {"ma": "MRVT54", "ten": "Ron container 567 EDPM(1 sợi =2.4m) J*2400mm", "dvt": "Sợi"}, {"ma": "MRVT55", "ten": "Silicone Apolo A500 (đen)", "dvt": "Chai"}, {"ma": "MRVT56", "ten": "Silicone Apolo A500 (xám)", "dvt": "Chai"}, {"ma": "MRVT57", "ten": "Silicone trắng xám", "dvt": "Chai"}, {"ma": "MRVT58", "ten": "Sơn Alkyd BT màu nâu GNA8009RAL", "dvt": "Lit"}, {"ma": "MRVT59", "ten": "Sơn Alkyd BT màu xám GNA7035RAL M", "dvt": "Lit"}, {"ma": "MRVT60", "ten": "Sơn Alkyd BT phủ màu đen GNA3750", "dvt": "Lit"}, {"ma": "MRVT61", "ten": "Sơn Alkyd BT phủ vàng mờ 1063RAL (GNA1003RAL)", "dvt": "Lit"}, {"ma": "MRVT62", "ten": "Sơn cam MSG RAL 2000", "dvt": "Lit"}, {"ma": "MRVT63", "ten": "Sơn đen M300", "dvt": "Lit"}, {"ma": "MRVT64", "ten": "Sơn ghi MSG RAL 7035", "dvt": "Lit"}, {"ma": "MRVT65", "ten": "Sơn kem M1281", "dvt": "Lit"}, {"ma": "MRVT66", "ten": "Sơn màu đen", "dvt": "Lit"}, {"ma": "MRVT67", "ten": "Sơn nâu MSG RAL 3009", "dvt": "Lit"}, {"ma": "MRVT68", "ten": "Sơn nâu MSG RAL 8004", "dvt": "Lit"}, {"ma": "MRVT69", "ten": "Sơn xanh MSG RAL 5010", "dvt": "Lit"}, {"ma": "MRVT70", "ten": "Sơn xanh MSg RAL 5013", "dvt": "Lit"}, {"ma": "MRVT71", "ten": "Sơn xanh MSG RAL 6033", "dvt": "Lit"}, {"ma": "MRVT72", "ten": "Sơn xanh MSG RAL 6037", "dvt": "Lit"}, {"ma": "MRVT73", "ten": "Súng hàn", "dvt": "Cái"}, {"ma": "MRVT74", "ten": "Tai bản lề container", "dvt": "Cái"}, {"ma": "MRVT75", "ten": "Tai khóa seal tay cửa gân container", "dvt": "Cái"}, {"ma": "MRVT76", "ten": "Tai khóa seal tay cửa trơn container", "dvt": "Cái"}, {"ma": "MRVT77", "ten": "Tay cửa gân container", "dvt": "Cái"}, {"ma": "MRVT78", "ten": "Tay cửa trơn container", "dvt": "Cái"}, {"ma": "MRVT79", "ten": "Thanh J bar(6*30*50*2400)mm", "dvt": "Cây"}, {"ma": "MRVT80", "ten": "Thông gió container", "dvt": "Cái"}, {"ma": "MRVT81", "ten": "Tôn mặt trước cao container (2*1024*2700)mm", "dvt": "Tấm"}, {"ma": "MRVT82", "ten": "Tôn nóc 2 sóng mạ kẽm container(2*1045*2356)mm", "dvt": "Tấm"}, {"ma": "MRVT83", "ten": "Tôn nóc 3 sóng(2*1045*2356)mm", "dvt": "Tấm"}, {"ma": "MRVT84", "ten": "Tôn nóc 4 sóng(2*1045*2356)mm", "dvt": "Tấm"}, {"ma": "MRVT85", "ten": "Tôn nóc 5 sóng(2*1045*2356)mm", "dvt": "Tấm"}, {"ma": "MRVT86", "ten": "Tôn nóc vá 5 sóng container (2*1045*600)mm", "dvt": "Tấm"}, {"ma": "MRVT87", "ten": "Tôn phẳng cont (3*1157*2400mm)", "dvt": "Tấm"}, {"ma": "MRVT88", "ten": "Tôn vách cao mạ kẽm container(2*1116*2700)mm", "dvt": "Tấm"}, {"ma": "MRVT89", "ten": "Trụ gia cố trong container  thấp mạ kẽm(12*40*113*2353)mm", "dvt": "Cây"}, {"ma": "MRVT90", "ten": "Trụ gia cố trong conterner cao mạ kẽm(12*40*113*2657)mm", "dvt": "Cây"}, {"ma": "MRVT91", "ten": "Trụ sau cao container (6*40*70*230*2700)mm", "dvt": "Cây"}, {"ma": "MRVT92", "ten": "Trụ sau thấp container (6*40*70*230*2400)mm", "dvt": "Cây"}, {"ma": "MRVT93", "ten": "Trụ trước cao container (6*229*245*2700)mm", "dvt": "Cây"}, {"ma": "MRVT94", "ten": "Trụ trước thấp container (6*229*245*2400)mm", "dvt": "Cây"}, {"ma": "MRVT95", "ten": "Ván ép (5*1160*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT96", "ten": "Ván sàn container 21 lớp (28*1160*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT97", "ten": "Ván sàn container 21 lớp (28*550*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT98", "ten": "Ván sàn container 21 lớp (28*635*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT99", "ten": "Vít sàn container M6-50", "dvt": "Kg"}, {"ma": "MRVT100", "ten": "Vòng chặn cam container", "dvt": "Cái"}];
+
+const state = { depot:"DP1", type:"XUAT", slip:{}, mode:"write", viewData:null }; // slip: ma -> {ma,ten,dvt,qty}
+
+function stripAccent(s){
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
+}
+ITEMS.forEach(it => it.key = stripAccent(it.ten + " " + it.ma));
+
+const $ = id => document.getElementById(id);
+const today = new Date();
+$("ngay").value = today.toISOString().slice(0,10);
+
+function segInit(id, key){
+  $(id).querySelectorAll("button").forEach(b=>{
+    b.onclick = ()=>{
+      $(id).querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on");
+      state[key] = b.dataset.v;
+      renderSlipHead();
+      if(state.mode==="view") renderView();
+    };
+  });
+}
+segInit("segDepot","depot");
+segInit("segType","type");
+
+// Mode switch: write <-> view
+document.querySelectorAll("#modeSwitch button").forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll("#modeSwitch button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    state.mode = b.dataset.m;
+    document.body.classList.toggle("viewing", state.mode==="view");
+    if(state.mode==="view") loadView();
+  };
+});
+
+function renderSlipHead(){
+  $("slipTitle").textContent = "PHIẾU " + (state.type==="XUAT"?"XUẤT":"NHẬP") + " — " + state.depot;
+}
+
+function renderResults(){
+  const q = stripAccent($("q").value.trim());
+  const box = $("results");
+  box.innerHTML = "";
+  if(!q){ box.innerHTML = ""; return; }
+  const hits = ITEMS.filter(it => it.key.includes(q)).slice(0,20);
+  if(!hits.length){ box.innerHTML = '<div class="empty-note">Không tìm thấy — thử gõ ngắn hơn.</div>'; return; }
+  hits.forEach(it=>{
+    const added = !!state.slip[it.ma];
+    const div = document.createElement("div");
+    div.className = "item"+(added?" added":"");
+    div.innerHTML = '<div><div class="nm">'+it.ten+'</div><div class="cd">'+it.ma+' · Đvt: '+it.dvt+'</div></div>'
+                  + '<button class="add">'+(added?"✓":"+")+'</button>';
+    div.onclick = ()=>{ addItem(it); };
+    box.appendChild(div);
+  });
+}
+$("q").addEventListener("input", renderResults);
+
+function addItem(it){
+  if(!state.slip[it.ma]) state.slip[it.ma] = {ma:it.ma,ten:it.ten,dvt:it.dvt,qty:1};
+  renderSlip(); renderResults();
+}
+function removeItem(ma){ delete state.slip[ma]; renderSlip(); renderResults(); }
+function setQty(ma,v){
+  v = parseInt(v,10);
+  if(isNaN(v)||v<1) v=1;
+  if(v>9999) v=9999;
+  state.slip[ma].qty = v; renderSlip();
+}
+
+function renderSlip(){
+  const rows = $("slipRows");
+  const list = Object.values(state.slip);
+  $("slipCount").textContent = list.length + " mã";
+  $("barSum").innerHTML = "<b>"+list.length+"</b> mã vật tư";
+  $("btnSend").disabled = list.length===0;
+  if(!list.length){ rows.innerHTML = '<div class="slip-empty">Chưa có vật tư nào trong phiếu.<br>Tìm và bấm chọn ở trên.</div>'; return; }
+  rows.innerHTML = "";
+  list.forEach(r=>{
+    const d = document.createElement("div");
+    d.className = "slip-row";
+    d.innerHTML =
+      '<div class="info"><div class="nm">'+r.ten+'</div><div class="cd">'+r.ma+' · '+r.dvt+'</div></div>'
+     +'<div class="qty">'
+     +'<button aria-label="Giảm">−</button>'
+     +'<input type="number" inputmode="numeric" min="1" value="'+r.qty+'">'
+     +'<button aria-label="Tăng">+</button></div>'
+     +'<button class="rm" aria-label="Xóa">✕</button>';
+    const [minus, plus] = d.querySelectorAll(".qty button");
+    const inp = d.querySelector(".qty input");
+    minus.onclick = ()=>setQty(r.ma, r.qty-1);
+    plus.onclick  = ()=>setQty(r.ma, r.qty+1);
+    inp.onchange  = e=>setQty(r.ma, e.target.value);
+    d.querySelector(".rm").onclick = ()=>removeItem(r.ma);
+    rows.appendChild(d);
+  });
+}
+
+$("btnSend").onclick = ()=>{
+  const list = Object.values(state.slip);
+  if(!list.length) return;
+  const d = $("ngay").value.split("-"); // yyyy-mm-dd
+  const dateVN = d[2]+"/"+d[1]+"/"+d[0];
+  $("cfTitle").textContent = "Xác nhận PHIẾU "+(state.type==="XUAT"?"XUẤT":"NHẬP")+" — "+state.depot+" — "+dateVN;
+  $("cfSummary").innerHTML = list.map(r=>"• "+r.ten+" — <b>"+r.qty+" "+r.dvt+"</b>").join("<br>");
+  $("ovConfirm").classList.add("show");
 };
+$("btnCancel").onclick = e=>{ e.preventDefault(); $("ovConfirm").classList.remove("show"); };
 
-var HEADERS = ["Timestamp", "Ngày", "Vật tư", "Số lượng", "Ghi chú", "Mã VT", "Đvt"];
-var HISTORY_LIMIT = 30; // số dòng lịch sử gần nhất trả về mỗi tab
+try{ $("pin").value = localStorage.getItem("kho_pin") || ""; }catch(_){}
 
-// ============ GHI PHIẾU (có PIN) ============
-function doPost(e) {
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try {
-    var data = JSON.parse(e.postData.contents);
+$("btnConfirm").onclick = async ()=>{
+  const pinVal = $("pin").value.trim();
+  if(!pinVal){ $("pinErr").textContent="Nhập mã PIN trước khi gửi."; $("pinErr").style.display="block"; return; }
+  $("pinErr").style.display="none";
+  $("ovConfirm").classList.remove("show");
+  $("ovSending").classList.add("show");
+  const d = $("ngay").value.split("-");
+  const payload = {
+    pin: pinVal,
+    depot: state.depot,
+    type: state.type,
+    date: d[2]+"/"+d[1]+"/"+d[0],
+    note: $("note").value.trim(),
+    items: Object.values(state.slip).map(r=>({ma:r.ma,ten:r.ten,dvt:r.dvt,qty:r.qty}))
+  };
+  try{
+    const res = await fetch(SCRIPT_URL, {method:"POST", body: JSON.stringify(payload)});
+    let ok = res.ok, wrongPin = false;
+    try{ const j = await res.json(); ok = j.status==="ok"; wrongPin = j.status==="wrong_pin"; }catch(_){}
+    $("ovSending").classList.remove("show");
+    if(wrongPin){
+      try{ localStorage.removeItem("kho_pin"); }catch(_){}
+      $("pin").value=""; $("pinErr").textContent="Mã PIN không đúng — nhập lại."; $("pinErr").style.display="block";
+      $("ovConfirm").classList.add("show");
+      return;
+    }
+    if(ok){
+      try{ localStorage.setItem("kho_pin", pinVal); }catch(_){}
+      $("doneIcon").textContent="✅";
+      $("doneTitle").textContent="Đã gửi thành công";
+      $("doneMsg").textContent = payload.items.length+" mã vật tư đã được ghi vào sổ "+(state.type==="XUAT"?"xuất":"nhập")+" "+state.depot+".";
+    }else{ showFail(); }
+    $("ovDone").classList.add("show");
+  }catch(err){
+    $("ovSending").classList.remove("show");
+    showFail();
+    $("ovDone").classList.add("show");
+  }
+};
+function showFail(){
+  $("doneIcon").textContent="⚠️";
+  $("doneTitle").textContent="Gửi chưa thành công";
+  $("doneMsg").textContent="Kiểm tra mạng rồi bấm Gửi lại. Nếu vẫn lỗi: ghi tạm vào sổ giấy và báo Leon.";
+}
+function resetAll(){
+  $("ovDone").classList.remove("show");
+  state.slip = {}; $("note").value=""; $("q").value="";
+  renderSlip(); renderResults();
+}
 
-    // --- Kiểm tra PIN (server-side) ---
-    var pinStored = PropertiesService.getScriptProperties().getProperty("PIN");
-    if (!pinStored) {
-      return jsonOut({ status: "error", message: "Chưa cài PIN trong Script Properties. Báo Leon." });
-    }
-    if (String(data.pin || "") !== String(pinStored)) {
-      return jsonOut({ status: "wrong_pin", message: "Mã PIN không đúng." });
-    }
-
-    // --- Kiểm tra dữ liệu phiếu ---
-    if (!data.depot || !data.type || !data.date || !data.items || !data.items.length) {
-      return jsonOut({ status: "error", message: "Thiếu dữ liệu phiếu." });
-    }
-    var key = String(data.type).toUpperCase() + "_" + String(data.depot).toUpperCase();
-    var tabName = TAB_NAMES[key];
-    if (!tabName) {
-      return jsonOut({ status: "error", message: "Tổ/loại phiếu không hợp lệ: " + key });
-    }
-
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName(tabName);
-    if (!sheet) {
-      sheet = ss.insertSheet(tabName);
-      sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight("bold");
-      sheet.setFrozenRows(1);
-    }
-
-    var now = new Date();
-    var rows = [];
-    for (var i = 0; i < data.items.length; i++) {
-      var it = data.items[i];
-      var qty = Number(it.qty);
-      if (!it.ma || !qty || qty < 1) continue;
-      rows.push([
-        now,
-        String(data.date),
-        String(it.ten || "") + " (" + String(it.ma) + ")",
-        qty,
-        String(data.note || ""),
-        String(it.ma),
-        String(it.dvt || "")
-      ]);
-    }
-    if (!rows.length) {
-      return jsonOut({ status: "error", message: "Không có dòng vật tư hợp lệ." });
-    }
-
-    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, HEADERS.length).setValues(rows);
-    return jsonOut({ status: "ok", written: rows.length, tab: tabName });
-  } catch (err) {
-    return jsonOut({ status: "error", message: String(err) });
-  } finally {
-    lock.releaseLock();
+// ===== XEM KHO =====
+async function loadView(){
+  $("vwStock").className="vw-load"; $("vwStock").textContent="Đang tải dữ liệu kho…";
+  $("vwHist").className="vw-load"; $("vwHist").textContent="…";
+  try{
+    const res = await fetch(SCRIPT_URL+"?mode=view");
+    const j = await res.json();
+    if(j.status!=="ok") throw new Error(j.message||"lỗi");
+    state.viewData = j;
+    renderView();
+  }catch(err){
+    $("vwStock").textContent="Không tải được — kiểm tra mạng rồi bấm lại tab Xem kho.";
+    $("vwHist").textContent="—";
   }
 }
+$("vwq").addEventListener("input", ()=>renderView());
 
-// ============ XEM KHO (không cần PIN) ============
-function doGet(e) {
-  try {
-    var mode = e && e.parameter ? e.parameter.mode : "";
-    if (mode !== "view") {
-      return jsonOut({ status: "ok", message: "Apps Script kho vật tư đang hoạt động." });
-    }
-
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-
-    // Tồn kho từ 2 tab DANH_MUC: A=Mã, B=Tên, C=Đvt, D=Tồn gốc, E=Nhập, F=Xuất, G=Tồn
-    var stock = {};
-    ["DP1", "DP3"].forEach(function (dp) {
-      var sh = ss.getSheetByName("DANH_MUC_" + dp);
-      var out = [];
-      if (sh) {
-        var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 7).getValues();
-        for (var i = 0; i < vals.length; i++) {
-          if (!vals[i][0]) continue;
-          out.push({
-            ma: String(vals[i][0]),
-            ten: String(vals[i][1]),
-            dvt: String(vals[i][2]),
-            nhap: Number(vals[i][4]) || 0,
-            xuat: Number(vals[i][5]) || 0,
-            ton: Number(vals[i][6]) || 0
-          });
-        }
-      }
-      stock[dp] = out;
-    });
-
-    // Lịch sử gần nhất từ 4 tab response
-    var history = {};
-    Object.keys(TAB_NAMES).forEach(function (key) {
-      var sh = ss.getSheetByName(TAB_NAMES[key]);
-      var out = [];
-      if (sh && sh.getLastRow() > 1) {
-        var last = sh.getLastRow();
-        var start = Math.max(2, last - HISTORY_LIMIT + 1);
-        var vals = sh.getRange(start, 1, last - start + 1, 7).getValues();
-        for (var i = vals.length - 1; i >= 0; i--) { // mới nhất trước
-          out.push({
-            ts: vals[i][0] instanceof Date ? Utilities.formatDate(vals[i][0], "GMT+7", "dd/MM HH:mm") : String(vals[i][0]),
-            ngay: String(vals[i][1]),
-            vt: String(vals[i][2]),
-            sl: Number(vals[i][3]) || 0,
-            ghichu: String(vals[i][4] || "")
-          });
-        }
-      }
-      history[key] = out;
-    });
-
-    return jsonOut({ status: "ok", stock: stock, history: history, updated: Utilities.formatDate(new Date(), "GMT+7", "dd/MM/yyyy HH:mm") });
-  } catch (err) {
-    return jsonOut({ status: "error", message: String(err) });
-  }
+function renderView(){
+  const d = state.viewData; if(!d) return;
+  const dp = state.depot;
+  $("vwStockTitle").textContent = "TỒN KHO " + dp + (d.updated ? " — cập nhật " + d.updated : "");
+  const q = stripAccent($("vwq").value.trim());
+  const rows = (d.stock[dp]||[]).filter(r=>!q || stripAccent(r.ten+" "+r.ma).includes(q));
+  const box = $("vwStock"); box.className=""; box.innerHTML="";
+  if(!rows.length){ box.innerHTML='<div class="vw-load">Không có vật tư khớp.</div>'; }
+  rows.forEach(r=>{
+    const div=document.createElement("div");
+    div.className="stock-row"+(r.ton<=0?" zero":"");
+    div.innerHTML='<div><div class="nm">'+r.ten+'</div><div class="cd">'+r.ma+' · Nhập '+r.nhap+' · Xuất '+r.xuat+'</div></div>'
+                 +'<div class="ton">'+r.ton+' <small>'+r.dvt+'</small></div>';
+    box.appendChild(div);
+  });
+  // history: merge XUAT+NHAP of current depot
+  const hx=(d.history["XUAT_"+dp]||[]).map(h=>({...h,t:"x"}));
+  const hn=(d.history["NHAP_"+dp]||[]).map(h=>({...h,t:"n"}));
+  const hist=[...hx,...hn].sort((a,b)=> (b.ts>a.ts?1:-1)).slice(0,30);
+  const hb=$("vwHist"); hb.className=""; hb.innerHTML="";
+  if(!hist.length){ hb.innerHTML='<div class="vw-load">Chưa có phiếu nào.</div>'; }
+  hist.forEach(h=>{
+    const div=document.createElement("div");
+    div.className="hist-row";
+    div.innerHTML='<div class="top"><span><span class="hist-tag '+h.t+'">'+(h.t==="x"?"XUẤT":"NHẬP")+'</span>'+h.vt+'</span><b>'+h.sl+'</b></div>'
+                 +'<div class="sub">Ngày '+h.ngay+' · gửi lúc '+h.ts+(h.ghichu?' · '+h.ghichu:'')+'</div>';
+    hb.appendChild(div);
+  });
 }
 
-function jsonOut(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+renderSlip(); renderSlipHead();
+</script>
+</body>
+</html>
