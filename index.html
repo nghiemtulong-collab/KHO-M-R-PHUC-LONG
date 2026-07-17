@@ -122,6 +122,22 @@ body.viewing .slip, body.viewing .bar, body.viewing .search-box, body.viewing .r
 .pin-row input{width:100%;border:2px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:20px;text-align:center;letter-spacing:6px}
 .pin-row input:focus{outline:none;border-color:var(--amber)}
 .pin-err{color:var(--danger);font-size:12.5px;margin-top:5px;display:none;text-align:left}
+.sender-row{padding:10px 12px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.sender-row label{font-size:13px;font-weight:700;white-space:nowrap}
+.sender-row select{flex:1;border:1.5px solid var(--line);border-radius:9px;padding:9px 11px;font-family:inherit;font-size:14px;background:var(--white)}
+.adjust-row{padding:10px 12px;border-top:1px solid var(--line);display:flex;gap:9px;align-items:flex-start}
+.adjust-row input[type=checkbox]{width:20px;height:20px;margin-top:1px;accent-color:var(--amber)}
+.adjust-row .lbl{font-size:13px;font-weight:700}
+.adjust-row .sub{font-size:11.5px;color:var(--muted);font-weight:400;margin-top:2px}
+body.adjusting .slip{border-color:var(--danger)}
+body.adjusting .slip-head{background:var(--danger)}
+.stock-row.low{border-color:var(--danger);background:#FDF3F2}
+.stock-row.low .ton{color:var(--danger)}
+.low-tag{display:inline-block;font-size:10.5px;font-weight:800;background:#FDE8E6;color:var(--danger);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.hist-row .who{color:var(--navy-2);font-weight:700}
+.hist-row.neg{border-color:var(--danger)}
+.hist-row.neg .top b{color:var(--danger)}
+
 .vw-filter{display:flex;gap:8px;align-items:center;margin:10px 0}
 .vw-filter input{flex:1;border:2px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:15px;background:var(--white)}
 .vw-filter input:focus{outline:none;border-color:var(--amber)}
@@ -171,6 +187,20 @@ body.viewing .slip, body.viewing .bar, body.viewing .search-box, body.viewing .r
     </div>
     <div id="slipRows"><div class="slip-empty">Chưa có vật tư nào trong phiếu.<br>Tìm và bấm chọn ở trên.</div></div>
     <div class="note-row"><input type="text" id="note" placeholder="Ghi chú (không bắt buộc)"></div>
+    <div class="sender-row">
+      <label for="nguoi">Người gửi:</label>
+      <select id="nguoi">
+        <option value="">— Chọn người gửi —</option>
+        <option>Quỳnh (DP1)</option>
+        <option>Tâm (DP3)</option>
+        <option>Khác</option>
+      </select>
+    </div>
+    <div class="adjust-row">
+      <input type="checkbox" id="adjustChk">
+      <div><div class="lbl">Phiếu điều chỉnh (sửa phiếu gửi nhầm)</div>
+      <div class="sub">Cho phép số lượng ÂM để trừ ngược lại phiếu sai. Bắt buộc ghi chú lý do.</div></div>
+    </div>
   </div>
 
   <div class="viewwrap">
@@ -254,6 +284,11 @@ function segInit(id, key){
 segInit("segDepot","depot");
 segInit("segType","type");
 
+$("adjustChk").onchange = ()=>{
+  document.body.classList.toggle("adjusting", $("adjustChk").checked);
+  renderSlipHead();
+};
+
 // Mode switch: write <-> view
 document.querySelectorAll("#modeSwitch button").forEach(b=>{
   b.onclick = ()=>{
@@ -266,7 +301,8 @@ document.querySelectorAll("#modeSwitch button").forEach(b=>{
 });
 
 function renderSlipHead(){
-  $("slipTitle").textContent = "PHIẾU " + (state.type==="XUAT"?"XUẤT":"NHẬP") + " — " + state.depot;
+  const adj = $("adjustChk") && $("adjustChk").checked ? "ĐIỀU CHỈNH " : "";
+  $("slipTitle").textContent = "PHIẾU " + adj + (state.type==="XUAT"?"XUẤT":"NHẬP") + " — " + state.depot;
 }
 
 function renderResults(){
@@ -295,8 +331,11 @@ function addItem(it){
 function removeItem(ma){ delete state.slip[ma]; renderSlip(); renderResults(); }
 function setQty(ma,v){
   v = parseInt(v,10);
-  if(isNaN(v)||v<1) v=1;
-  if(v>9999) v=9999;
+  const adj = $("adjustChk").checked;
+  if(isNaN(v)) v = 1;
+  if(v===0) v = adj ? -1 : 1; // bước qua 0: phiếu thường tối thiểu 1, điều chỉnh nhảy sang -1
+  if(!adj && v<1) v = 1;
+  if(v>9999) v=9999; if(v<-9999) v=-9999;
   state.slip[ma].qty = v; renderSlip();
 }
 
@@ -315,7 +354,7 @@ function renderSlip(){
       '<div class="info"><div class="nm">'+r.ten+'</div><div class="cd">'+r.ma+' · '+r.dvt+'</div></div>'
      +'<div class="qty">'
      +'<button aria-label="Giảm">−</button>'
-     +'<input type="number" inputmode="numeric" min="1" value="'+r.qty+'">'
+     +'<input type="number" inputmode="numeric" value="'+r.qty+'">'
      +'<button aria-label="Tăng">+</button></div>'
      +'<button class="rm" aria-label="Xóa">✕</button>';
     const [minus, plus] = d.querySelectorAll(".qty button");
@@ -331,9 +370,11 @@ function renderSlip(){
 $("btnSend").onclick = ()=>{
   const list = Object.values(state.slip);
   if(!list.length) return;
+  if(!$("nguoi").value){ alert("Chọn Người gửi trước khi gửi phiếu."); return; }
+  if($("adjustChk").checked && !$("note").value.trim()){ alert("Phiếu điều chỉnh bắt buộc ghi chú lý do."); return; }
   const d = $("ngay").value.split("-"); // yyyy-mm-dd
   const dateVN = d[2]+"/"+d[1]+"/"+d[0];
-  $("cfTitle").textContent = "Xác nhận PHIẾU "+(state.type==="XUAT"?"XUẤT":"NHẬP")+" — "+state.depot+" — "+dateVN;
+  $("cfTitle").textContent = "Xác nhận PHIẾU "+($("adjustChk").checked?"ĐIỀU CHỈNH ":"")+(state.type==="XUAT"?"XUẤT":"NHẬP")+" — "+state.depot+" — "+dateVN;
   $("cfSummary").innerHTML = list.map(r=>"• "+r.ten+" — <b>"+r.qty+" "+r.dvt+"</b>").join("<br>");
   $("ovConfirm").classList.add("show");
 };
@@ -350,6 +391,8 @@ $("btnConfirm").onclick = async ()=>{
   const d = $("ngay").value.split("-");
   const payload = {
     pin: pinVal,
+    nguoi: $("nguoi").value,
+    adjust: $("adjustChk").checked,
     depot: state.depot,
     type: state.type,
     date: d[2]+"/"+d[1]+"/"+d[0],
@@ -388,7 +431,8 @@ function showFail(){
 function resetAll(){
   $("ovDone").classList.remove("show");
   state.slip = {}; $("note").value=""; $("q").value="";
-  renderSlip(); renderResults();
+  $("adjustChk").checked = false; document.body.classList.remove("adjusting");
+  renderSlip(); renderResults(); renderSlipHead();
 }
 
 // ===== XEM KHO =====
@@ -427,8 +471,9 @@ function renderView(){
   if(!rows.length){ box.innerHTML='<div class="vw-load">Không có vật tư khớp.</div>'; }
   rows.forEach(r=>{
     const div=document.createElement("div");
-    div.className="stock-row"+(r.ton<=0?" zero":"");
-    div.innerHTML='<div><div class="nm">'+r.ten+'</div><div class="cd">'+r.ma+' · Nhập '+r.nhap+' · Xuất '+r.xuat+'</div></div>'
+    const low = r.min>0 && r.ton<=r.min;
+    div.className="stock-row"+(r.ton<=0?" zero":"")+(low?" low":"");
+    div.innerHTML='<div><div class="nm">'+r.ten+(low?'<span class="low-tag">⚠ DƯỚI NGƯỠNG</span>':'')+'</div><div class="cd">'+r.ma+' · Nhập '+r.nhap+' · Xuất '+r.xuat+(r.min>0?' · Min '+r.min:'')+'</div></div>'
                  +'<div class="ton">'+r.ton+' <small>'+r.dvt+'</small></div>';
     box.appendChild(div);
   });
@@ -447,9 +492,9 @@ function renderView(){
   if(!hist.length){ hb.innerHTML='<div class="vw-load">'+($("vwDate").value?"Không có phiếu nào trong ngày đã chọn.":"Chưa có phiếu nào.")+'</div>'; }
   hist.forEach(h=>{
     const div=document.createElement("div");
-    div.className="hist-row";
-    div.innerHTML='<div class="top"><span><span class="hist-tag '+h.t+'">'+(h.t==="x"?"XUẤT":"NHẬP")+'</span>'+h.vt+'</span><b>'+h.sl+'</b></div>'
-                 +'<div class="sub">Ngày '+h.ngay+' · gửi lúc '+h.ts+(h.ghichu?' · '+h.ghichu:'')+'</div>';
+    div.className="hist-row"+(h.sl<0?" neg":"");
+    div.innerHTML='<div class="top"><span><span class="hist-tag '+h.t+'">'+(h.t==="x"?"XUẤT":"NHẬP")+'</span>'+h.vt+'</span><b>'+(h.sl>0?h.sl:h.sl)+'</b></div>'
+                 +'<div class="sub">Ngày '+h.ngay+' · gửi lúc '+h.ts+(h.nguoi?' · <span class="who">'+h.nguoi+'</span>':'')+(h.ghichu?' · '+h.ghichu:'')+'</div>';
     hb.appendChild(div);
   });
 }
