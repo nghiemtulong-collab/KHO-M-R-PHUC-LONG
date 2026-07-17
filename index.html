@@ -122,6 +122,12 @@ body.viewing .slip, body.viewing .bar, body.viewing .search-box, body.viewing .r
 .pin-row input{width:100%;border:2px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:20px;text-align:center;letter-spacing:6px}
 .pin-row input:focus{outline:none;border-color:var(--amber)}
 .pin-err{color:var(--danger);font-size:12.5px;margin-top:5px;display:none;text-align:left}
+.vw-filter{display:flex;gap:8px;align-items:center;margin:10px 0}
+.vw-filter input{flex:1;border:2px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:15px;background:var(--white)}
+.vw-filter input:focus{outline:none;border-color:var(--amber)}
+.vw-filter button{border:1.5px solid var(--line);border-radius:10px;background:var(--white);font-family:inherit;font-weight:700;font-size:13px;padding:10px 14px;cursor:pointer;color:var(--navy-2);white-space:nowrap}
+.vw-filter button.active{background:var(--navy-2);color:var(--white);border-color:var(--navy-2)}
+
 
 </style>
 </head>
@@ -173,6 +179,10 @@ body.viewing .slip, body.viewing .bar, body.viewing .search-box, body.viewing .r
     <div class="vw-sec" id="vwStockTitle">TỒN KHO DP1</div>
     <div id="vwStock" class="vw-load">Bấm "Xem kho" để tải dữ liệu…</div>
     <div class="vw-sec">LỊCH SỬ GẦN NHẤT</div>
+    <div class="vw-filter">
+      <input type="date" id="vwDate" title="Lọc theo ngày xuất/nhập">
+      <button id="vwDateAll" class="active">Tất cả</button>
+    </div>
     <div id="vwHist" class="vw-load">—</div>
   </div>
 </div>
@@ -397,6 +407,15 @@ async function loadView(){
   }
 }
 $("vwq").addEventListener("input", ()=>renderView());
+$("vwDate").addEventListener("change", ()=>{
+  $("vwDateAll").classList.toggle("active", !$("vwDate").value);
+  renderView();
+});
+$("vwDateAll").onclick = ()=>{
+  $("vwDate").value = "";
+  $("vwDateAll").classList.add("active");
+  renderView();
+};
 
 function renderView(){
   const d = state.viewData; if(!d) return;
@@ -416,9 +435,16 @@ function renderView(){
   // history: merge XUAT+NHAP of current depot
   const hx=(d.history["XUAT_"+dp]||[]).map(h=>({...h,t:"x"}));
   const hn=(d.history["NHAP_"+dp]||[]).map(h=>({...h,t:"n"}));
-  const hist=[...hx,...hn].sort((a,b)=> (b.ts>a.ts?1:-1)).slice(0,30);
+  let hist=[...hx,...hn].sort((a,b)=> (b.ts>a.ts?1:-1));
+  const df = $("vwDate").value; // yyyy-mm-dd
+  if(df){
+    const p = df.split("-"); const dfVN = p[2]+"/"+p[1]+"/"+p[0]; // dd/MM/yyyy
+    hist = hist.filter(h=> h.ngay === dfVN);
+  } else {
+    hist = hist.slice(0,30); // không lọc: chỉ hiện 30 dòng gần nhất cho gọn
+  }
   const hb=$("vwHist"); hb.className=""; hb.innerHTML="";
-  if(!hist.length){ hb.innerHTML='<div class="vw-load">Chưa có phiếu nào.</div>'; }
+  if(!hist.length){ hb.innerHTML='<div class="vw-load">'+($("vwDate").value?"Không có phiếu nào trong ngày đã chọn.":"Chưa có phiếu nào.")+'</div>'; }
   hist.forEach(h=>{
     const div=document.createElement("div");
     div.className="hist-row";
