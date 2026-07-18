@@ -115,6 +115,7 @@ body.viewing .slip, body.viewing .bar, body.viewing .search-box, body.viewing .r
 .hist-tag{font-size:11px;font-weight:800;border-radius:6px;padding:1px 7px;margin-right:6px}
 .hist-tag.x{background:#FDE8E6;color:var(--danger)}
 .hist-tag.n{background:#E3F2E9;color:var(--ok)}
+.hist-tag.d{background:#FFF3DC;color:#8A5A00}
 .vw-load{text-align:center;color:var(--muted);padding:20px 0;font-size:14px}
 /* PIN */
 .pin-row{margin-bottom:14px}
@@ -499,7 +500,8 @@ function renderView(){
   // history: merge XUAT+NHAP of current depot
   const hx=(d.history["XUAT_"+dp]||[]).map(h=>({...h,t:"x"}));
   const hn=(d.history["NHAP_"+dp]||[]).map(h=>({...h,t:"n"}));
-  let hist=[...hx,...hn].sort((a,b)=> (b.ts>a.ts?1:-1));
+  const hd=(d.history["DEXUAT_"+dp]||[]).map(h=>({...h,t:"d"}));
+  let hist=[...hx,...hn,...hd].sort((a,b)=> (b.ts>a.ts?1:-1));
   const df = $("vwDate").value; // yyyy-mm-dd
   if(df){
     const p = df.split("-"); const dfVN = p[2]+"/"+p[1]+"/"+p[0]; // dd/MM/yyyy
@@ -512,7 +514,7 @@ function renderView(){
   hist.forEach(h=>{
     const div=document.createElement("div");
     div.className="hist-row"+(h.sl<0?" neg":"");
-    div.innerHTML='<div class="top"><span><span class="hist-tag '+h.t+'">'+(h.t==="x"?"XUẤT":"NHẬP")+'</span>'+h.vt+'</span><b>'+(h.sl>0?h.sl:h.sl)+'</b></div>'
+    div.innerHTML='<div class="top"><span><span class="hist-tag '+h.t+'">'+(h.t==="x"?"XUẤT":(h.t==="n"?"NHẬP":"ĐỀ XUẤT"))+'</span>'+h.vt+'</span><b>'+(h.sl>0?h.sl:h.sl)+'</b></div>'
                  +'<div class="sub">Ngày '+h.ngay+' · gửi lúc '+h.ts+(h.nguoi?' · <span class="who">'+h.nguoi+'</span>':'')+(h.ghichu?' · '+h.ghichu:'')+'</div>';
     hb.appendChild(div);
   });
