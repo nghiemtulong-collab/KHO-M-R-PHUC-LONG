@@ -146,6 +146,9 @@ body.dexuat .adjust-row{display:none}
 .vw-filter input:focus{outline:none;border-color:var(--amber)}
 .vw-filter button{border:1.5px solid var(--line);border-radius:10px;background:var(--white);font-family:inherit;font-weight:700;font-size:13px;padding:10px 14px;cursor:pointer;color:var(--navy-2);white-space:nowrap}
 .vw-filter button.active{background:var(--navy-2);color:var(--white);border-color:var(--navy-2)}
+.vw-types{display:flex;gap:6px;margin:0 0 10px}
+.vw-types button{flex:1;border:1.5px solid var(--line);border-radius:10px;background:var(--white);font-family:inherit;font-weight:700;font-size:13px;padding:9px 0;cursor:pointer;color:var(--muted)}
+.vw-types button.active{background:var(--navy-2);color:var(--white);border-color:var(--navy-2)}
 
 
 </style>
@@ -213,9 +216,15 @@ body.dexuat .adjust-row{display:none}
     <div class="vw-sec" id="vwStockTitle">TỒN KHO DP1</div>
     <div id="vwStock" class="vw-load">Bấm "Xem kho" để tải dữ liệu…</div>
     <div class="vw-sec">LỊCH SỬ GẦN NHẤT</div>
+    <div class="vw-types" id="vwTypes">
+      <button data-t="all" class="active">Tất cả</button>
+      <button data-t="x">Xuất</button>
+      <button data-t="n">Nhập</button>
+      <button data-t="d">Đề xuất</button>
+    </div>
     <div class="vw-filter">
-      <input type="date" id="vwDate" title="Lọc theo ngày xuất/nhập">
-      <button id="vwDateAll" class="active">Tất cả</button>
+      <input type="date" id="vwDate" title="Lọc theo ngày">
+      <button id="vwDateAll" class="active">Mọi ngày</button>
     </div>
     <div id="vwHist" class="vw-load">—</div>
   </div>
@@ -471,6 +480,15 @@ async function loadView(){
   }
 }
 $("vwq").addEventListener("input", ()=>renderView());
+let vwType = "all";
+document.querySelectorAll("#vwTypes button").forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll("#vwTypes button").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    vwType = b.dataset.t;
+    renderView();
+  };
+});
 $("vwDate").addEventListener("change", ()=>{
   $("vwDateAll").classList.toggle("active", !$("vwDate").value);
   renderView();
@@ -502,6 +520,7 @@ function renderView(){
   const hn=(d.history["NHAP_"+dp]||[]).map(h=>({...h,t:"n"}));
   const hd=(d.history["DEXUAT_"+dp]||[]).map(h=>({...h,t:"d"}));
   let hist=[...hx,...hn,...hd].sort((a,b)=> (b.ts>a.ts?1:-1));
+  if(vwType!=="all") hist = hist.filter(h=>h.t===vwType);
   const df = $("vwDate").value; // yyyy-mm-dd
   if(df){
     const p = df.split("-"); const dfVN = p[2]+"/"+p[1]+"/"+p[0]; // dd/MM/yyyy
@@ -510,7 +529,7 @@ function renderView(){
     hist = hist.slice(0,30); // không lọc: chỉ hiện 30 dòng gần nhất cho gọn
   }
   const hb=$("vwHist"); hb.className=""; hb.innerHTML="";
-  if(!hist.length){ hb.innerHTML='<div class="vw-load">'+($("vwDate").value?"Không có phiếu nào trong ngày đã chọn.":"Chưa có phiếu nào.")+'</div>'; }
+  if(!hist.length){ hb.innerHTML='<div class="vw-load">'+(($("vwDate").value||vwType!=="all")?"Không có phiếu nào khớp bộ lọc.":"Chưa có phiếu nào.")+'</div>'; }
   hist.forEach(h=>{
     const div=document.createElement("div");
     div.className="hist-row"+(h.sl<0?" neg":"");
