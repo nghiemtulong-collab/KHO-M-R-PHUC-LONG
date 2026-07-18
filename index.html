@@ -511,7 +511,7 @@ function renderView(){
     const div=document.createElement("div");
     const low = r.min>0 && r.ton<=r.min;
     div.className="stock-row"+(r.ton<=0?" zero":"")+(low?" low":"");
-    div.innerHTML='<div><div class="nm">'+r.ten+(low?'<span class="low-tag">⚠ DƯỚI NGƯỠNG</span>':'')+'</div><div class="cd">'+r.ma+' · Nhập '+r.nhap+' · Xuất '+r.xuat+(r.min>0?' · Min '+r.min:'')+'</div></div>'
+    div.innerHTML='<div><div class="nm">'+r.ten+(low?'<span class="low-tag">⚠ DƯỚI NGƯỠNG</span>':'')+'</div><div class="cd">'+r.ma+(r.macu?' ('+r.macu+')':'')+' · Nhập '+r.nhap+' · Xuất '+r.xuat+(r.min>0?' · Min '+r.min:'')+'</div></div>'
                  +'<div class="ton">'+r.ton+' <small>'+r.dvt+'</small></div>';
     box.appendChild(div);
   });
