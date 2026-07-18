@@ -131,6 +131,8 @@ body.viewing .slip, body.viewing .bar, body.viewing .search-box, body.viewing .r
 .adjust-row .sub{font-size:11.5px;color:var(--muted);font-weight:400;margin-top:2px}
 body.adjusting .slip{border-color:var(--danger)}
 body.adjusting .slip-head{background:var(--danger)}
+body.dexuat .adjust-row{display:none}
+.doc-link{display:block;background:var(--amber);color:var(--navy);font-weight:800;border-radius:10px;padding:12px;margin-bottom:12px;text-decoration:none;font-size:15px}
 .stock-row.low{border-color:var(--danger);background:#FDF3F2}
 .stock-row.low .ton{color:var(--danger)}
 .low-tag{display:inline-block;font-size:10.5px;font-weight:800;background:#FDE8E6;color:var(--danger);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle}
@@ -158,8 +160,9 @@ body.adjusting .slip-head{background:var(--danger)}
         <button data-v="DP3">Tổ DP3</button>
       </div>
       <div class="seg" id="segType">
-        <button data-v="XUAT" class="on">Xuất kho</button>
-        <button data-v="NHAP">Nhập kho</button>
+        <button data-v="XUAT" class="on">Xuất</button>
+        <button data-v="NHAP">Nhập</button>
+        <button data-v="DEXUAT">Đề xuất</button>
       </div>
     </div>
     <div class="date-row">
@@ -248,6 +251,7 @@ body.adjusting .slip-head{background:var(--danger)}
     <div class="big" id="doneIcon">✅</div>
     <h2 id="doneTitle">Đã gửi thành công</h2>
     <p id="doneMsg"></p>
+    <div id="docLinkWrap"></div>
     <button class="primary" onclick="resetAll()">Làm phiếu mới</button>
   </div>
 </div>
@@ -306,9 +310,12 @@ document.querySelectorAll("#modeSwitch button").forEach(b=>{
   };
 });
 
+function typeLabel(){ return state.type==="XUAT"?"XUẤT":(state.type==="NHAP"?"NHẬP":"ĐỀ XUẤT"); }
 function renderSlipHead(){
-  const adj = $("adjustChk") && $("adjustChk").checked ? "ĐIỀU CHỈNH " : "";
-  $("slipTitle").textContent = "PHIẾU " + adj + (state.type==="XUAT"?"XUẤT":"NHẬP") + " — " + state.depot;
+  const adj = $("adjustChk") && $("adjustChk").checked && state.type!=="DEXUAT" ? "ĐIỀU CHỈNH " : "";
+  $("slipTitle").textContent = "PHIẾU " + adj + typeLabel() + " — " + state.depot;
+  document.body.classList.toggle("dexuat", state.type==="DEXUAT");
+  $("note").placeholder = state.type==="DEXUAT" ? "V/v — lý do đề xuất (nên ghi rõ)" : "Ghi chú (không bắt buộc)";
 }
 
 function renderResults(){
@@ -380,7 +387,7 @@ $("btnSend").onclick = ()=>{
   if($("adjustChk").checked && !$("note").value.trim()){ alert("Phiếu điều chỉnh bắt buộc ghi chú lý do."); return; }
   const d = $("ngay").value.split("-"); // yyyy-mm-dd
   const dateVN = d[2]+"/"+d[1]+"/"+d[0];
-  $("cfTitle").textContent = "Xác nhận PHIẾU "+($("adjustChk").checked?"ĐIỀU CHỈNH ":"")+(state.type==="XUAT"?"XUẤT":"NHẬP")+" — "+state.depot+" — "+dateVN;
+  $("cfTitle").textContent = "Xác nhận PHIẾU "+($("adjustChk").checked&&state.type!=="DEXUAT"?"ĐIỀU CHỈNH ":"")+typeLabel()+" — "+state.depot+" — "+dateVN;
   $("cfSummary").innerHTML = list.map(r=>"• "+r.ten+" — <b>"+r.qty+" "+r.dvt+"</b>").join("<br>");
   loadPin();
   $("ovConfirm").classList.add("show");
@@ -409,8 +416,8 @@ $("btnConfirm").onclick = async ()=>{
   };
   try{
     const res = await fetch(SCRIPT_URL, {method:"POST", body: JSON.stringify(payload)});
-    let ok = res.ok, wrongPin = false;
-    try{ const j = await res.json(); ok = j.status==="ok"; wrongPin = j.status==="wrong_pin"; }catch(_){}
+    let ok = res.ok, wrongPin = false, j2 = null;
+    try{ const j = await res.json(); j2 = j; ok = j.status==="ok"; wrongPin = j.status==="wrong_pin"; }catch(_){}
     $("ovSending").classList.remove("show");
     if(wrongPin){
       try{ localStorage.removeItem("kho_pin_"+state.depot); }catch(_){}
@@ -422,7 +429,9 @@ $("btnConfirm").onclick = async ()=>{
       try{ localStorage.setItem("kho_pin_"+state.depot, pinVal); }catch(_){}
       $("doneIcon").textContent="✅";
       $("doneTitle").textContent="Đã gửi thành công";
-      $("doneMsg").textContent = payload.items.length+" mã vật tư đã được ghi vào sổ "+(state.type==="XUAT"?"xuất":"nhập")+" "+state.depot+".";
+      const loai = state.type==="XUAT"?"xuất":(state.type==="NHAP"?"nhập":"đề xuất");
+      $("doneMsg").textContent = payload.items.length+" mã vật tư đã được ghi vào sổ "+loai+" "+state.depot+"."+(j2&&j2.warn?(" "+j2.warn):"");
+      $("docLinkWrap").innerHTML = (j2&&j2.docUrl) ? '<a href="'+j2.docUrl+'" target="_blank" class="doc-link">🖨 Mở phiếu đề xuất để in</a>' : "";
     }else{ showFail(); }
     $("ovDone").classList.add("show");
   }catch(err){
@@ -432,11 +441,13 @@ $("btnConfirm").onclick = async ()=>{
   }
 };
 function showFail(){
+  $("docLinkWrap").innerHTML="";
   $("doneIcon").textContent="⚠️";
   $("doneTitle").textContent="Gửi chưa thành công";
   $("doneMsg").textContent="Kiểm tra mạng rồi bấm Gửi lại. Nếu vẫn lỗi: ghi tạm vào sổ giấy và báo Leon.";
 }
 function resetAll(){
+  $("docLinkWrap").innerHTML="";
   $("ovDone").classList.remove("show");
   state.slip = {}; $("note").value=""; $("q").value="";
   $("adjustChk").checked = false; document.body.classList.remove("adjusting");
