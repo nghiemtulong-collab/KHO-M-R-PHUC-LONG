@@ -127,9 +127,13 @@ body.viewing .slip, body.viewing .bar, body.viewing .search-box, body.viewing .r
 .sender-row label{font-size:13px;font-weight:700;white-space:nowrap}
 .sender-row select{flex:1;border:1.5px solid var(--line);border-radius:9px;padding:9px 11px;font-family:inherit;font-size:14px;background:var(--white)}
 .adjust-row{padding:10px 12px;border-top:1px solid var(--line);display:flex;gap:9px;align-items:flex-start}
-.adjust-row input[type=checkbox]{width:20px;height:20px;margin-top:1px;accent-color:var(--amber)}
+.adjust-row input[type=checkbox]{width:20px;height:20px;margin-top:1px;accent-color:var(--amber);flex-shrink:0}
 .adjust-row .lbl{font-size:13px;font-weight:700}
 .adjust-row .sub{font-size:11.5px;color:var(--muted);font-weight:400;margin-top:2px}
+.reset-toggle{cursor:pointer;user-select:none}
+.reset-toggle.on{background:#FFF3DC}
+.item.out-of-stock{opacity:.62;background:#F1F2EF;border-style:dashed;cursor:not-allowed}
+.item.out-of-stock .add{width:auto;min-width:48px;padding:0 8px;background:#8A9690;color:var(--white);font-size:11px;text-transform:uppercase}
 body.adjusting .slip{border-color:var(--danger)}
 body.adjusting .slip-head{background:var(--danger)}
 body.dexuat .adjust-row{display:none}
@@ -203,11 +207,11 @@ body.dexuat .adjust-row{display:none}
         <option>Khác</option>
       </select>
     </div>
-    <div class="adjust-row">
+    <label class="adjust-row reset-toggle" id="adjustRow" for="adjustChk">
       <input type="checkbox" id="adjustChk">
       <div><div class="lbl">Phiếu điều chỉnh (sửa phiếu gửi nhầm)</div>
-      <div class="sub">Cho phép số lượng ÂM để trừ ngược lại phiếu sai. Bắt buộc ghi chú lý do.</div></div>
-    </div>
+      <div class="sub">Chạm lại vào dòng này để bỏ chọn. Khi bật, toàn bộ số lượng chuyển thành số ÂM; bắt buộc ghi chú lý do.</div></div>
+    </label>
   </div>
 
   <div class="viewwrap">
@@ -273,7 +277,7 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01
 
 const ITEMS = [{"ma": "MRVT01", "ten": "Bát khóa seal tay cửa gân container", "dvt": "Cái"}, {"ma": "MRVT02", "ten": "Bát khóa seal tay cửa trơn container", "dvt": "Cái"}, {"ma": "MRVT03", "ten": "Bát tay cửa container", "dvt": "Cái"}, {"ma": "MRVT04", "ten": "Bù lon 10*4", "dvt": "Bộ"}, {"ma": "MRVT05", "ten": "Bù lon đầu dù 10*40", "dvt": "Bộ"}, {"ma": "MRVT06", "ten": "Cam cửa container", "dvt": "Cái"}, {"ma": "MRVT07", "ten": "Cam cửa container có lỗ", "dvt": "Cái"}, {"ma": "MRVT08", "ten": "Chốt bản lề container", "dvt": "Cái"}, {"ma": "MRVT09", "ten": "Chốt tay cửa container", "dvt": "Cái"}, {"ma": "MRVT10", "ten": "CO2", "dvt": "Chai"}, {"ma": "MRVT11", "ten": "Đà cổ ngỗng(4*40*146*2400)mm", "dvt": "Cây"}, {"ma": "MRVT12", "ten": "Đà dọc dưới chữ C container(4.5*30*50*162*2400)mm", "dvt": "Cây"}, {"ma": "MRVT13", "ten": "Đà dọc dưới chữ Z( 4.5*30*80*158*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT14", "ten": "Đà dọc trên  container(3*60*60*5702)mm", "dvt": "Cây"}, {"ma": "MRVT15", "ten": "Đà dưới cửa container(4.5*150*165*2400)mm", "dvt": "Cây"}, {"ma": "MRVT16", "ten": "Đà dưới mặt trước container(4.5*95*154*2400)mm", "dvt": "Cây"}, {"ma": "MRVT17", "ten": "Đà gầm U containet(4*45*45*122*2350)mm đơn", "dvt": "Cây"}, {"ma": "MRVT18", "ten": "Đà gầm U containet(4*45*75*122*2350)mm đôi", "dvt": "Cây"}, {"ma": "MRVT19", "ten": "Đà L (4*30*120*2400)mm", "dvt": "Cây"}, {"ma": "MRVT20", "ten": "Đà L(4*50*120*2400)mm", "dvt": "Cây"}, {"ma": "MRVT21", "ten": "Đà L(4*70*120*2400)mm", "dvt": "Cây"}, {"ma": "MRVT22", "ten": "Đà L(4*70*140*2400)mm", "dvt": "Cây"}, {"ma": "MRVT23", "ten": "Đà L(6*120*150*2400)mm", "dvt": "Cây"}, {"ma": "MRVT24", "ten": "Đà L(6*120*150*2700)mm", "dvt": "Cây"}, {"ma": "MRVT25", "ten": "Đà trên cửa  container(4*112.5*113*137.5*2400)mm", "dvt": "Cây"}, {"ma": "MRVT26", "ten": "Đà trên cửa container(4*110*110*130*2400)mm", "dvt": "Cây"}, {"ma": "MRVT27", "ten": "Đà trên mặt trước container(4*60*104*380*2400)mm", "dvt": "Cây"}, {"ma": "MRVT28", "ten": "Đà trên mặt trước container(4*60*89*380*2400)mm", "dvt": "Cây"}, {"ma": "MRVT29", "ten": "Dây hàn", "dvt": "M"}, {"ma": "MRVT30", "ten": "Dây hàn MAG GM70S D0.8 GEMINI ( 1 cuộn 15 kg)", "dvt": "Kg"}, {"ma": "MRVT31", "ten": "Đinh Thép 3 phân", "dvt": "Kg"}, {"ma": "MRVT32", "ten": "Dung môi M", "dvt": "Lit"}, {"ma": "MRVT33", "ten": "Dung môi sơn AlKyd", "dvt": "Lit"}, {"ma": "MRVT34", "ten": "Gas công nghiệp 12 kg", "dvt": "Bình"}, {"ma": "MRVT35", "ten": "Gia cố nóc(3*335*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT36", "ten": "Gia cố nóc(3*397*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT37", "ten": "Gia cố nóc(3*427*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT38", "ten": "Hộp cửa container(3.2*50*100*2560)mm", "dvt": "Cây"}, {"ma": "MRVT39", "ten": "Hộp Gù  container", "dvt": "Cái"}, {"ma": "MRVT40", "ten": "Khóa cam  container có lỗ", "dvt": "Cái"}, {"ma": "MRVT41", "ten": "Khóa cam container", "dvt": "Cái"}, {"ma": "MRVT42", "ten": "Long đền bản lề contai ner", "dvt": "Cái"}, {"ma": "MRVT43", "ten": "Long đền chống bó container", "dvt": "Cái"}, {"ma": "MRVT44", "ten": "Máy hàn Mig 250 đầu rời 250V Jasic J44", "dvt": "Máy"}, {"ma": "MRVT45", "ten": "Nẹp ron container(1*30*2549)m", "dvt": "Cây"}, {"ma": "MRVT46", "ten": "Nhựa lót ốp lớn container", "dvt": "Cái"}, {"ma": "MRVT47", "ten": "Nhựa lót ốp nhỏ contai ner", "dvt": "Cái"}, {"ma": "MRVT48", "ten": "Ổ khóa Việt Tiệp", "dvt": "Cái"}, {"ma": "MRVT49", "ten": "Ống phi 34(phi 34*2345)mm (Thanh bar)", "dvt": "Cây"}, {"ma": "MRVT50", "ten": "Ốp lớn container", "dvt": "Cái"}, {"ma": "MRVT51", "ten": "Ốp nhỏ container", "dvt": "Cái"}, {"ma": "MRVT52", "ten": "Oxy", "dvt": "Chai"}, {"ma": "MRVT53", "ten": "Ron container 566 EDPM( 1 sợi =2.4m) I*2400mm", "dvt": "Sợi"}, {"ma": "MRVT54", "ten": "Ron container 567 EDPM(1 sợi =2.4m) J*2400mm", "dvt": "Sợi"}, {"ma": "MRVT55", "ten": "Silicone Apolo A500 (đen)", "dvt": "Chai"}, {"ma": "MRVT56", "ten": "Silicone Apolo A500 (xám)", "dvt": "Chai"}, {"ma": "MRVT57", "ten": "Silicone trắng xám", "dvt": "Chai"}, {"ma": "MRVT58", "ten": "Sơn Alkyd BT màu nâu GNA8009RAL", "dvt": "Lit"}, {"ma": "MRVT59", "ten": "Sơn Alkyd BT màu xám GNA7035RAL M", "dvt": "Lit"}, {"ma": "MRVT60", "ten": "Sơn Alkyd BT phủ màu đen GNA3750", "dvt": "Lit"}, {"ma": "MRVT61", "ten": "Sơn Alkyd BT phủ vàng mờ 1063RAL (GNA1003RAL)", "dvt": "Lit"}, {"ma": "MRVT62", "ten": "Sơn cam MSG RAL 2000", "dvt": "Lit"}, {"ma": "MRVT63", "ten": "Sơn đen M300", "dvt": "Lit"}, {"ma": "MRVT64", "ten": "Sơn ghi MSG RAL 7035", "dvt": "Lit"}, {"ma": "MRVT65", "ten": "Sơn kem M1281", "dvt": "Lit"}, {"ma": "MRVT66", "ten": "Sơn màu đen", "dvt": "Lit"}, {"ma": "MRVT67", "ten": "Sơn nâu MSG RAL 3009", "dvt": "Lit"}, {"ma": "MRVT68", "ten": "Sơn nâu MSG RAL 8004", "dvt": "Lit"}, {"ma": "MRVT69", "ten": "Sơn xanh MSG RAL 5010", "dvt": "Lit"}, {"ma": "MRVT70", "ten": "Sơn xanh MSg RAL 5013", "dvt": "Lit"}, {"ma": "MRVT71", "ten": "Sơn xanh MSG RAL 6033", "dvt": "Lit"}, {"ma": "MRVT72", "ten": "Sơn xanh MSG RAL 6037", "dvt": "Lit"}, {"ma": "MRVT73", "ten": "Súng hàn", "dvt": "Cái"}, {"ma": "MRVT74", "ten": "Tai bản lề container", "dvt": "Cái"}, {"ma": "MRVT75", "ten": "Tai khóa seal tay cửa gân container", "dvt": "Cái"}, {"ma": "MRVT76", "ten": "Tai khóa seal tay cửa trơn container", "dvt": "Cái"}, {"ma": "MRVT77", "ten": "Tay cửa gân container", "dvt": "Cái"}, {"ma": "MRVT78", "ten": "Tay cửa trơn container", "dvt": "Cái"}, {"ma": "MRVT79", "ten": "Thanh J bar(6*30*50*2400)mm", "dvt": "Cây"}, {"ma": "MRVT80", "ten": "Thông gió container", "dvt": "Cái"}, {"ma": "MRVT81", "ten": "Tôn mặt trước cao container (2*1024*2700)mm", "dvt": "Tấm"}, {"ma": "MRVT82", "ten": "Tôn nóc 2 sóng mạ kẽm container(2*1045*2356)mm", "dvt": "Tấm"}, {"ma": "MRVT83", "ten": "Tôn nóc 3 sóng(2*1045*2356)mm", "dvt": "Tấm"}, {"ma": "MRVT84", "ten": "Tôn nóc 4 sóng(2*1045*2356)mm", "dvt": "Tấm"}, {"ma": "MRVT85", "ten": "Tôn nóc 5 sóng(2*1045*2356)mm", "dvt": "Tấm"}, {"ma": "MRVT86", "ten": "Tôn nóc vá 5 sóng container (2*1045*600)mm", "dvt": "Tấm"}, {"ma": "MRVT87", "ten": "Tôn phẳng cont (3*1157*2400mm)", "dvt": "Tấm"}, {"ma": "MRVT88", "ten": "Tôn vách cao mạ kẽm container(2*1116*2700)mm", "dvt": "Tấm"}, {"ma": "MRVT89", "ten": "Trụ gia cố trong container  thấp mạ kẽm(12*40*113*2353)mm", "dvt": "Cây"}, {"ma": "MRVT90", "ten": "Trụ gia cố trong conterner cao mạ kẽm(12*40*113*2657)mm", "dvt": "Cây"}, {"ma": "MRVT91", "ten": "Trụ sau cao container (6*40*70*230*2700)mm", "dvt": "Cây"}, {"ma": "MRVT92", "ten": "Trụ sau thấp container (6*40*70*230*2400)mm", "dvt": "Cây"}, {"ma": "MRVT93", "ten": "Trụ trước cao container (6*229*245*2700)mm", "dvt": "Cây"}, {"ma": "MRVT94", "ten": "Trụ trước thấp container (6*229*245*2400)mm", "dvt": "Cây"}, {"ma": "MRVT95", "ten": "Ván ép (5*1160*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT96", "ten": "Ván sàn container 21 lớp (28*1160*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT97", "ten": "Ván sàn container 21 lớp (28*550*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT98", "ten": "Ván sàn container 21 lớp (28*635*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT99", "ten": "Vít sàn container M6-50", "dvt": "Kg"}, {"ma": "MRVT100", "ten": "Vòng chặn cam container", "dvt": "Cái"}];
 
-const state = { depot:"DP1", type:"XUAT", slip:{}, mode:"write", viewData:null }; // slip: ma -> {ma,ten,dvt,qty}
+const state = { depot:"DP1", type:"XUAT", slip:{}, mode:"write", viewData:null }; // viewData chứa tồn hiện tại của cả DP1/DP3
 
 function stripAccent(s){
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
@@ -291,7 +295,10 @@ function segInit(id, key){
       b.classList.add("on");
       state[key] = b.dataset.v;
       if(key==="depot") setDefaultSender();
+      if(key==="type" && state.type==="DEXUAT") setAdjustMode(false);
       renderSlipHead();
+      renderResults();
+      renderSlip();
       if(state.mode==="view") renderView();
     };
   });
@@ -304,10 +311,26 @@ function setDefaultSender(){
 }
 setDefaultSender();
 
-$("adjustChk").onchange = ()=>{
-  document.body.classList.toggle("adjusting", $("adjustChk").checked);
+function isAdjustOn(){
+  return state.type!=="DEXUAT" && $("adjustChk").checked;
+}
+function setAdjustMode(on){
+  on = !!on && state.type!=="DEXUAT";
+  $("adjustChk").checked = on;
+  document.body.classList.toggle("adjusting", on);
+  $("adjustRow").classList.toggle("on", on);
+
+  // Không để số âm "dính" lại sau khi bỏ tick; khi bật thì toàn bộ phiếu là số âm.
+  Object.values(state.slip).forEach(r=>{
+    const base = Math.max(1, Math.abs(parseInt(r.qty,10) || 1));
+    r.qty = on ? -base : base;
+  });
+
   renderSlipHead();
-};
+  renderResults();
+  renderSlip();
+}
+$("adjustChk").onchange = ()=>setAdjustMode($("adjustChk").checked);
 
 // Mode switch: write <-> view
 document.querySelectorAll("#modeSwitch button").forEach(b=>{
@@ -328,6 +351,61 @@ function renderSlipHead(){
   $("note").placeholder = state.type==="DEXUAT" ? "V/v — lý do đề xuất (nên ghi rõ)" : "Ghi chú (không bắt buộc)";
 }
 
+function stockItem(ma){
+  const rows = state.viewData && state.viewData.stock ? (state.viewData.stock[state.depot] || []) : [];
+  return rows.find(r=>r.ma===ma) || null;
+}
+function transactionDepletesStock(){
+  return (state.type==="XUAT" && !isAdjustOn()) || (state.type==="NHAP" && isAdjustOn());
+}
+function validateSlipSign(list){
+  if(state.type==="DEXUAT" && list.some(r=>r.qty<=0)){
+    alert("Phiếu đề xuất bắt buộc tất cả số lượng là số DƯƠNG.");
+    return false;
+  }
+  if(isAdjustOn() && list.some(r=>r.qty>=0)){
+    alert("Phiếu điều chỉnh bắt buộc tất cả số lượng là số ÂM.");
+    return false;
+  }
+  if(!isAdjustOn() && state.type!=="DEXUAT" && list.some(r=>r.qty<=0)){
+    alert("Phiếu thường bắt buộc tất cả số lượng là số DƯƠNG.");
+    return false;
+  }
+  return true;
+}
+function validateSlipStock(list){
+  if(!transactionDepletesStock() || !state.viewData) return true;
+  const problems = [];
+  list.forEach(r=>{
+    const s = stockItem(r.ma);
+    if(!s) return;
+    const requested = Math.abs(Number(r.qty) || 0);
+    if(requested > Number(s.ton || 0)){
+      problems.push(r.ten+" ("+r.ma+"): tồn "+s.ton+", cần "+requested);
+    }
+  });
+  if(problems.length){
+    alert("Không đủ tồn kho; chưa thể gửi phiếu:\n- "+problems.join("\n- ")+"\nTải lại Xem kho hoặc kiểm kê/lập phiếu điều chỉnh nếu số thực tế khác.");
+    return false;
+  }
+  return true;
+}
+async function refreshStock(silent){
+  try{
+    const res = await fetch(SCRIPT_URL+"?mode=view&_="+Date.now());
+    const j = await res.json();
+    if(j.status!=="ok") throw new Error(j.message||"Không tải được tồn kho.");
+    state.viewData = j;
+    renderResults();
+    renderSlip();
+    if(state.mode==="view") renderView();
+    return true;
+  }catch(err){
+    if(!silent) alert("Không tải được tồn kho: "+(err&&err.message?err.message:err));
+    return false;
+  }
+}
+
 function renderResults(){
   const q = stripAccent($("q").value.trim());
   const box = $("results");
@@ -337,29 +415,62 @@ function renderResults(){
   if(!hits.length){ box.innerHTML = '<div class="empty-note">Không tìm thấy — thử gõ ngắn hơn.</div>'; return; }
   hits.forEach(it=>{
     const added = !!state.slip[it.ma];
+    const s = stockItem(it.ma);
+    const out = transactionDepletesStock() && s && Number(s.ton)<=0;
     const div = document.createElement("div");
-    div.className = "item"+(added?" added":"");
-    div.innerHTML = '<div><div class="nm">'+it.ten+'</div><div class="cd">'+it.ma+' · Đvt: '+it.dvt+'</div></div>'
-                  + '<button class="add">'+(added?"✓":"+")+'</button>';
-    div.onclick = ()=>{ addItem(it); };
+    div.className = "item"+(added?" added":"")+(out?" out-of-stock":"");
+    const stockText = s ? " · Tồn: "+s.ton+" "+s.dvt : "";
+    div.innerHTML = '<div><div class="nm">'+it.ten+'</div><div class="cd">'+it.ma+' · Đvt: '+it.dvt+stockText+'</div></div>'
+                  + '<button class="add">'+(out?"HẾT":(added?"✓":"+"))+'</button>';
+    div.onclick = ()=>{
+      if(out){ alert("Vật tư "+it.ma+" hiện đã hết. Phiếu xuất/điều chỉnh nhập không được làm tồn âm."); return; }
+      addItem(it);
+    };
     box.appendChild(div);
   });
 }
 $("q").addEventListener("input", renderResults);
 
 function addItem(it){
-  if(!state.slip[it.ma]) state.slip[it.ma] = {ma:it.ma,ten:it.ten,dvt:it.dvt,qty:1};
+  const s = stockItem(it.ma);
+  if(transactionDepletesStock() && s && Number(s.ton)<=0){
+    alert("Vật tư "+it.ma+" hiện đã hết; không thể thêm vào giao dịch làm giảm tồn.");
+    return;
+  }
+  if(!state.slip[it.ma]){
+    state.slip[it.ma] = {ma:it.ma,ten:it.ten,dvt:it.dvt,qty:isAdjustOn()?-1:1};
+  }
   renderSlip(); renderResults();
 }
 function removeItem(ma){ delete state.slip[ma]; renderSlip(); renderResults(); }
 function setQty(ma,v){
   v = parseInt(v,10);
-  const adj = $("adjustChk").checked;
-  if(isNaN(v)) v = 1;
-  if(v===0) v = adj ? -1 : 1; // bước qua 0: phiếu thường tối thiểu 1, điều chỉnh nhảy sang -1
-  if(!adj && v<1) v = 1;
-  if(v>9999) v=9999; if(v<-9999) v=-9999;
-  state.slip[ma].qty = v; renderSlip();
+  const adj = isAdjustOn();
+  if(isNaN(v)) v = adj ? -1 : 1;
+  if(v===0) v = adj ? -1 : 1;
+  v = adj ? -Math.abs(v) : Math.abs(v);
+  if(v>9999) v=9999;
+  if(v<-9999) v=-9999;
+
+  if(transactionDepletesStock()){
+    const s = stockItem(ma);
+    if(s){
+      const ton = Math.max(0, Number(s.ton)||0);
+      if(ton<=0){
+        alert("Vật tư "+ma+" đã hết; dòng này được xóa khỏi phiếu.");
+        delete state.slip[ma];
+        renderSlip(); renderResults();
+        return;
+      }
+      if(Math.abs(v)>ton){
+        alert("Số lượng tối đa có thể làm giảm tồn theo số liệu hiện tại là "+ton+" "+s.dvt+".");
+        v = adj ? -ton : ton;
+      }
+    }
+  }
+
+  state.slip[ma].qty = v;
+  renderSlip();
 }
 
 function renderSlip(){
@@ -390,14 +501,24 @@ function renderSlip(){
   });
 }
 
-$("btnSend").onclick = ()=>{
-  const list = Object.values(state.slip);
+$("btnSend").onclick = async ()=>{
+  let list = Object.values(state.slip);
   if(!list.length) return;
   if(!$("nguoi").value){ alert("Chọn Người gửi trước khi gửi phiếu."); return; }
-  if($("adjustChk").checked && !$("note").value.trim()){ alert("Phiếu điều chỉnh bắt buộc ghi chú lý do."); return; }
+  if(isAdjustOn() && !$("note").value.trim()){ alert("Phiếu điều chỉnh bắt buộc ghi chú lý do."); return; }
+  if(!validateSlipSign(list)) return;
+
+  // Kiểm tra UX bằng tồn mới nhất; backend vẫn kiểm lại lần cuối dưới ScriptLock.
+  if(transactionDepletesStock()){
+    await refreshStock(true);
+    list = Object.values(state.slip);
+    if(!validateSlipStock(list)) return;
+  }
+
   const d = $("ngay").value.split("-"); // yyyy-mm-dd
+  if(d.length!==3){ alert("Chọn ngày phiếu."); return; }
   const dateVN = d[2]+"/"+d[1]+"/"+d[0];
-  $("cfTitle").textContent = "Xác nhận PHIẾU "+($("adjustChk").checked&&state.type!=="DEXUAT"?"ĐIỀU CHỈNH ":"")+typeLabel()+" — "+state.depot+" — "+dateVN;
+  $("cfTitle").textContent = "Xác nhận PHIẾU "+(isAdjustOn()?"ĐIỀU CHỈNH ":"")+typeLabel()+" — "+state.depot+" — "+dateVN;
   $("cfSummary").innerHTML = list.map(r=>"• "+r.ten+" — <b>"+r.qty+" "+r.dvt+"</b>").join("<br>");
   loadPin();
   $("ovConfirm").classList.add("show");
@@ -417,7 +538,7 @@ $("btnConfirm").onclick = async ()=>{
   const payload = {
     pin: pinVal,
     nguoi: $("nguoi").value,
-    adjust: $("adjustChk").checked,
+    adjust: isAdjustOn(),
     depot: state.depot,
     type: state.type,
     date: d[2]+"/"+d[1]+"/"+d[0],
@@ -442,39 +563,34 @@ $("btnConfirm").onclick = async ()=>{
       const loai = state.type==="XUAT"?"xuất":(state.type==="NHAP"?"nhập":"đề xuất");
       $("doneMsg").textContent = payload.items.length+" mã vật tư đã được ghi vào sổ "+loai+" "+state.depot+"."+(j2&&j2.warn?(" "+j2.warn):"");
       $("docLinkWrap").innerHTML = (j2&&j2.docUrl) ? '<a href="'+j2.docUrl+'" target="_blank" class="doc-link">🖨 Mở phiếu đề xuất để in</a>' : "";
-    }else{ showFail(); }
+    }else{ showFail(j2&&j2.message ? j2.message : "Hệ thống từ chối phiếu."); }
     $("ovDone").classList.add("show");
   }catch(err){
     $("ovSending").classList.remove("show");
-    showFail();
+    showFail("Không kết nối được hệ thống. Kiểm tra mạng rồi gửi lại.");
     $("ovDone").classList.add("show");
   }
 };
-function showFail(){
+function showFail(message){
   $("docLinkWrap").innerHTML="";
   $("doneIcon").textContent="⚠️";
-  $("doneTitle").textContent="Gửi chưa thành công";
-  $("doneMsg").textContent="Kiểm tra mạng rồi bấm Gửi lại. Nếu vẫn lỗi: ghi tạm vào sổ giấy và báo Leon.";
+  $("doneTitle").textContent="Phiếu chưa được ghi";
+  $("doneMsg").textContent=message || "Kiểm tra dữ liệu rồi gửi lại.";
 }
 function resetAll(){
   $("docLinkWrap").innerHTML="";
   $("ovDone").classList.remove("show");
   state.slip = {}; $("note").value=""; $("q").value="";
-  $("adjustChk").checked = false; document.body.classList.remove("adjusting");
-  renderSlip(); renderResults(); renderSlipHead();
+  setAdjustMode(false);
+  refreshStock(true);
 }
 
 // ===== XEM KHO =====
 async function loadView(){
   $("vwStock").className="vw-load"; $("vwStock").textContent="Đang tải dữ liệu kho…";
   $("vwHist").className="vw-load"; $("vwHist").textContent="…";
-  try{
-    const res = await fetch(SCRIPT_URL+"?mode=view");
-    const j = await res.json();
-    if(j.status!=="ok") throw new Error(j.message||"lỗi");
-    state.viewData = j;
-    renderView();
-  }catch(err){
+  const ok = await refreshStock(true);
+  if(!ok){
     $("vwStock").textContent="Không tải được — kiểm tra mạng rồi bấm lại tab Xem kho.";
     $("vwHist").textContent="—";
   }
@@ -540,6 +656,7 @@ function renderView(){
 }
 
 renderSlip(); renderSlipHead();
+refreshStock(true);
 </script>
 </body>
 </html>
