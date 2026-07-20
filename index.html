@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phiếu kho vật tư M&R — ICD Phúc Long</title>
+<title>Phiếu kho vật tư M&R — ICD Phúc Long (v3.1.1)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -423,7 +423,15 @@ function renderResults(){
     div.innerHTML = '<div><div class="nm">'+it.ten+'</div><div class="cd">'+it.ma+' · Đvt: '+it.dvt+stockText+'</div></div>'
                   + '<button class="add">'+(out?"HẾT":(added?"✓":"+"))+'</button>';
     div.onclick = ()=>{
-      if(out){ alert("Vật tư "+it.ma+" hiện đã hết. Phiếu xuất/điều chỉnh nhập không được làm tồn âm."); return; }
+      // Dòng đã chọn: chạm lại để bỏ chọn, kể cả khi tồn vừa chuyển về 0.
+      if(added){
+        removeItem(it.ma);
+        return;
+      }
+      if(out){
+        alert("Vật tư "+it.ma+" hiện đã hết. Phiếu xuất/điều chỉnh nhập không được làm tồn âm.");
+        return;
+      }
       addItem(it);
     };
     box.appendChild(div);
@@ -432,6 +440,8 @@ function renderResults(){
 $("q").addEventListener("input", renderResults);
 
 function addItem(it){
+  // addItem chỉ thêm mới; thao tác bỏ chọn được xử lý ngay tại renderResults.
+  // Tách hai nhánh để không vô tình chặn việc bỏ tick khi tồn đã về 0.
   const s = stockItem(it.ma);
   if(transactionDepletesStock() && s && Number(s.ton)<=0){
     alert("Vật tư "+it.ma+" hiện đã hết; không thể thêm vào giao dịch làm giảm tồn.");
