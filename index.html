@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.1 CATALOG)</title>
+<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.1.1 CATALOG HF1)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -164,7 +164,7 @@ body.dexuat .adjust-row{display:none}
 <header>
   <div class="hd-inner">
     <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
-    <div class="hd-sub">ICD Phúc Long — session bảo mật theo depot · v4.1</div>
+    <div class="hd-sub">ICD Phúc Long — session bảo mật theo depot · v4.1.1</div>
     <div class="controls">
       <div class="seg" id="segDepot">
         <button data-v="DP1" class="on">Tổ DP1</button>
@@ -286,7 +286,7 @@ body.dexuat .adjust-row{display:none}
 <script>
 // ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
-const APP_VERSION = "2026.07.22-MR-v4.1-CATALOG";
+const APP_VERSION = "2026.07.22-MR-v4.1.1-CATALOG-HF1";
 const REQUEST_TIMEOUT_MS = 35000;
 // =================================================================================
 
@@ -357,7 +357,7 @@ function clearPendingRequest(){
   try{localStorage.removeItem(pendingStorageKey());}catch(_){}
 }
 
-function sessionKey(depot){return "mr_kho_access_v41_"+String(depot||"").toUpperCase();}
+function sessionKey(depot){return "mr_kho_access_v411_"+String(depot||"").toUpperCase();}
 function getAccessToken(depot){
   try{return sessionStorage.getItem(sessionKey(depot))||"";}catch(_){return "";}
 }
@@ -404,7 +404,7 @@ function setVersionState(version){
   state.versionOk=version===APP_VERSION;
   const sub=document.querySelector(".hd-sub");
   if(state.versionOk){
-    if(sub)sub.textContent="ICD Phúc Long — session bảo mật theo depot · v4.1";
+    if(sub)sub.textContent="ICD Phúc Long — session bảo mật theo depot · v4.1.1";
   }else{
     if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
     if(!state.versionWarned){
