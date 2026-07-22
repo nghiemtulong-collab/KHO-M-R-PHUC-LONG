@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phiếu kho vật tư M&R — ICD Phúc Long (v3.2 STABLE)</title>
+<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.0 STABILITY)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -123,6 +123,9 @@ body.viewing .slip, body.viewing .bar, body.viewing .search-box, body.viewing .r
 .pin-row input{width:100%;border:2px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:20px;text-align:center;letter-spacing:6px}
 .pin-row input:focus{outline:none;border-color:var(--amber)}
 .pin-err{color:var(--danger);font-size:12.5px;margin-top:5px;display:none;text-align:left}
+.session-note{background:#f3f6fa;border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:14px;text-align:left;font-size:13px;color:var(--muted)}
+.session-note b{color:var(--ink)}
+.login-meta{font-size:12px;color:var(--muted);margin:-4px 0 12px}
 .sender-row{padding:10px 12px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center}
 .sender-row label{font-size:13px;font-weight:700;white-space:nowrap}
 .sender-row select{flex:1;border:1.5px solid var(--line);border-radius:9px;padding:9px 11px;font-family:inherit;font-size:14px;background:var(--white)}
@@ -161,7 +164,7 @@ body.dexuat .adjust-row{display:none}
 <header>
   <div class="hd-inner">
     <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
-    <div class="hd-sub">ICD Phúc Long — chọn vật tư, nhập số lượng, gửi 1 lần</div>
+    <div class="hd-sub">ICD Phúc Long — session bảo mật theo depot · v4.0</div>
     <div class="controls">
       <div class="seg" id="segDepot">
         <button data-v="DP1" class="on">Tổ DP1</button>
@@ -241,16 +244,26 @@ body.dexuat .adjust-row{display:none}
   </div>
 </div>
 
+<div class="overlay" id="ovLogin">
+  <div class="card">
+    <div class="big">🔐</div>
+    <h2 id="loginTitle">Đăng nhập kho DP1</h2>
+    <p class="login-meta">PIN chỉ dùng một lần để tạo phiên trên tab trình duyệt này.</p>
+    <div class="pin-row">
+      <label for="loginPin">Mã PIN depot</label>
+      <input type="password" id="loginPin" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="••••••">
+      <div class="pin-err" id="loginErr">Mã PIN không đúng.</div>
+    </div>
+    <button class="primary" id="btnLogin">Đăng nhập</button>
+  </div>
+</div>
+
 <div class="overlay" id="ovConfirm">
   <div class="card">
     <div class="big">🧾</div>
     <h2 id="cfTitle">Xác nhận gửi phiếu</h2>
     <div class="summary" id="cfSummary"></div>
-    <div class="pin-row">
-      <label for="pin">Mã PIN kho (hỏi Leon nếu chưa có)</label>
-      <input type="password" id="pin" inputmode="numeric" maxlength="8" placeholder="••••••">
-      <div class="pin-err" id="pinErr">Mã PIN không đúng — nhập lại.</div>
-    </div>
+    <div class="session-note" id="sessionNote"><b>Phiên đăng nhập:</b> đang kiểm tra…</div>
     <button class="primary" id="btnConfirm">Gửi ngay</button>
     <p style="margin-top:10px"><a href="#" id="btnCancel" style="color:var(--muted)">Quay lại sửa</a></p>
   </div>
@@ -273,7 +286,7 @@ body.dexuat .adjust-row{display:none}
 <script>
 // ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
-const APP_VERSION = "2026.07.22-MR-v3.2-STABLE";
+const APP_VERSION = "2026.07.22-MR-v4.0-STABILITY";
 const REQUEST_TIMEOUT_MS = 35000;
 // =================================================================================
 
@@ -282,7 +295,7 @@ const ITEMS = [{"ma": "MRVT01", "ten": "Bát khóa seal tay cửa gân container
 const state = {
   depot:"DP1", type:"XUAT", slip:{}, mode:"write", viewData:null,
   versionOk:false, sending:false, pendingRequest:null, versionWarned:false,
-  clientId:""
+  clientId:"", loginBusy:false
 };
 
 function stripAccent(s){
@@ -316,7 +329,7 @@ function stablePayloadFingerprint(payload){
     items
   });
 }
-function pendingStorageKey(){return "mr_kho_pending_request_v32";}
+function pendingStorageKey(){return "mr_kho_pending_request_v40";}
 function getOrCreateRequestId(payloadCore){
   const fingerprint=stablePayloadFingerprint(payloadCore);
   if(state.pendingRequest && state.pendingRequest.fingerprint===fingerprint){
@@ -337,6 +350,33 @@ function getOrCreateRequestId(payloadCore){
 function clearPendingRequest(){
   state.pendingRequest=null;
   try{localStorage.removeItem(pendingStorageKey());}catch(_){}
+}
+
+function sessionKey(depot){return "mr_kho_access_v40_"+String(depot||"").toUpperCase();}
+function getAccessToken(depot){
+  try{return sessionStorage.getItem(sessionKey(depot))||"";}catch(_){return "";}
+}
+function saveAccessToken(depot,token){
+  try{sessionStorage.setItem(sessionKey(depot),String(token||""));}catch(_){}
+}
+function clearAccessToken(depot){
+  try{sessionStorage.removeItem(sessionKey(depot));}catch(_){}
+}
+function isAccessError(status){
+  return ["access_required","access_invalid","access_expired","access_forbidden"].includes(String(status||""));
+}
+function showLogin(message){
+  $("loginTitle").textContent="Đăng nhập kho "+state.depot;
+  $("loginErr").textContent=message||"Nhập PIN để mở phiên làm việc.";
+  $("loginErr").style.display=message?"block":"none";
+  $("loginPin").value="";
+  $("ovLogin").classList.add("show");
+  setTimeout(()=>$("loginPin").focus(),50);
+}
+function requireSession(interactive=true){
+  if(getAccessToken(state.depot))return true;
+  if(interactive)showLogin("");
+  return false;
 }
 async function postJson(payload){
   const ctl=new AbortController();
@@ -359,7 +399,7 @@ function setVersionState(version){
   state.versionOk=version===APP_VERSION;
   const sub=document.querySelector(".hd-sub");
   if(state.versionOk){
-    if(sub)sub.textContent="ICD Phúc Long — chọn vật tư, nhập số lượng, gửi 1 lần · v3.2";
+    if(sub)sub.textContent="ICD Phúc Long — session bảo mật theo depot · v4.0";
   }else{
     if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
     if(!state.versionWarned){
@@ -376,6 +416,33 @@ const $ = id => document.getElementById(id);
 const today = new Date();
 $("ngay").value = today.toISOString().slice(0,10);
 
+$("btnLogin").onclick=async()=>{
+  if(state.loginBusy)return;
+  const pin=$("loginPin").value.trim();
+  if(!pin){$("loginErr").textContent="Nhập mã PIN trước khi đăng nhập.";$("loginErr").style.display="block";return;}
+  state.loginBusy=true;$("btnLogin").disabled=true;$("loginErr").style.display="none";
+  try{
+    const j=await postJson({
+      type:"AUTH_LOGIN",depot:state.depot,accessPin:pin,
+      clientId:state.clientId,clientVersion:APP_VERSION
+    });
+    if(j.status==="version_mismatch"){
+      setVersionState(j.version||j.serverVersion);
+      $("loginErr").textContent=j.message||"Phiên bản chưa đồng bộ.";$("loginErr").style.display="block";return;
+    }
+    if(j.status!=="ok"||!j.accessToken){
+      const wait=j.retryAfter?" Thử lại sau "+j.retryAfter+" giây.":"";
+      $("loginErr").textContent=(j.message||"Đăng nhập thất bại.")+wait;$("loginErr").style.display="block";return;
+    }
+    saveAccessToken(state.depot,j.accessToken);
+    $("loginPin").value="";$("ovLogin").classList.remove("show");
+    await refreshStock(false);
+  }catch(err){
+    $("loginErr").textContent="Không kết nối được backend. Kiểm tra mạng rồi thử lại.";$("loginErr").style.display="block";
+  }finally{state.loginBusy=false;$("btnLogin").disabled=false;}
+};
+$("loginPin").addEventListener("keydown",e=>{if(e.key==="Enter")$("btnLogin").click();});
+
 function segInit(id, key){
   $(id).querySelectorAll("button").forEach(b=>{
     b.onclick = ()=>{
@@ -383,12 +450,17 @@ function segInit(id, key){
       b.classList.add("on");
       state[key] = b.dataset.v;
       state.pendingRequest=null;
-      if(key==="depot") setDefaultSender();
+      if(key==="depot"){
+        setDefaultSender();
+        state.viewData=null;
+      }
       if(key==="type" && state.type==="DEXUAT") setAdjustMode(false);
       renderSlipHead();
       renderResults();
       renderSlip();
-      if(state.mode==="view") renderView();
+      if(key==="depot"){
+        if(requireSession(true))refreshStock(true);
+      }else if(state.mode==="view") renderView();
     };
   });
 }
@@ -480,15 +552,22 @@ function validateSlipStock(list){
   return true;
 }
 async function refreshStock(silent){
+  if(!requireSession(!silent))return false;
   try{
-    const res=await fetch(SCRIPT_URL+"?mode=view&_="+Date.now(),{cache:"no-store"});
-    const j=await res.json();
+    const j=await postJson({
+      type:"VIEW",depot:state.depot,accessToken:getAccessToken(state.depot),
+      clientId:state.clientId,clientVersion:APP_VERSION
+    });
+    if(isAccessError(j.status)){
+      clearAccessToken(state.depot);state.versionOk=false;
+      showLogin(j.message||"Phiên đăng nhập đã hết hạn.");
+      return false;
+    }
     if(j.status!=="ok")throw new Error(j.message||"Không tải được tồn kho.");
     setVersionState(j.version);
     if(!state.versionOk)return false;
     state.viewData=j;
-    renderResults();
-    renderSlip();
+    renderResults();renderSlip();
     if(state.mode==="view")renderView();
     return true;
   }catch(err){
@@ -609,7 +688,8 @@ function renderSlip(){
 $("btnSend").onclick = async ()=>{
   let list = Object.values(state.slip);
   if(!list.length)return;
-  if(!state.versionOk){alert("Chưa xác nhận được phiên bản backend. Mở Xem kho hoặc tải lại trang.");return;}
+  if(!requireSession(true))return;
+  if(!state.versionOk){alert("Chưa xác nhận được phiên bản backend. Đăng nhập lại hoặc tải lại trang.");return;}
   if(!$("nguoi").value){ alert("Chọn Người gửi trước khi gửi phiếu."); return; }
   if(isAdjustOn() && !$("note").value.trim()){ alert("Phiếu điều chỉnh bắt buộc ghi chú lý do."); return; }
   if(!validateSlipSign(list)) return;
@@ -626,120 +706,70 @@ $("btnSend").onclick = async ()=>{
   const dateVN = d[2]+"/"+d[1]+"/"+d[0];
   $("cfTitle").textContent = "Xác nhận PHIẾU "+(isAdjustOn()?"ĐIỀU CHỈNH ":"")+typeLabel()+" — "+state.depot+" — "+dateVN;
   $("cfSummary").innerHTML = list.map(r=>"• "+r.ten+" — <b>"+r.qty+" "+r.dvt+"</b>").join("<br>");
-  loadPin();
+  $("sessionNote").innerHTML="<b>Phiên đăng nhập:</b> "+state.depot+" · token chỉ lưu trong tab này";
   $("ovConfirm").classList.add("show");
 };
 $("btnCancel").onclick = e=>{ e.preventDefault(); $("ovConfirm").classList.remove("show"); };
 
-function loadPin(){ try{ $("pin").value = localStorage.getItem("kho_pin_"+state.depot) || ""; }catch(_){} }
-loadPin();
 
 $("btnConfirm").onclick = async ()=>{
   if(state.sending)return;
-  const pinVal=$("pin").value.trim();
-  if(!pinVal){
-    $("pinErr").textContent="Nhập mã PIN trước khi gửi.";
-    $("pinErr").style.display="block";
-    return;
-  }
   if(!state.versionOk){
-    $("pinErr").textContent="Phiên bản hệ thống chưa đồng bộ. Tải lại trang.";
-    $("pinErr").style.display="block";
-    return;
+    showFail("Phiên bản hệ thống chưa đồng bộ. Tải lại trang.");
+    $("ovConfirm").classList.remove("show");$("ovDone").classList.add("show");return;
+  }
+  if(!requireSession(false)){
+    $("ovConfirm").classList.remove("show");showLogin("Phiên đăng nhập không còn hiệu lực.");return;
   }
 
-  $("pinErr").style.display="none";
   const d=$("ngay").value.split("-");
   const payloadCore={
-    nguoi:$("nguoi").value,
-    adjust:isAdjustOn(),
-    depot:state.depot,
-    type:state.type,
-    date:d[2]+"/"+d[1]+"/"+d[0],
-    note:$("note").value.trim(),
+    nguoi:$("nguoi").value,adjust:isAdjustOn(),depot:state.depot,type:state.type,
+    date:d[2]+"/"+d[1]+"/"+d[0],note:$("note").value.trim(),
     items:Object.values(state.slip).map(r=>({ma:r.ma,qty:r.qty}))
   };
   const requestId=getOrCreateRequestId(payloadCore);
   const payload={
-    ...payloadCore,
-    pin:pinVal,
-    requestId,
-    clientId:state.clientId,
-    clientVersion:APP_VERSION
+    ...payloadCore,requestId,clientId:state.clientId,clientVersion:APP_VERSION,
+    accessToken:getAccessToken(state.depot)
   };
 
-  state.sending=true;
-  renderSlip();
-  $("btnConfirm").disabled=true;
-  $("ovConfirm").classList.remove("show");
-  $("ovSending").classList.add("show");
-
+  state.sending=true;renderSlip();$("btnConfirm").disabled=true;
+  $("ovConfirm").classList.remove("show");$("ovSending").classList.add("show");
   try{
     const j2=await postJson(payload);
     $("ovSending").classList.remove("show");
-
-    if(j2.status==="wrong_pin"){
-      try{localStorage.removeItem("kho_pin_"+state.depot);}catch(_){}
-      $("pin").value="";
-      $("pinErr").textContent="Mã PIN không đúng — nhập lại.";
-      $("pinErr").style.display="block";
-      $("ovConfirm").classList.add("show");
-      return;
+    if(isAccessError(j2.status)){
+      clearAccessToken(state.depot);showLogin(j2.message||"Phiên đăng nhập đã hết hạn.");return;
     }
-
     if(j2.status==="version_mismatch"){
-      setVersionState(j2.version);
-      showFail(j2.message||"Phiên bản chưa đồng bộ.");
-      $("ovDone").classList.add("show");
-      return;
+      setVersionState(j2.version||j2.serverVersion);showFail(j2.message||"Phiên bản chưa đồng bộ.");$("ovDone").classList.add("show");return;
     }
-
     if(j2.status==="manual_review"){
-      showFail((j2.message||"Giao dịch cần kiểm tra.")+(j2.txnId?" Mã: "+j2.txnId:""));
-      $("ovDone").classList.add("show");
-      return;
+      showFail((j2.message||"Giao dịch cần kiểm tra.")+(j2.txnId?" Mã: "+j2.txnId:""));$("ovDone").classList.add("show");return;
     }
-
     if(j2.status==="ok"){
-      try{localStorage.setItem("kho_pin_"+state.depot,pinVal);}catch(_){}
       clearPendingRequest();
       $("doneIcon").textContent="✅";
       $("doneTitle").textContent=j2.duplicate?"Phiếu đã được ghi trước đó":"Đã gửi thành công";
       const loai=state.type==="XUAT"?"xuất":(state.type==="NHAP"?"nhập":"đề xuất");
       $("doneMsg").textContent=
-        (j2.duplicate
-          ?"Hệ thống nhận diện lần gửi lại và không ghi trùng. "
-          :payload.items.length+" mã vật tư đã được ghi vào sổ "+loai+" "+state.depot+". ")+
-        (j2.txnId?"Mã giao dịch: "+j2.txnId+". ":"")+
-        (j2.warn||"");
-      $("docLinkWrap").innerHTML=j2.docUrl
-        ?'<a href="'+j2.docUrl+'" target="_blank" rel="noopener" class="doc-link">🖨 Mở phiếu đề xuất để in</a>'
-        :"";
-      $("btnDoneAction").textContent="Làm phiếu mới";
-      $("btnDoneAction").onclick=resetAll;
-      $("ovDone").classList.add("show");
-      return;
+        (j2.duplicate?"Hệ thống nhận diện lần gửi lại và không ghi trùng. ":payload.items.length+" mã vật tư đã được ghi vào sổ "+loai+" "+state.depot+". ")+
+        (j2.txnId?"Mã giao dịch: "+j2.txnId+". ":"")+(j2.recovered?"Giao dịch đã được tự đối soát. ":"")+(j2.warn||"");
+      $("docLinkWrap").innerHTML=j2.docUrl?'<a href="'+j2.docUrl+'" target="_blank" rel="noopener" class="doc-link">🖨 Mở phiếu đề xuất để in</a>':"";
+      $("btnDoneAction").textContent="Làm phiếu mới";$("btnDoneAction").onclick=resetAll;$("ovDone").classList.add("show");return;
     }
-
-    showFail((j2.message||"Hệ thống từ chối phiếu.")+(j2.txnId?" Mã: "+j2.txnId:""));
-    $("ovDone").classList.add("show");
+    showFail((j2.message||"Hệ thống từ chối phiếu.")+(j2.txnId?" Mã: "+j2.txnId:""));$("ovDone").classList.add("show");
   }catch(err){
     $("ovSending").classList.remove("show");
-    const msg=err&&err.name==="AbortError"
-      ?"Server phản hồi quá lâu. Request ID đã được giữ; bấm gửi lại sẽ không ghi trùng."
-      :"Không kết nối được hệ thống. Request ID đã được giữ; kiểm tra mạng rồi gửi lại.";
-    showFail(msg);
-    $("ovDone").classList.add("show");
-  }finally{
-    state.sending=false;
-    $("btnConfirm").disabled=false;
-    renderSlip();
-  }
+    const msg=err&&err.name==="AbortError"?"Server phản hồi quá lâu. Request ID đã được giữ; bấm gửi lại sẽ không ghi trùng.":"Không kết nối được hệ thống. Request ID đã được giữ; kiểm tra mạng rồi gửi lại.";
+    showFail(msg);$("ovDone").classList.add("show");
+  }finally{state.sending=false;$("btnConfirm").disabled=false;renderSlip();}
 };
 function showFail(message){
   $("docLinkWrap").innerHTML="";
   $("doneIcon").textContent="⚠️";
-  $("doneTitle").textContent="Phiếu chưa được ghi";
+  $("doneTitle").textContent="Chưa xác nhận kết quả";
   $("doneMsg").textContent=message||"Kiểm tra dữ liệu rồi gửi lại.";
   $("btnDoneAction").textContent="Quay lại phiếu";
   $("btnDoneAction").onclick=()=>{$("ovDone").classList.remove("show");};
@@ -824,7 +854,7 @@ function renderView(){
 }
 
 renderSlip(); renderSlipHead();
-refreshStock(true);
+if(requireSession(false))refreshStock(true);else showLogin("");
 </script>
 </body>
 </html>
