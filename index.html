@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phiếu kho vật tư M&R — ICD Phúc Long (v3.1.1)</title>
+<title>Phiếu kho vật tư M&R — ICD Phúc Long (v3.2 STABLE)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -266,23 +266,111 @@ body.dexuat .adjust-row{display:none}
     <h2 id="doneTitle">Đã gửi thành công</h2>
     <p id="doneMsg"></p>
     <div id="docLinkWrap"></div>
-    <button class="primary" onclick="resetAll()">Làm phiếu mới</button>
+    <button class="primary" id="btnDoneAction">Làm phiếu mới</button>
   </div>
 </div>
 
 <script>
 // ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
+const APP_VERSION = "2026.07.22-MR-v3.2-STABLE";
+const REQUEST_TIMEOUT_MS = 35000;
 // =================================================================================
 
 const ITEMS = [{"ma": "MRVT01", "ten": "Bát khóa seal tay cửa gân container", "dvt": "Cái"}, {"ma": "MRVT02", "ten": "Bát khóa seal tay cửa trơn container", "dvt": "Cái"}, {"ma": "MRVT03", "ten": "Bát tay cửa container", "dvt": "Cái"}, {"ma": "MRVT04", "ten": "Bù lon 10*4", "dvt": "Bộ"}, {"ma": "MRVT05", "ten": "Bù lon đầu dù 10*40", "dvt": "Bộ"}, {"ma": "MRVT06", "ten": "Cam cửa container", "dvt": "Cái"}, {"ma": "MRVT07", "ten": "Cam cửa container có lỗ", "dvt": "Cái"}, {"ma": "MRVT08", "ten": "Chốt bản lề container", "dvt": "Cái"}, {"ma": "MRVT09", "ten": "Chốt tay cửa container", "dvt": "Cái"}, {"ma": "MRVT10", "ten": "CO2", "dvt": "Chai"}, {"ma": "MRVT11", "ten": "Đà cổ ngỗng(4*40*146*2400)mm", "dvt": "Cây"}, {"ma": "MRVT12", "ten": "Đà dọc dưới chữ C container(4.5*30*50*162*2400)mm", "dvt": "Cây"}, {"ma": "MRVT13", "ten": "Đà dọc dưới chữ Z( 4.5*30*80*158*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT14", "ten": "Đà dọc trên  container(3*60*60*5702)mm", "dvt": "Cây"}, {"ma": "MRVT15", "ten": "Đà dưới cửa container(4.5*150*165*2400)mm", "dvt": "Cây"}, {"ma": "MRVT16", "ten": "Đà dưới mặt trước container(4.5*95*154*2400)mm", "dvt": "Cây"}, {"ma": "MRVT17", "ten": "Đà gầm U containet(4*45*45*122*2350)mm đơn", "dvt": "Cây"}, {"ma": "MRVT18", "ten": "Đà gầm U containet(4*45*75*122*2350)mm đôi", "dvt": "Cây"}, {"ma": "MRVT19", "ten": "Đà L (4*30*120*2400)mm", "dvt": "Cây"}, {"ma": "MRVT20", "ten": "Đà L(4*50*120*2400)mm", "dvt": "Cây"}, {"ma": "MRVT21", "ten": "Đà L(4*70*120*2400)mm", "dvt": "Cây"}, {"ma": "MRVT22", "ten": "Đà L(4*70*140*2400)mm", "dvt": "Cây"}, {"ma": "MRVT23", "ten": "Đà L(6*120*150*2400)mm", "dvt": "Cây"}, {"ma": "MRVT24", "ten": "Đà L(6*120*150*2700)mm", "dvt": "Cây"}, {"ma": "MRVT25", "ten": "Đà trên cửa  container(4*112.5*113*137.5*2400)mm", "dvt": "Cây"}, {"ma": "MRVT26", "ten": "Đà trên cửa container(4*110*110*130*2400)mm", "dvt": "Cây"}, {"ma": "MRVT27", "ten": "Đà trên mặt trước container(4*60*104*380*2400)mm", "dvt": "Cây"}, {"ma": "MRVT28", "ten": "Đà trên mặt trước container(4*60*89*380*2400)mm", "dvt": "Cây"}, {"ma": "MRVT29", "ten": "Dây hàn", "dvt": "M"}, {"ma": "MRVT30", "ten": "Dây hàn MAG GM70S D0.8 GEMINI ( 1 cuộn 15 kg)", "dvt": "Kg"}, {"ma": "MRVT31", "ten": "Đinh Thép 3 phân", "dvt": "Kg"}, {"ma": "MRVT32", "ten": "Dung môi M", "dvt": "Lit"}, {"ma": "MRVT33", "ten": "Dung môi sơn AlKyd", "dvt": "Lit"}, {"ma": "MRVT34", "ten": "Gas công nghiệp 12 kg", "dvt": "Bình"}, {"ma": "MRVT35", "ten": "Gia cố nóc(3*335*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT36", "ten": "Gia cố nóc(3*397*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT37", "ten": "Gia cố nóc(3*427*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT38", "ten": "Hộp cửa container(3.2*50*100*2560)mm", "dvt": "Cây"}, {"ma": "MRVT39", "ten": "Hộp Gù  container", "dvt": "Cái"}, {"ma": "MRVT40", "ten": "Khóa cam  container có lỗ", "dvt": "Cái"}, {"ma": "MRVT41", "ten": "Khóa cam container", "dvt": "Cái"}, {"ma": "MRVT42", "ten": "Long đền bản lề contai ner", "dvt": "Cái"}, {"ma": "MRVT43", "ten": "Long đền chống bó container", "dvt": "Cái"}, {"ma": "MRVT44", "ten": "Máy hàn Mig 250 đầu rời 250V Jasic J44", "dvt": "Máy"}, {"ma": "MRVT45", "ten": "Nẹp ron container(1*30*2549)m", "dvt": "Cây"}, {"ma": "MRVT46", "ten": "Nhựa lót ốp lớn container", "dvt": "Cái"}, {"ma": "MRVT47", "ten": "Nhựa lót ốp nhỏ contai ner", "dvt": "Cái"}, {"ma": "MRVT48", "ten": "Ổ khóa Việt Tiệp", "dvt": "Cái"}, {"ma": "MRVT49", "ten": "Ống phi 34(phi 34*2345)mm (Thanh bar)", "dvt": "Cây"}, {"ma": "MRVT50", "ten": "Ốp lớn container", "dvt": "Cái"}, {"ma": "MRVT51", "ten": "Ốp nhỏ container", "dvt": "Cái"}, {"ma": "MRVT52", "ten": "Oxy", "dvt": "Chai"}, {"ma": "MRVT53", "ten": "Ron container 566 EDPM( 1 sợi =2.4m) I*2400mm", "dvt": "Sợi"}, {"ma": "MRVT54", "ten": "Ron container 567 EDPM(1 sợi =2.4m) J*2400mm", "dvt": "Sợi"}, {"ma": "MRVT55", "ten": "Silicone Apolo A500 (đen)", "dvt": "Chai"}, {"ma": "MRVT56", "ten": "Silicone Apolo A500 (xám)", "dvt": "Chai"}, {"ma": "MRVT57", "ten": "Silicone trắng xám", "dvt": "Chai"}, {"ma": "MRVT58", "ten": "Sơn Alkyd BT màu nâu GNA8009RAL", "dvt": "Lit"}, {"ma": "MRVT59", "ten": "Sơn Alkyd BT màu xám GNA7035RAL M", "dvt": "Lit"}, {"ma": "MRVT60", "ten": "Sơn Alkyd BT phủ màu đen GNA3750", "dvt": "Lit"}, {"ma": "MRVT61", "ten": "Sơn Alkyd BT phủ vàng mờ 1063RAL (GNA1003RAL)", "dvt": "Lit"}, {"ma": "MRVT62", "ten": "Sơn cam MSG RAL 2000", "dvt": "Lit"}, {"ma": "MRVT63", "ten": "Sơn đen M300", "dvt": "Lit"}, {"ma": "MRVT64", "ten": "Sơn ghi MSG RAL 7035", "dvt": "Lit"}, {"ma": "MRVT65", "ten": "Sơn kem M1281", "dvt": "Lit"}, {"ma": "MRVT66", "ten": "Sơn màu đen", "dvt": "Lit"}, {"ma": "MRVT67", "ten": "Sơn nâu MSG RAL 3009", "dvt": "Lit"}, {"ma": "MRVT68", "ten": "Sơn nâu MSG RAL 8004", "dvt": "Lit"}, {"ma": "MRVT69", "ten": "Sơn xanh MSG RAL 5010", "dvt": "Lit"}, {"ma": "MRVT70", "ten": "Sơn xanh MSg RAL 5013", "dvt": "Lit"}, {"ma": "MRVT71", "ten": "Sơn xanh MSG RAL 6033", "dvt": "Lit"}, {"ma": "MRVT72", "ten": "Sơn xanh MSG RAL 6037", "dvt": "Lit"}, {"ma": "MRVT73", "ten": "Súng hàn", "dvt": "Cái"}, {"ma": "MRVT74", "ten": "Tai bản lề container", "dvt": "Cái"}, {"ma": "MRVT75", "ten": "Tai khóa seal tay cửa gân container", "dvt": "Cái"}, {"ma": "MRVT76", "ten": "Tai khóa seal tay cửa trơn container", "dvt": "Cái"}, {"ma": "MRVT77", "ten": "Tay cửa gân container", "dvt": "Cái"}, {"ma": "MRVT78", "ten": "Tay cửa trơn container", "dvt": "Cái"}, {"ma": "MRVT79", "ten": "Thanh J bar(6*30*50*2400)mm", "dvt": "Cây"}, {"ma": "MRVT80", "ten": "Thông gió container", "dvt": "Cái"}, {"ma": "MRVT81", "ten": "Tôn mặt trước cao container (2*1024*2700)mm", "dvt": "Tấm"}, {"ma": "MRVT82", "ten": "Tôn nóc 2 sóng mạ kẽm container(2*1045*2356)mm", "dvt": "Tấm"}, {"ma": "MRVT83", "ten": "Tôn nóc 3 sóng(2*1045*2356)mm", "dvt": "Tấm"}, {"ma": "MRVT84", "ten": "Tôn nóc 4 sóng(2*1045*2356)mm", "dvt": "Tấm"}, {"ma": "MRVT85", "ten": "Tôn nóc 5 sóng(2*1045*2356)mm", "dvt": "Tấm"}, {"ma": "MRVT86", "ten": "Tôn nóc vá 5 sóng container (2*1045*600)mm", "dvt": "Tấm"}, {"ma": "MRVT87", "ten": "Tôn phẳng cont (3*1157*2400mm)", "dvt": "Tấm"}, {"ma": "MRVT88", "ten": "Tôn vách cao mạ kẽm container(2*1116*2700)mm", "dvt": "Tấm"}, {"ma": "MRVT89", "ten": "Trụ gia cố trong container  thấp mạ kẽm(12*40*113*2353)mm", "dvt": "Cây"}, {"ma": "MRVT90", "ten": "Trụ gia cố trong conterner cao mạ kẽm(12*40*113*2657)mm", "dvt": "Cây"}, {"ma": "MRVT91", "ten": "Trụ sau cao container (6*40*70*230*2700)mm", "dvt": "Cây"}, {"ma": "MRVT92", "ten": "Trụ sau thấp container (6*40*70*230*2400)mm", "dvt": "Cây"}, {"ma": "MRVT93", "ten": "Trụ trước cao container (6*229*245*2700)mm", "dvt": "Cây"}, {"ma": "MRVT94", "ten": "Trụ trước thấp container (6*229*245*2400)mm", "dvt": "Cây"}, {"ma": "MRVT95", "ten": "Ván ép (5*1160*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT96", "ten": "Ván sàn container 21 lớp (28*1160*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT97", "ten": "Ván sàn container 21 lớp (28*550*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT98", "ten": "Ván sàn container 21 lớp (28*635*2400)mm", "dvt": "Tấm"}, {"ma": "MRVT99", "ten": "Vít sàn container M6-50", "dvt": "Kg"}, {"ma": "MRVT100", "ten": "Vòng chặn cam container", "dvt": "Cái"}];
 
-const state = { depot:"DP1", type:"XUAT", slip:{}, mode:"write", viewData:null }; // viewData chứa tồn hiện tại của cả DP1/DP3
+const state = {
+  depot:"DP1", type:"XUAT", slip:{}, mode:"write", viewData:null,
+  versionOk:false, sending:false, pendingRequest:null, versionWarned:false,
+  clientId:""
+};
 
 function stripAccent(s){
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
 }
+
+function randomId(prefix="id"){
+  if(window.crypto && crypto.randomUUID){
+    return prefix+"_"+crypto.randomUUID().replace(/-/g,"");
+  }
+  return prefix+"_"+Date.now().toString(36)+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+}
+function initClientId(){
+  try{
+    let id=localStorage.getItem("mr_kho_client_id");
+    if(!id){id=randomId("client");localStorage.setItem("mr_kho_client_id",id);}
+    return id;
+  }catch(_){return randomId("client");}
+}
+function stablePayloadFingerprint(payload){
+  const items=(payload.items||[])
+    .map(r=>({ma:String(r.ma),qty:Number(r.qty)}))
+    .sort((a,b)=>a.ma.localeCompare(b.ma));
+  return JSON.stringify({
+    nguoi:String(payload.nguoi||""),
+    adjust:payload.adjust===true,
+    depot:String(payload.depot||""),
+    type:String(payload.type||""),
+    date:String(payload.date||""),
+    note:String(payload.note||""),
+    items
+  });
+}
+function pendingStorageKey(){return "mr_kho_pending_request_v32";}
+function getOrCreateRequestId(payloadCore){
+  const fingerprint=stablePayloadFingerprint(payloadCore);
+  if(state.pendingRequest && state.pendingRequest.fingerprint===fingerprint){
+    return state.pendingRequest.requestId;
+  }
+  try{
+    const saved=JSON.parse(localStorage.getItem(pendingStorageKey())||"null");
+    if(saved && saved.fingerprint===fingerprint && saved.requestId){
+      state.pendingRequest=saved;
+      return saved.requestId;
+    }
+  }catch(_){}
+  const pending={requestId:randomId("req"),fingerprint};
+  state.pendingRequest=pending;
+  try{localStorage.setItem(pendingStorageKey(),JSON.stringify(pending));}catch(_){}
+  return pending.requestId;
+}
+function clearPendingRequest(){
+  state.pendingRequest=null;
+  try{localStorage.removeItem(pendingStorageKey());}catch(_){}
+}
+async function postJson(payload){
+  const ctl=new AbortController();
+  const timer=setTimeout(()=>ctl.abort(),REQUEST_TIMEOUT_MS);
+  try{
+    const res=await fetch(SCRIPT_URL,{
+      method:"POST",
+      body:JSON.stringify(payload),
+      cache:"no-store",
+      signal:ctl.signal
+    });
+    let data;
+    try{data=await res.json();}catch(_){throw new Error("Backend trả phản hồi không hợp lệ.");}
+    return data;
+  }finally{
+    clearTimeout(timer);
+  }
+}
+function setVersionState(version){
+  state.versionOk=version===APP_VERSION;
+  const sub=document.querySelector(".hd-sub");
+  if(state.versionOk){
+    if(sub)sub.textContent="ICD Phúc Long — chọn vật tư, nhập số lượng, gửi 1 lần · v3.2";
+  }else{
+    if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
+    if(!state.versionWarned){
+      state.versionWarned=true;
+      alert("Frontend và backend chưa cùng phiên bản. Đã khóa gửi phiếu để tránh ghi sai dữ liệu.");
+    }
+  }
+  renderSlip();
+}
 ITEMS.forEach(it => it.key = stripAccent(it.ten + " " + it.ma));
+state.clientId=initClientId();
 
 const $ = id => document.getElementById(id);
 const today = new Date();
@@ -294,6 +382,7 @@ function segInit(id, key){
       $(id).querySelectorAll("button").forEach(x=>x.classList.remove("on"));
       b.classList.add("on");
       state[key] = b.dataset.v;
+      state.pendingRequest=null;
       if(key==="depot") setDefaultSender();
       if(key==="type" && state.type==="DEXUAT") setAdjustMode(false);
       renderSlipHead();
@@ -392,16 +481,22 @@ function validateSlipStock(list){
 }
 async function refreshStock(silent){
   try{
-    const res = await fetch(SCRIPT_URL+"?mode=view&_="+Date.now());
-    const j = await res.json();
-    if(j.status!=="ok") throw new Error(j.message||"Không tải được tồn kho.");
-    state.viewData = j;
+    const res=await fetch(SCRIPT_URL+"?mode=view&_="+Date.now(),{cache:"no-store"});
+    const j=await res.json();
+    if(j.status!=="ok")throw new Error(j.message||"Không tải được tồn kho.");
+    setVersionState(j.version);
+    if(!state.versionOk)return false;
+    state.viewData=j;
     renderResults();
     renderSlip();
-    if(state.mode==="view") renderView();
+    if(state.mode==="view")renderView();
     return true;
   }catch(err){
-    if(!silent) alert("Không tải được tồn kho: "+(err&&err.message?err.message:err));
+    state.versionOk=false;
+    const sub=document.querySelector(".hd-sub");
+    if(sub)sub.textContent="Không kết nối backend — tạm khóa gửi phiếu";
+    renderSlip();
+    if(!silent)alert("Không tải được tồn kho: "+(err&&err.message?err.message:err));
     return false;
   }
 }
@@ -488,7 +583,7 @@ function renderSlip(){
   const list = Object.values(state.slip);
   $("slipCount").textContent = list.length + " mã";
   $("barSum").innerHTML = "<b>"+list.length+"</b> mã vật tư";
-  $("btnSend").disabled = list.length===0;
+  $("btnSend").disabled = list.length===0 || !state.versionOk || state.sending;
   if(!list.length){ rows.innerHTML = '<div class="slip-empty">Chưa có vật tư nào trong phiếu.<br>Tìm và bấm chọn ở trên.</div>'; return; }
   rows.innerHTML = "";
   list.forEach(r=>{
@@ -513,7 +608,8 @@ function renderSlip(){
 
 $("btnSend").onclick = async ()=>{
   let list = Object.values(state.slip);
-  if(!list.length) return;
+  if(!list.length)return;
+  if(!state.versionOk){alert("Chưa xác nhận được phiên bản backend. Mở Xem kho hoặc tải lại trang.");return;}
   if(!$("nguoi").value){ alert("Chọn Người gửi trước khi gửi phiếu."); return; }
   if(isAdjustOn() && !$("note").value.trim()){ alert("Phiếu điều chỉnh bắt buộc ghi chú lý do."); return; }
   if(!validateSlipSign(list)) return;
@@ -539,58 +635,120 @@ function loadPin(){ try{ $("pin").value = localStorage.getItem("kho_pin_"+state.
 loadPin();
 
 $("btnConfirm").onclick = async ()=>{
-  const pinVal = $("pin").value.trim();
-  if(!pinVal){ $("pinErr").textContent="Nhập mã PIN trước khi gửi."; $("pinErr").style.display="block"; return; }
+  if(state.sending)return;
+  const pinVal=$("pin").value.trim();
+  if(!pinVal){
+    $("pinErr").textContent="Nhập mã PIN trước khi gửi.";
+    $("pinErr").style.display="block";
+    return;
+  }
+  if(!state.versionOk){
+    $("pinErr").textContent="Phiên bản hệ thống chưa đồng bộ. Tải lại trang.";
+    $("pinErr").style.display="block";
+    return;
+  }
+
   $("pinErr").style.display="none";
+  const d=$("ngay").value.split("-");
+  const payloadCore={
+    nguoi:$("nguoi").value,
+    adjust:isAdjustOn(),
+    depot:state.depot,
+    type:state.type,
+    date:d[2]+"/"+d[1]+"/"+d[0],
+    note:$("note").value.trim(),
+    items:Object.values(state.slip).map(r=>({ma:r.ma,qty:r.qty}))
+  };
+  const requestId=getOrCreateRequestId(payloadCore);
+  const payload={
+    ...payloadCore,
+    pin:pinVal,
+    requestId,
+    clientId:state.clientId,
+    clientVersion:APP_VERSION
+  };
+
+  state.sending=true;
+  renderSlip();
+  $("btnConfirm").disabled=true;
   $("ovConfirm").classList.remove("show");
   $("ovSending").classList.add("show");
-  const d = $("ngay").value.split("-");
-  const payload = {
-    pin: pinVal,
-    nguoi: $("nguoi").value,
-    adjust: isAdjustOn(),
-    depot: state.depot,
-    type: state.type,
-    date: d[2]+"/"+d[1]+"/"+d[0],
-    note: $("note").value.trim(),
-    items: Object.values(state.slip).map(r=>({ma:r.ma,ten:r.ten,dvt:r.dvt,qty:r.qty}))
-  };
+
   try{
-    const res = await fetch(SCRIPT_URL, {method:"POST", body: JSON.stringify(payload)});
-    let ok = res.ok, wrongPin = false, j2 = null;
-    try{ const j = await res.json(); j2 = j; ok = j.status==="ok"; wrongPin = j.status==="wrong_pin"; }catch(_){}
+    const j2=await postJson(payload);
     $("ovSending").classList.remove("show");
-    if(wrongPin){
-      try{ localStorage.removeItem("kho_pin_"+state.depot); }catch(_){}
-      $("pin").value=""; $("pinErr").textContent="Mã PIN không đúng — nhập lại."; $("pinErr").style.display="block";
+
+    if(j2.status==="wrong_pin"){
+      try{localStorage.removeItem("kho_pin_"+state.depot);}catch(_){}
+      $("pin").value="";
+      $("pinErr").textContent="Mã PIN không đúng — nhập lại.";
+      $("pinErr").style.display="block";
       $("ovConfirm").classList.add("show");
       return;
     }
-    if(ok){
-      try{ localStorage.setItem("kho_pin_"+state.depot, pinVal); }catch(_){}
+
+    if(j2.status==="version_mismatch"){
+      setVersionState(j2.version);
+      showFail(j2.message||"Phiên bản chưa đồng bộ.");
+      $("ovDone").classList.add("show");
+      return;
+    }
+
+    if(j2.status==="manual_review"){
+      showFail((j2.message||"Giao dịch cần kiểm tra.")+(j2.txnId?" Mã: "+j2.txnId:""));
+      $("ovDone").classList.add("show");
+      return;
+    }
+
+    if(j2.status==="ok"){
+      try{localStorage.setItem("kho_pin_"+state.depot,pinVal);}catch(_){}
+      clearPendingRequest();
       $("doneIcon").textContent="✅";
-      $("doneTitle").textContent="Đã gửi thành công";
-      const loai = state.type==="XUAT"?"xuất":(state.type==="NHAP"?"nhập":"đề xuất");
-      $("doneMsg").textContent = payload.items.length+" mã vật tư đã được ghi vào sổ "+loai+" "+state.depot+"."+(j2&&j2.warn?(" "+j2.warn):"");
-      $("docLinkWrap").innerHTML = (j2&&j2.docUrl) ? '<a href="'+j2.docUrl+'" target="_blank" class="doc-link">🖨 Mở phiếu đề xuất để in</a>' : "";
-    }else{ showFail(j2&&j2.message ? j2.message : "Hệ thống từ chối phiếu."); }
+      $("doneTitle").textContent=j2.duplicate?"Phiếu đã được ghi trước đó":"Đã gửi thành công";
+      const loai=state.type==="XUAT"?"xuất":(state.type==="NHAP"?"nhập":"đề xuất");
+      $("doneMsg").textContent=
+        (j2.duplicate
+          ?"Hệ thống nhận diện lần gửi lại và không ghi trùng. "
+          :payload.items.length+" mã vật tư đã được ghi vào sổ "+loai+" "+state.depot+". ")+
+        (j2.txnId?"Mã giao dịch: "+j2.txnId+". ":"")+
+        (j2.warn||"");
+      $("docLinkWrap").innerHTML=j2.docUrl
+        ?'<a href="'+j2.docUrl+'" target="_blank" rel="noopener" class="doc-link">🖨 Mở phiếu đề xuất để in</a>'
+        :"";
+      $("btnDoneAction").textContent="Làm phiếu mới";
+      $("btnDoneAction").onclick=resetAll;
+      $("ovDone").classList.add("show");
+      return;
+    }
+
+    showFail((j2.message||"Hệ thống từ chối phiếu.")+(j2.txnId?" Mã: "+j2.txnId:""));
     $("ovDone").classList.add("show");
   }catch(err){
     $("ovSending").classList.remove("show");
-    showFail("Không kết nối được hệ thống. Kiểm tra mạng rồi gửi lại.");
+    const msg=err&&err.name==="AbortError"
+      ?"Server phản hồi quá lâu. Request ID đã được giữ; bấm gửi lại sẽ không ghi trùng."
+      :"Không kết nối được hệ thống. Request ID đã được giữ; kiểm tra mạng rồi gửi lại.";
+    showFail(msg);
     $("ovDone").classList.add("show");
+  }finally{
+    state.sending=false;
+    $("btnConfirm").disabled=false;
+    renderSlip();
   }
 };
 function showFail(message){
   $("docLinkWrap").innerHTML="";
   $("doneIcon").textContent="⚠️";
   $("doneTitle").textContent="Phiếu chưa được ghi";
-  $("doneMsg").textContent=message || "Kiểm tra dữ liệu rồi gửi lại.";
+  $("doneMsg").textContent=message||"Kiểm tra dữ liệu rồi gửi lại.";
+  $("btnDoneAction").textContent="Quay lại phiếu";
+  $("btnDoneAction").onclick=()=>{$("ovDone").classList.remove("show");};
 }
 function resetAll(){
   $("docLinkWrap").innerHTML="";
   $("ovDone").classList.remove("show");
-  state.slip = {}; $("note").value=""; $("q").value="";
+  state.slip={};state.sending=false;$("note").value="";$("q").value="";
+  clearPendingRequest();
   setAdjustMode(false);
   refreshStock(true);
 }
@@ -660,7 +818,7 @@ function renderView(){
     const div=document.createElement("div");
     div.className="hist-row"+(h.sl<0?" neg":"");
     div.innerHTML='<div class="top"><span><span class="hist-tag '+h.t+'">'+(h.t==="x"?"XUẤT":(h.t==="n"?"NHẬP":"ĐỀ XUẤT"))+'</span>'+h.vt+'</span><b>'+(h.sl>0?h.sl:h.sl)+'</b></div>'
-                 +'<div class="sub">Ngày '+h.ngay+' · gửi lúc '+h.ts+(h.nguoi?' · <span class="who">'+h.nguoi+'</span>':'')+(h.ghichu?' · '+h.ghichu:'')+'</div>';
+                 +'<div class="sub">Ngày '+h.ngay+' · gửi lúc '+h.ts+(h.nguoi?' · <span class="who">'+h.nguoi+'</span>':'')+(h.ghichu?' · '+h.ghichu:'')+(h.txnId?' · '+h.txnId:'')+'</div>';
     hb.appendChild(div);
   });
 }
