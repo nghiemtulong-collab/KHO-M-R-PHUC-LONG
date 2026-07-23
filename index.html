@@ -172,7 +172,7 @@ body.dexuat .adjust-detail{display:none!important}
 <header>
   <div class="hd-inner">
     <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
-    <div class="hd-sub">ICD Phúc Long — thao tác đơn giản · v4.3.3</div>
+    <div class="hd-sub">ICD Phúc Long — thao tác đơn giản · v4.3.4</div>
     <div class="controls">
       <div class="seg" id="segDepot">
         <button data-v="DP1" class="on">Tổ DP1</button>
@@ -327,7 +327,7 @@ body.dexuat .adjust-detail{display:none!important}
 <script>
 // ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
-const APP_VERSION = "2026.07.23-MR-v4.3.3-SIMPLE-OPERATIONS-HF2";
+const APP_VERSION="2026.07.23-MR-v4.3.4-STOCK-COUNT-REMOVAL-HF3";
 const REQUEST_TIMEOUT_MS = 35000;
 // =================================================================================
 
@@ -461,7 +461,7 @@ function setVersionState(version){
   state.versionOk=version===APP_VERSION;
   const sub=document.querySelector(".hd-sub");
   if(state.versionOk){
-    if(sub)sub.textContent="ICD Phúc Long — thao tác đơn giản · v4.3.3";
+    if(sub)sub.textContent="ICD Phúc Long — thao tác đơn giản · v4.3.4";
   }else{
     if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
     if(!state.versionWarned){
@@ -481,7 +481,7 @@ $("ngay").value = localIsoDate(today);
 $("ngay").max = localIsoDate(today);
 $("ngay").min = daysAgoIso(7);
 function selectedBackdateDays(id="ngay"){const v=$(id).value;if(!v)return 0;const d=new Date(v+"T00:00:00"),t=new Date();t.setHours(0,0,0,0);return Math.round((t-d)/86400000);}
-function renderBackdateHint(){const n=selectedBackdateDays();const box=$("backdateHint");if(n>0){box.textContent="Phiếu lùi "+n+" ngày · hệ thống vẫn lưu thời điểm tạo thực tế và ghi audit.";box.className="backdate-hint warn";}else{box.textContent="Có thể chọn ngày trong 30 ngày gần nhất.";box.className="backdate-hint";}}
+function renderBackdateHint(){const n=selectedBackdateDays();const box=$("backdateHint");if(n>0){box.textContent="Phiếu lùi "+n+" ngày · hệ thống vẫn lưu thời điểm tạo thực tế và ghi audit.";box.className="backdate-hint warn";}else{box.textContent="Có thể chọn ngày trong 7 ngày gần nhất.";box.className="backdate-hint";}}
 $("ngay").addEventListener("change",renderBackdateHint);renderBackdateHint();
 
 $("btnLogin").onclick=async()=>{
