@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3 STOCK INTEGRITY)</title>
+<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.1 STOCK ADJUSTMENT HF1)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -158,35 +158,10 @@ body.dexuat .adjust-row{display:none}
 .vw-types button.active{background:var(--navy-2);color:var(--white);border-color:var(--navy-2)}
 
 
-/* Stock count v4.3 */
-.countwrap{display:none;padding-top:12px}
-body.counting .countwrap{display:block}
-body.counting .slip,body.counting .bar,body.counting .search-box,body.counting .results,body.counting .viewwrap{display:none}
-body.counting .controls{grid-template-columns:1fr}
-body.counting #segType,body.counting .date-row{display:none}
-.count-note{background:#EAF2FF;border:1px solid #9BB7DF;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#29486F;margin-bottom:10px}
-.count-card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
-.count-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
-.count-id{font-size:13px;font-weight:800;color:var(--navy-2);overflow-wrap:anywhere}
-.count-status{font-size:11px;font-weight:800;border-radius:20px;padding:3px 9px;background:#EAF2FF;color:var(--navy-2);white-space:nowrap}
-.count-meta{font-size:11.5px;color:var(--muted);margin-top:5px}
-.count-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-.count-actions button,.count-create{border:0;border-radius:10px;font-family:inherit;font-weight:800;font-size:13px;padding:11px 10px;cursor:pointer}
-.count-primary{background:var(--navy-2);color:var(--white)}
-.count-amber{background:var(--amber);color:var(--navy)}
-.count-danger{background:#FDE8E6;color:var(--danger)}
-.count-muted{background:#ECE9E1;color:var(--ink)}
-.count-create{width:100%;background:var(--amber);color:var(--navy);font-size:15px}
-.count-search{width:100%;border:2px solid var(--line);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:15px;margin:8px 0}
-.count-row{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:7px}
-.count-row.changed{border-color:var(--danger);background:#FFF8F7}
-.count-row .top{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:700}
-.count-row .sub{font-size:11.5px;color:var(--muted);margin:2px 0 7px}
-.count-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.count-grid input,.count-grid select{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:8px;font-family:inherit;font-size:13px;background:var(--white)}
-.count-grid .wide{grid-column:1/-1}
-.count-var{font-weight:800}.count-var.pos{color:var(--ok)}.count-var.neg{color:var(--danger)}
-.count-history{font-size:12px;border-top:1px dashed var(--line);padding:7px 0;color:var(--muted)}
+/* Stock count v4.3.1 */
+.countwrap{display:none;padding-top:12px}body.counting .countwrap{display:block}body.counting .slip,body.counting .bar,body.counting .search-box,body.counting .results,body.counting .viewwrap{display:none}
+.count-note{background:#EDF4FF;border:1px solid #9ABBEA;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#24466F;margin-bottom:10px}.count-card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:10px}.count-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.count-id{font-size:13px;font-weight:800;color:var(--navy-2)}.count-meta{font-size:11.5px;color:var(--muted);margin-top:3px}.count-status{font-size:11px;font-weight:800;background:#E8F0FC;color:var(--navy-2);border-radius:12px;padding:3px 8px;white-space:nowrap}.count-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.count-actions button,.count-create,.count-tool{border:0;border-radius:10px;font-family:inherit;font-weight:800;font-size:13px;padding:11px 10px;cursor:pointer}.count-primary{background:var(--navy-2);color:var(--white)}.count-amber{background:var(--amber);color:var(--navy)}.count-danger{background:#FDE8E6;color:var(--danger)}.count-muted{background:#ECE9E1;color:var(--ink)}.count-create{width:100%;background:var(--amber);color:var(--navy);font-size:15px}.count-search,.count-select,.count-input{width:100%;border:2px solid var(--line);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14px;background:var(--white);margin:6px 0}.count-row{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:7px}.count-row.changed{border-color:var(--danger);background:#FFF8F7}.count-row .top{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:700}.count-row .sub{font-size:11.5px;color:var(--muted);margin:2px 0 7px}.count-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.count-grid input,.count-grid select{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:8px;font-family:inherit;font-size:13px;background:var(--white)}.count-grid .wide{grid-column:1/-1}.count-var{font-weight:800}.count-var.pos{color:var(--ok)}.count-var.neg{color:var(--danger)}.count-history{font-size:12px;border-top:1px dashed var(--line);padding:7px 0;color:var(--muted)}
+.count-submode{display:flex;background:#ECE9E1;border-radius:10px;padding:3px;margin-bottom:10px}.count-submode button{flex:1;border:0;border-radius:8px;padding:9px 4px;font-family:inherit;font-weight:800;background:transparent;color:var(--muted)}.count-submode button.on{background:var(--navy-2);color:#fff}.count-section-title{font-size:13px;font-weight:800;color:var(--navy-2);margin:8px 0}.count-tools{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.count-tool{padding:8px 10px;background:#ECE9E1;color:var(--ink)}.count-selection{max-height:330px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:5px;background:#FAF9F6}.count-pick{display:flex;gap:9px;align-items:flex-start;padding:8px;border-bottom:1px dashed var(--line);font-size:12.5px}.count-pick:last-child{border-bottom:0}.count-pick input{width:20px;height:20px;flex:0 0 auto}.count-pick.locked{opacity:.55}.count-pick .meta{color:var(--muted);font-size:11px}.count-badge{display:inline-block;background:#E8F0FC;color:var(--navy-2);padding:2px 7px;border-radius:10px;font-size:11px;font-weight:800}.campaign-box{background:#FFF9EC;border:1px solid #E8C36D;border-radius:10px;padding:9px;margin:7px 0;font-size:12px}.coverage{height:8px;background:#E5DFD2;border-radius:5px;overflow:hidden;margin:6px 0}.coverage span{display:block;height:100%;background:var(--amber)}.session-list button{width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px;margin:4px 0;font-family:inherit;font-size:12px}.session-list button.on{border-color:var(--amber);background:#FFF9EC}.quick-box{display:none}.quick-box.on{display:block}.count-session-mode.off{display:none}
 
 </style>
 </head>
@@ -194,7 +169,7 @@ body.counting #segType,body.counting .date-row{display:none}
 <header>
   <div class="hd-inner">
     <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
-    <div class="hd-sub">ICD Phúc Long — kiểm kê có truy vết · v4.3</div>
+    <div class="hd-sub">ICD Phúc Long — kiểm kê linh hoạt · v4.3.1</div>
     <div class="controls">
       <div class="seg" id="segDepot">
         <button data-v="DP1" class="on">Tổ DP1</button>
@@ -268,20 +243,55 @@ body.counting #segType,body.counting .date-row{display:none}
   </div>
 
   <div class="countwrap">
-    <div class="count-note">Kiểm kê không sửa tồn trực tiếp. Chỉ khi phiên REVIEW được xác nhận và tồn hệ thống không đổi, backend mới tạo một transaction điều chỉnh có COUNT_ID, Request ID và Txn ID.</div>
-    <div class="count-card">
-      <div class="sender-row" style="border-top:0;padding:0 0 8px">
-        <label for="countActor">Người kiểm kê:</label>
-        <select id="countActor"><option value="">— Chọn —</option><option>Quỳnh (DP1)</option><option>Tâm (DP3)</option><option>Leon</option><option>Khác</option></select>
-      </div>
-      <input id="countSessionNote" class="count-search" type="text" placeholder="Ghi chú phiên kiểm kê (không bắt buộc)">
-      <button id="btnCountCreate" class="count-create">Mở phiên kiểm kê mới</button>
-      <div id="countSession"></div>
+    <div class="count-note">Kiểm kê có 3 cách: điều chỉnh nhanh cho 1 mã; phiên chọn mã/toàn bộ; hoặc đợt cuốn chiếu nhiều phiên. Một mã chỉ được nằm trong một phiên đang mở tại cùng depot.</div>
+    <div class="sender-row count-card" style="border-top:0">
+      <label for="countActor">Người thực hiện:</label>
+      <select id="countActor"><option value="">— Chọn —</option><option>Quỳnh (DP1)</option><option>Tâm (DP3)</option><option>Leon</option><option>Khác</option></select>
     </div>
-    <input id="countSearch" class="count-search" type="search" placeholder="Tìm mã hoặc tên vật tư…">
-    <div id="countRows"><div class="vw-load">Chuyển sang Kiểm kê để tải phiên hiện tại.</div></div>
-    <div class="vw-sec">PHIÊN GẦN ĐÂY</div>
-    <div id="countRecent" class="vw-load">—</div>
+    <div class="count-submode" id="countSubmode"><button data-cm="session" class="on">Phiên kiểm kê</button><button data-cm="quick">Điều chỉnh nhanh</button></div>
+
+    <div id="countSessionMode" class="count-session-mode">
+      <div class="count-card">
+        <div class="count-section-title">ĐỢT KIỂM KÊ CUỐN CHIẾU</div>
+        <div id="campaignCurrent" class="vw-load" style="padding:4px 0">Chưa tải.</div>
+        <input id="campaignName" class="count-input" type="text" placeholder="Tên đợt, ví dụ: Kiểm kê DP1 tháng 07/2026">
+        <input id="campaignNote" class="count-input" type="text" placeholder="Ghi chú đợt (không bắt buộc)">
+        <button id="btnCampaignCreate" class="count-create">Tạo đợt toàn bộ kho</button>
+      </div>
+
+      <div class="count-card">
+        <div class="count-section-title">TẠO PHIÊN</div>
+        <select id="countScope" class="count-select"><option value="SELECTED">Chọn vật tư</option><option value="FULL">Toàn bộ kho</option><option value="CAMPAIGN_BATCH">Phiên con trong đợt</option></select>
+        <input id="countSessionNote" class="count-input" type="text" placeholder="Ghi chú phiên kiểm kê">
+        <input id="countPickSearch" class="count-search" type="search" placeholder="Tìm mã hoặc tên để tích chọn…">
+        <div class="count-tools"><button id="btnPickAll" class="count-tool">Chọn tất cả kết quả</button><button id="btnPickNone" class="count-tool">Bỏ chọn</button><span id="countPickedTotal" class="count-badge">0 mã</span></div>
+        <div id="countSelection" class="count-selection"><div class="vw-load">Tải danh mục…</div></div>
+        <button id="btnCountCreate" class="count-create" style="margin-top:8px">Mở phiên kiểm kê</button>
+      </div>
+
+      <div class="count-card">
+        <div class="count-section-title">PHIÊN ĐANG MỞ</div>
+        <div id="activeSessionList" class="session-list"><div class="vw-load">Chưa tải.</div></div>
+        <div id="countSession"></div>
+      </div>
+      <input id="countSearch" class="count-search" type="search" placeholder="Lọc mã trong phiên đang chọn…">
+      <div id="countRows"><div class="vw-load">Chuyển sang Kiểm kê để tải dữ liệu.</div></div>
+      <div class="vw-sec">PHIÊN GẦN ĐÂY</div><div id="countRecent" class="vw-load">—</div>
+    </div>
+
+    <div id="countQuickMode" class="quick-box">
+      <div class="count-card">
+        <div class="count-section-title">ĐIỀU CHỈNH NHANH MỘT MÃ</div>
+        <select id="quickItem" class="count-select"><option value="">— Chọn vật tư —</option></select>
+        <div id="quickSystem" class="count-meta">Tồn hệ thống: —</div>
+        <input id="quickActual" class="count-input" type="number" min="0" step="1" placeholder="Tồn thực tế">
+        <select id="quickReason" class="count-select"><option value="">— Nguyên nhân —</option></select>
+        <input id="quickNote" class="count-input" type="text" placeholder="Ghi chú (bắt buộc với OTHER/HISTORICAL)">
+        <input id="quickEvidence" class="count-input" type="url" placeholder="Evidence URL (bắt buộc khi hư hỏng)">
+        <button id="btnQuickAdjust" class="count-create">Tạo nhập/xuất bù tự động</button>
+      </div>
+      <div class="count-note">Backend đọc tồn hiện tại ngay lúc xác nhận, tự tính chiều nhập bù hoặc xuất bù, gắn COUNT_ID, Request ID và Txn ID. Không dùng phiếu nhập/xuất thường để che chênh lệch kiểm kê.</div>
+    </div>
   </div>
 </div>
 
@@ -334,14 +344,14 @@ body.counting #segType,body.counting .date-row{display:none}
 <script>
 // ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
-const APP_VERSION = "2026.07.23-MR-v4.3-STOCK-INTEGRITY";
+const APP_VERSION = "2026.07.23-MR-v4.3.1-STOCK-ADJUSTMENT-HF1";
 const REQUEST_TIMEOUT_MS = 35000;
 // =================================================================================
 
 const state = {
   depot:"DP1", type:"XUAT", slip:{}, mode:"write", viewData:null,
   versionOk:false, sending:false, pendingRequest:null, versionWarned:false,
-  clientId:"", loginBusy:false, countData:null, countBusy:false, countFilter:""
+  clientId:"", loginBusy:false, countData:null, countBusy:false, countFilter:"", countMode:"session", currentCountId:"", countSelected:{}, quickPendingRequest:null
 };
 
 function stripAccent(s){
@@ -452,7 +462,7 @@ function setVersionState(version){
   state.versionOk=version===APP_VERSION;
   const sub=document.querySelector(".hd-sub");
   if(state.versionOk){
-    if(sub)sub.textContent="ICD Phúc Long — kiểm kê có truy vết · v4.3";
+    if(sub)sub.textContent="ICD Phúc Long — kiểm kê linh hoạt · v4.3.1";
   }else{
     if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
     if(!state.versionWarned){
@@ -850,128 +860,37 @@ function resetAll(){
 }
 
 
-// ===== KIỂM KÊ v4.3 =====
-const COUNT_REASON_LABELS={
-  COUNTING_ERROR:"Sai sót khi đếm",UNRECORDED_ISSUE:"Xuất chưa ghi nhận",UNRECORDED_RECEIPT:"Nhập chưa ghi nhận",
-  DAMAGED_MATERIAL:"Vật tư hư hỏng",UNIT_CONVERSION:"Sai quy đổi ĐVT",HISTORICAL_DATA:"Dữ liệu lịch sử",OTHER:"Khác"
-};
+// ===== KIỂM KÊ v4.3.1 =====
+const COUNT_REASON_LABELS={COUNTING_ERROR:"Sai sót khi đếm",UNRECORDED_ISSUE:"Xuất chưa ghi nhận",UNRECORDED_RECEIPT:"Nhập chưa ghi nhận",DAMAGED_MATERIAL:"Vật tư hư hỏng",UNIT_CONVERSION:"Sai quy đổi ĐVT",HISTORICAL_DATA:"Dữ liệu lịch sử",OTHER:"Khác"};
 function countActor(){return $("countActor").value||"";}
-function countApiPayload(type,extra={}){
-  return {type,depot:state.depot,clientId:state.clientId,clientVersion:APP_VERSION,accessToken:getAccessToken(state.depot),...extra};
-}
-async function runCountApi(type,extra={}){
-  if(state.countBusy)return null;
-  if(!requireSession(true))return null;
-  state.countBusy=true;
-  try{
-    const j=await postJson(countApiPayload(type,extra));
-    if(isAccessError(j.status)){clearAccessToken(state.depot);showLogin(j.message||"Phiên đăng nhập đã hết hạn.");return null;}
-    if(j.status==="version_mismatch"){setVersionState(j.version||j.serverVersion);alert(j.message||"Phiên bản chưa đồng bộ.");return null;}
-    if(j.status==="error"||j.status==="request_conflict"||j.status==="manual_review"){alert(j.message||"Thao tác kiểm kê thất bại.");return j;}
-    return j;
-  }catch(err){alert("Không kết nối được backend kiểm kê. Kiểm tra mạng rồi thử lại.");return null;}
-  finally{state.countBusy=false;}
-}
-async function loadStockCount(){
-  if(!requireSession(true))return;
-  $("countRows").innerHTML='<div class="vw-load">Đang tải phiên kiểm kê…</div>';
-  const j=await runCountApi("STOCK_COUNT_VIEW");
-  if(j&&j.status==="ok"){state.countData=j;renderStockCount();}
-}
+function countApiPayload(type,extra={}){return{type,depot:state.depot,clientId:state.clientId,clientVersion:APP_VERSION,accessToken:getAccessToken(state.depot),...extra};}
+async function runCountApi(type,extra={}){if(state.countBusy)return null;if(!requireSession(true))return null;state.countBusy=true;try{const j=await postJson(countApiPayload(type,extra));if(isAccessError(j.status)){clearAccessToken(state.depot);showLogin(j.message||"Phiên đăng nhập đã hết hạn.");return null;}if(j.status==="version_mismatch"){setVersionState(j.version||j.serverVersion);alert(j.message||"Phiên bản chưa đồng bộ.");return null;}if(["error","request_conflict","manual_review"].includes(j.status)){alert(j.message||"Thao tác kiểm kê thất bại.");return j;}return j;}catch(err){alert("Không kết nối được backend kiểm kê. Kiểm tra mạng rồi thử lại.");return null;}finally{state.countBusy=false;}}
+async function loadStockCount(countId=""){if(!requireSession(true))return;$("countRows").innerHTML='<div class="vw-load">Đang tải dữ liệu kiểm kê…</div>';const j=await runCountApi("STOCK_COUNT_VIEW",{countId:countId||state.currentCountId||""});if(j&&j.status==="ok"){state.countData=j;state.currentCountId=j.active?j.active.countId:"";renderStockCount();}}
 function countDetails(){return state.countData&&Array.isArray(state.countData.details)?state.countData.details:[];}
-function renderStockCount(){
-  const d=state.countData||{},s=d.active;
-  $("btnCountCreate").style.display=s?"none":"block";
-  $("countSessionNote").style.display=s?"none":"block";
-  if(!s){
-    $("countSession").innerHTML='<div class="vw-load">Không có phiên đang mở cho '+state.depot+'.</div>';
-    $("countRows").innerHTML='<div class="vw-load">Mở phiên mới để chụp tồn hệ thống và bắt đầu đếm.</div>';
-  }else{
-    const editable=["DRAFT","COUNTING"].includes(s.status);
-    $("countSession").innerHTML='<div class="count-head"><div><div class="count-id">'+s.countId+'</div><div class="count-meta">Snapshot: '+s.snapshotAt+' · tạo bởi '+s.createdBy+'</div></div><span class="count-status">'+s.status+'</span></div>'+
-      '<div class="count-actions">'+
-      (editable?'<button id="btnCountSave" class="count-primary">Lưu tiến độ</button><button id="btnCountSubmit" class="count-amber">Gửi REVIEW</button>':'')+
-      (s.status==="REVIEW"?'<button id="btnCountConfirm" class="count-amber">Xác nhận điều chỉnh</button>':'')+
-      (["DRAFT","COUNTING","REVIEW"].includes(s.status)?'<button id="btnCountCancel" class="count-danger">Hủy phiên</button>':'')+
-      '<button id="btnCountReload" class="count-muted">Tải lại</button></div>';
-    if($("btnCountSave")) $("btnCountSave").onclick=saveStockCount;
-    if($("btnCountSubmit")) $("btnCountSubmit").onclick=submitStockCount;
-    if($("btnCountConfirm")) $("btnCountConfirm").onclick=confirmStockCount;
-    if($("btnCountCancel")) $("btnCountCancel").onclick=cancelStockCount;
-    $("btnCountReload").onclick=loadStockCount;
-    renderCountRows();
-  }
-  const recent=d.recent||[];
-  $("countRecent").className="";
-  $("countRecent").innerHTML=recent.length?recent.map(r=>'<div class="count-history"><b>'+r.countId+'</b> · '+r.status+' · '+(r.confirmedAt||r.cancelledAt||r.createdAt)+(r.adjustmentTxnId?' · '+r.adjustmentTxnId:'')+'</div>').join(""):'<div class="vw-load">Chưa có lịch sử kiểm kê.</div>';
-}
-function renderCountRows(){
-  const s=state.countData&&state.countData.active;if(!s)return;
-  const editable=["DRAFT","COUNTING"].includes(s.status),q=stripAccent($("countSearch").value.trim());
-  const rows=countDetails().filter(r=>!q||stripAccent(r.ma+" "+r.ten).includes(q));
-  $("countRows").innerHTML="";
-  if(!rows.length){$("countRows").innerHTML='<div class="vw-load">Không có mã khớp.</div>';return;}
-  rows.forEach(r=>{
-    const v=r.actualQty==null?null:Number(r.actualQty)-Number(r.systemQty),div=document.createElement("div");
-    div.className="count-row"+((v||0)!==0?" changed":"");
-    const opts=['<option value="">— Nguyên nhân —</option>'].concat((state.countData.reasons||[]).map(x=>'<option value="'+x+'" '+(r.reasonCode===x?'selected':'')+'>'+COUNT_REASON_LABELS[x]+'</option>')).join("");
-    div.innerHTML='<div class="top"><span>'+escapeHtml(r.ten)+' ('+escapeHtml(r.ma)+')</span><span>'+r.systemQty+' '+escapeHtml(r.dvt)+'</span></div><div class="sub">Tồn hệ thống tại snapshot</div>'+
-      '<div class="count-grid"><input data-f="actual" type="number" min="0" step="1" placeholder="Tồn thực tế" value="'+(r.actualQty==null?'':r.actualQty)+'" '+(editable?'':'disabled')+'>'+
-      '<div class="count-var '+(v>0?'pos':v<0?'neg':'')+'">Chênh: '+(v==null?'—':v)+'</div><select data-f="reason" '+(editable?'':'disabled')+'>'+opts+'</select>'+
-      '<input class="wide" data-f="note" type="text" placeholder="Ghi chú (bắt buộc với OTHER/HISTORICAL)" value="'+escapeHtml(r.note||'')+'" '+(editable?'':'disabled')+'>'+
-      '<input class="wide" data-f="evidence" type="url" placeholder="Evidence URL (bắt buộc khi vật tư hư hỏng)" value="'+escapeHtml(r.evidenceUrl||'')+'" '+(editable?'':'disabled')+'></div>';
-    if(editable){
-      div.querySelector('[data-f="actual"]').oninput=e=>{
-        r.actualQty=e.target.value===""?null:Number(e.target.value);
-        const vv=r.actualQty==null?null:Number(r.actualQty)-Number(r.systemQty),box=div.querySelector(".count-var");
-        box.textContent="Chênh: "+(vv==null?"—":vv);box.className="count-var "+(vv>0?"pos":vv<0?"neg":"");
-        div.classList.toggle("changed",(vv||0)!==0);
-      };
-      div.querySelector('[data-f="reason"]').onchange=e=>{r.reasonCode=e.target.value;};
-      div.querySelector('[data-f="note"]').oninput=e=>{r.note=e.target.value;};
-      div.querySelector('[data-f="evidence"]').oninput=e=>{r.evidenceUrl=e.target.value;};
-    }
-    $("countRows").appendChild(div);
-  });
-}
+function countCatalog(){return state.countData&&Array.isArray(state.countData.catalog)?state.countData.catalog:[];}
 function escapeHtml(s){return String(s||"").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function renderCampaign(){const d=state.countData||{},c=d.openCampaign,box=$("campaignCurrent");if(!c){box.innerHTML='<div class="count-meta">Không có đợt OPEN. Có thể tạo đợt toàn bộ kho.</div>';$("btnCampaignCreate").style.display="block";return;}$("btnCampaignCreate").style.display="none";box.innerHTML='<div class="campaign-box"><b>'+escapeHtml(c.campaignName)+'</b><div>'+c.campaignId+' · '+c.confirmedItems+'/'+c.totalItems+' mã · '+c.coveragePercent+'%</div><div class="coverage"><span style="width:'+Math.min(100,c.coveragePercent)+'%"></span></div><button id="btnCampaignCancel" class="count-tool">Hủy đợt</button></div>';$("btnCampaignCancel").onclick=cancelCampaign;}
+function scopeEligibleCatalog(){const d=state.countData||{},scope=$("countScope").value,campaign=d.openCampaign,campaignMap={};(d.campaignItems||[]).forEach(x=>campaignMap[x.ma]=x);return countCatalog().filter(r=>{if(scope==="CAMPAIGN_BATCH")return campaign&&campaignMap[r.ma]&&campaignMap[r.ma].status==="PENDING"&&!r.lockedBy;return !r.lockedBy;});}
+function renderSelection(){const scope=$("countScope").value,q=stripAccent($("countPickSearch").value.trim()),all=countCatalog(),eligible=scopeEligibleCatalog(),eligibleMap={};eligible.forEach(x=>eligibleMap[x.ma]=true);if(scope==="FULL"){state.countSelected={};eligible.forEach(x=>state.countSelected[x.ma]=true);}const rows=all.filter(r=>!q||stripAccent(r.ma+" "+r.ten).includes(q));$("countSelection").innerHTML=rows.length?rows.map(r=>{const allowed=!!eligibleMap[r.ma],checked=scope==="FULL"?allowed:!!state.countSelected[r.ma];return'<label class="count-pick '+(allowed?'':'locked')+'"><input type="checkbox" data-ma="'+r.ma+'" '+(checked?'checked':'')+' '+(allowed&&scope!=="FULL"?'':'disabled')+'><div><b>'+escapeHtml(r.ten)+'</b> ('+r.ma+')<div class="meta">Tồn '+r.systemQty+' '+escapeHtml(r.dvt)+(r.lockedBy?' · đang ở '+r.lockedBy:'')+'</div></div></label>';}).join(""):'<div class="vw-load">Không có mã phù hợp.</div>';$("countSelection").querySelectorAll('input[data-ma]').forEach(ch=>ch.onchange=e=>{if(e.target.checked)state.countSelected[e.target.dataset.ma]=true;else delete state.countSelected[e.target.dataset.ma];updatePickedTotal();});updatePickedTotal();}
+function updatePickedTotal(){const scope=$("countScope").value,n=scope==="FULL"?scopeEligibleCatalog().length:Object.keys(state.countSelected).filter(ma=>scopeEligibleCatalog().some(x=>x.ma===ma)).length;$("countPickedTotal").textContent=n+" mã";}
+function renderActiveSessions(){const d=state.countData||{},rows=d.activeSessions||[];$("activeSessionList").innerHTML=rows.length?rows.map(s=>'<button data-cid="'+s.countId+'" class="'+(d.active&&d.active.countId===s.countId?'on':'')+'"><b>'+s.countId+'</b> · '+s.status+' · '+s.scopeType+' · '+s.selectedItemCount+' mã'+(s.campaignId?' · '+s.campaignId:'')+'</button>').join(""):'<div class="count-meta">Không có phiên đang mở.</div>';$("activeSessionList").querySelectorAll('button[data-cid]').forEach(x=>x.onclick=()=>loadStockCount(x.dataset.cid));}
+function renderStockCount(){renderCampaign();renderSelection();renderQuickCatalog();renderActiveSessions();const d=state.countData||{},s=d.active;if(!s){$("countSession").innerHTML='<div class="count-meta">Chọn hoặc mở một phiên để nhập số đếm.</div>';$("countRows").innerHTML='<div class="vw-load">Chưa chọn phiên.</div>';}else{const editable=["DRAFT","COUNTING"].includes(s.status);$("countSession").innerHTML='<div class="count-head"><div><div class="count-id">'+s.countId+'</div><div class="count-meta">Snapshot: '+s.snapshotAt+' · '+s.scopeType+' · '+s.selectedItemCount+' mã</div></div><span class="count-status">'+s.status+'</span></div><div class="count-actions">'+(editable?'<button id="btnCountSave" class="count-primary">Lưu tiến độ</button><button id="btnCountSubmit" class="count-amber">Gửi REVIEW</button>':'')+(s.status==="REVIEW"?'<button id="btnCountConfirm" class="count-amber">Xác nhận điều chỉnh</button>':'')+(["DRAFT","COUNTING","REVIEW"].includes(s.status)?'<button id="btnCountCancel" class="count-danger">Hủy phiên</button>':'')+'<button id="btnCountReload" class="count-muted">Tải lại</button></div>';if($("btnCountSave"))$("btnCountSave").onclick=saveStockCount;if($("btnCountSubmit"))$("btnCountSubmit").onclick=submitStockCount;if($("btnCountConfirm"))$("btnCountConfirm").onclick=confirmStockCount;if($("btnCountCancel"))$("btnCountCancel").onclick=cancelStockCount;$("btnCountReload").onclick=()=>loadStockCount(s.countId);renderCountRows();}const recent=d.recent||[];$("countRecent").className="";$("countRecent").innerHTML=recent.length?recent.map(r=>'<div class="count-history"><b>'+r.countId+'</b> · '+r.status+' · '+r.scopeType+' · '+(r.confirmedAt||r.cancelledAt||r.createdAt)+(r.adjustmentTxnId?' · '+r.adjustmentTxnId:'')+'</div>').join(""):'<div class="vw-load">Chưa có lịch sử kiểm kê.</div>';}
+function renderCountRows(){const s=state.countData&&state.countData.active;if(!s)return;const editable=["DRAFT","COUNTING"].includes(s.status),q=stripAccent($("countSearch").value.trim()),rows=countDetails().filter(r=>!q||stripAccent(r.ma+" "+r.ten).includes(q));$("countRows").innerHTML="";if(!rows.length){$("countRows").innerHTML='<div class="vw-load">Không có mã khớp.</div>';return;}rows.forEach(r=>{const v=r.actualQty==null?null:Number(r.actualQty)-Number(r.systemQty),div=document.createElement("div");div.className="count-row"+((v||0)!==0?" changed":"");const opts=['<option value="">— Nguyên nhân —</option>'].concat((state.countData.reasons||[]).map(x=>'<option value="'+x+'" '+(r.reasonCode===x?'selected':'')+'>'+COUNT_REASON_LABELS[x]+'</option>')).join("");div.innerHTML='<div class="top"><span>'+escapeHtml(r.ten)+' ('+escapeHtml(r.ma)+')</span><span>'+r.systemQty+' '+escapeHtml(r.dvt)+'</span></div><div class="sub">Tồn hệ thống tại snapshot</div><div class="count-grid"><input data-f="actual" type="number" min="0" step="1" placeholder="Tồn thực tế" value="'+(r.actualQty==null?'':r.actualQty)+'" '+(editable?'':'disabled')+'><div class="count-var '+(v>0?'pos':v<0?'neg':'')+'">Chênh: '+(v==null?'—':v)+'</div><select data-f="reason" '+(editable?'':'disabled')+'>'+opts+'</select><input class="wide" data-f="note" type="text" placeholder="Ghi chú (bắt buộc với OTHER/HISTORICAL)" value="'+escapeHtml(r.note||'')+'" '+(editable?'':'disabled')+'><input class="wide" data-f="evidence" type="url" placeholder="Evidence URL (bắt buộc khi hư hỏng)" value="'+escapeHtml(r.evidenceUrl||'')+'" '+(editable?'':'disabled')+'></div>';if(editable){div.querySelector('[data-f="actual"]').oninput=e=>{r.actualQty=e.target.value===""?null:Number(e.target.value);const vv=r.actualQty==null?null:Number(r.actualQty)-Number(r.systemQty),box=div.querySelector(".count-var");box.textContent="Chênh: "+(vv==null?"—":vv);box.className="count-var "+(vv>0?"pos":vv<0?"neg":"");div.classList.toggle("changed",(vv||0)!==0);};div.querySelector('[data-f="reason"]').onchange=e=>r.reasonCode=e.target.value;div.querySelector('[data-f="note"]').oninput=e=>r.note=e.target.value;div.querySelector('[data-f="evidence"]').oninput=e=>r.evidenceUrl=e.target.value;}$("countRows").appendChild(div);});}
 function countPayloadItems(){return countDetails().map(r=>({ma:r.ma,actualQty:r.actualQty,reasonCode:r.reasonCode||"",note:r.note||"",evidenceUrl:r.evidenceUrl||""}));}
-$("countSearch").addEventListener("input",renderCountRows);
-$("btnCountCreate").onclick=async()=>{
-  if(!countActor()){alert("Chọn người kiểm kê.");return;}
-  if(!confirm("Mở phiên kiểm kê mới cho "+state.depot+"? Hệ thống sẽ chụp tồn hiện tại của toàn bộ danh mục ACTIVE."))return;
-  const j=await runCountApi("STOCK_COUNT_CREATE",{actor:countActor(),note:$("countSessionNote").value.trim()});
-  if(j&&j.status==="ok"){state.countData=j;renderStockCount();}
-};
-async function saveStockCount(){
-  if(!countActor()){alert("Chọn người kiểm kê.");return false;}
-  const s=state.countData.active,j=await runCountApi("STOCK_COUNT_SAVE",{countId:s.countId,actor:countActor(),items:countPayloadItems()});
-  if(j&&j.status==="ok"){state.countData=j;renderStockCount();return true;}return false;
-}
-async function submitStockCount(){
-  if(!(await saveStockCount()))return;
-  if(!confirm("Gửi phiên sang REVIEW? Sau bước này dữ liệu đếm sẽ khóa chỉnh sửa cho đến khi backend phát hiện cần đếm lại."))return;
-  const s=state.countData.active,j=await runCountApi("STOCK_COUNT_SUBMIT",{countId:s.countId,actor:countActor()});
-  if(j&&j.status==="ok"){state.countData=j;renderStockCount();}
-}
-async function confirmStockCount(){
-  if(!countActor()){alert("Chọn người xác nhận.");return;}
-  const s=state.countData.active;if(!confirm("Xác nhận phiên "+s.countId+"? Backend sẽ kiểm tra giao dịch phát sinh và chỉ ghi một transaction điều chỉnh."))return;
-  const j=await runCountApi("STOCK_COUNT_CONFIRM",{countId:s.countId,actor:countActor()});
-  if(!j)return;
-  if(j.status==="stock_changed"){
-    alert(j.message+"\n"+(j.changedItems||[]).map(x=>x.ma+": "+x.before+" → "+x.current).join("\n"));
-    await loadStockCount();return;
-  }
-  if(j.status==="ok"){alert(j.message+(j.txnId?"\nTxn ID: "+j.txnId:"")+("\nSố dòng điều chỉnh: "+Number(j.adjustmentRows||0)));await loadStockCount();}
-}
-async function cancelStockCount(){
-  if(!countActor()){alert("Chọn người hủy.");return;}
-  const s=state.countData.active;if(!confirm("Hủy phiên "+s.countId+"? Thao tác này không thay đổi tồn kho."))return;
-  const j=await runCountApi("STOCK_COUNT_CANCEL",{countId:s.countId,actor:countActor(),note:$("countSessionNote").value.trim()});
-  if(j&&j.status==="ok"){state.countData=j;renderStockCount();}
-}
-
+$("countSubmode").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("countSubmode").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.countMode=b.dataset.cm;$("countSessionMode").classList.toggle("off",state.countMode!=="session");$("countQuickMode").classList.toggle("on",state.countMode==="quick");});
+$("countScope").onchange=()=>{state.countSelected={};renderSelection();};$("countPickSearch").oninput=renderSelection;$("countSearch").oninput=renderCountRows;
+$("btnPickAll").onclick=e=>{e.preventDefault();const q=stripAccent($("countPickSearch").value.trim());scopeEligibleCatalog().filter(r=>!q||stripAccent(r.ma+" "+r.ten).includes(q)).forEach(r=>state.countSelected[r.ma]=true);renderSelection();};$("btnPickNone").onclick=e=>{e.preventDefault();state.countSelected={};renderSelection();};
+$("btnCampaignCreate").onclick=async()=>{if(!countActor()){alert("Chọn người thực hiện.");return;}if(!confirm("Tạo đợt kiểm kê toàn bộ danh mục ACTIVE của "+state.depot+"?"))return;const j=await runCountApi("STOCK_COUNT_CAMPAIGN_CREATE",{actor:countActor(),campaignName:$("campaignName").value.trim(),note:$("campaignNote").value.trim(),itemCodes:[]});if(j&&j.status==="ok"){state.countData=j;renderStockCount();}};
+async function cancelCampaign(){const c=state.countData.openCampaign;if(!c||!confirm("Hủy đợt "+c.campaignId+"? Chỉ thực hiện được khi không còn phiên con đang mở."))return;const j=await runCountApi("STOCK_COUNT_CAMPAIGN_CANCEL",{actor:countActor(),campaignId:c.campaignId,note:$("campaignNote").value.trim()});if(j&&j.status==="ok"){state.countData=j;renderStockCount();}}
+$("btnCountCreate").onclick=async()=>{if(!countActor()){alert("Chọn người kiểm kê.");return;}const scope=$("countScope").value,codes=scope==="FULL"?[]:Object.keys(state.countSelected),campaignId=scope==="CAMPAIGN_BATCH"&&state.countData.openCampaign?state.countData.openCampaign.campaignId:"";if(scope!=="FULL"&&!codes.length){alert("Chưa tích chọn vật tư.");return;}if(scope==="CAMPAIGN_BATCH"&&!campaignId){alert("Chưa có đợt kiểm kê OPEN.");return;}if(!confirm("Mở phiên "+scope+" với "+(scope==="FULL"?"toàn bộ kho":codes.length+" mã")+"?"))return;const j=await runCountApi("STOCK_COUNT_CREATE",{actor:countActor(),note:$("countSessionNote").value.trim(),scopeType:scope,itemCodes:codes,campaignId});if(j&&j.status==="ok"){state.countSelected={};state.countData=j;state.currentCountId=j.active?j.active.countId:"";renderStockCount();}};
+async function saveStockCount(){if(!countActor()){alert("Chọn người kiểm kê.");return false;}const s=state.countData.active,j=await runCountApi("STOCK_COUNT_SAVE",{countId:s.countId,actor:countActor(),items:countPayloadItems()});if(j&&j.status==="ok"){state.countData=j;renderStockCount();return true;}return false;}
+async function submitStockCount(){if(!(await saveStockCount()))return;if(!confirm("Gửi phiên sang REVIEW?"))return;const s=state.countData.active,j=await runCountApi("STOCK_COUNT_SUBMIT",{countId:s.countId,actor:countActor()});if(j&&j.status==="ok"){state.countData=j;renderStockCount();}}
+async function confirmStockCount(){if(!countActor()){alert("Chọn người xác nhận.");return;}const s=state.countData.active;if(!confirm("Xác nhận phiên "+s.countId+"? Backend sẽ kiểm tra tồn phát sinh và ghi tối đa một transaction điều chỉnh."))return;const j=await runCountApi("STOCK_COUNT_CONFIRM",{countId:s.countId,actor:countActor()});if(!j)return;if(j.status==="stock_changed"){alert(j.message+"\n"+(j.changedItems||[]).map(x=>x.ma+": "+x.before+" → "+x.current).join("\n"));await loadStockCount(s.countId);return;}if(j.status==="ok"){alert(j.message+(j.txnId?"\nTxn ID: "+j.txnId:"")+"\nSố dòng điều chỉnh: "+Number(j.adjustmentRows||0));state.currentCountId="";await loadStockCount();}}
+async function cancelStockCount(){if(!countActor()){alert("Chọn người hủy.");return;}const s=state.countData.active;if(!confirm("Hủy phiên "+s.countId+"? Không thay đổi tồn kho."))return;const j=await runCountApi("STOCK_COUNT_CANCEL",{countId:s.countId,actor:countActor(),note:$("countSessionNote").value.trim()});if(j&&j.status==="ok"){state.currentCountId="";state.countData=j;renderStockCount();}}
+function renderQuickCatalog(){const rows=countCatalog(),sel=$("quickItem"),current=sel.value;sel.innerHTML='<option value="">— Chọn vật tư —</option>'+rows.map(r=>'<option value="'+r.ma+'" '+(r.lockedBy?'disabled':'')+'>'+r.ma+' — '+escapeHtml(r.ten)+(r.lockedBy?' · đang kiểm kê':'')+'</option>').join("");if(rows.some(r=>r.ma===current&&!r.lockedBy))sel.value=current;const reasons=state.countData&&state.countData.reasons||[];$("quickReason").innerHTML='<option value="">— Nguyên nhân —</option>'+reasons.map(x=>'<option value="'+x+'">'+COUNT_REASON_LABELS[x]+'</option>').join("");renderQuickSystem();}
+function renderQuickSystem(){const r=countCatalog().find(x=>x.ma===$("quickItem").value);$("quickSystem").textContent=r?"Tồn hệ thống hiện tại: "+r.systemQty+" "+r.dvt:"Tồn hệ thống: —";state.quickPendingRequest=null;}
+$("quickItem").onchange=renderQuickSystem;["quickActual","quickReason","quickNote","quickEvidence"].forEach(id=>$(id).oninput=()=>state.quickPendingRequest=null);
+$("btnQuickAdjust").onclick=async()=>{if(!countActor()){alert("Chọn người thực hiện.");return;}const ma=$("quickItem").value,actual=$("quickActual").value;if(!ma||actual===""){alert("Chọn vật tư và nhập tồn thực tế.");return;}const current=countCatalog().find(x=>x.ma===ma),variance=Number(actual)-Number(current?current.systemQty:0);if(!confirm("Xác nhận tồn thực tế "+actual+". Chênh "+variance+"; hệ thống sẽ tự tạo "+(variance>0?"NHẬP BÙ":variance<0?"XUẤT BÙ":"KHÔNG ĐIỀU CHỈNH")+"?"))return;if(!state.quickPendingRequest)state.quickPendingRequest=randomId("QAREQ");const j=await runCountApi("STOCK_QUICK_ADJUST",{actor:countActor(),requestId:state.quickPendingRequest,itemCode:ma,actualQty:Number(actual),reasonCode:$("quickReason").value,note:$("quickNote").value.trim(),evidenceUrl:$("quickEvidence").value.trim()});if(!j)return;if(j.status==="stock_changed"){alert(j.message+"\nTồn trước: "+j.before+" → hiện tại: "+j.current);state.quickPendingRequest=null;await loadStockCount();return;}if(j.status==="ok"){alert(j.message+(j.txnId?"\nTxn ID: "+j.txnId:"")+(j.countId?"\nCount ID: "+j.countId:""));state.quickPendingRequest=null;$("quickActual").value="";$("quickReason").value="";$("quickNote").value="";$("quickEvidence").value="";await loadStockCount();}};
 
 // ===== XEM KHO =====
 async function loadView(){
