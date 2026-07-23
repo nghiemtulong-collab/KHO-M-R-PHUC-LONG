@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.2 CATALOG ACTIVATION)</title>
+<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3 STOCK INTEGRITY)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -158,13 +158,43 @@ body.dexuat .adjust-row{display:none}
 .vw-types button.active{background:var(--navy-2);color:var(--white);border-color:var(--navy-2)}
 
 
+/* Stock count v4.3 */
+.countwrap{display:none;padding-top:12px}
+body.counting .countwrap{display:block}
+body.counting .slip,body.counting .bar,body.counting .search-box,body.counting .results,body.counting .viewwrap{display:none}
+body.counting .controls{grid-template-columns:1fr}
+body.counting #segType,body.counting .date-row{display:none}
+.count-note{background:#EAF2FF;border:1px solid #9BB7DF;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#29486F;margin-bottom:10px}
+.count-card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.count-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.count-id{font-size:13px;font-weight:800;color:var(--navy-2);overflow-wrap:anywhere}
+.count-status{font-size:11px;font-weight:800;border-radius:20px;padding:3px 9px;background:#EAF2FF;color:var(--navy-2);white-space:nowrap}
+.count-meta{font-size:11.5px;color:var(--muted);margin-top:5px}
+.count-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.count-actions button,.count-create{border:0;border-radius:10px;font-family:inherit;font-weight:800;font-size:13px;padding:11px 10px;cursor:pointer}
+.count-primary{background:var(--navy-2);color:var(--white)}
+.count-amber{background:var(--amber);color:var(--navy)}
+.count-danger{background:#FDE8E6;color:var(--danger)}
+.count-muted{background:#ECE9E1;color:var(--ink)}
+.count-create{width:100%;background:var(--amber);color:var(--navy);font-size:15px}
+.count-search{width:100%;border:2px solid var(--line);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:15px;margin:8px 0}
+.count-row{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:7px}
+.count-row.changed{border-color:var(--danger);background:#FFF8F7}
+.count-row .top{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:700}
+.count-row .sub{font-size:11.5px;color:var(--muted);margin:2px 0 7px}
+.count-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.count-grid input,.count-grid select{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:8px;font-family:inherit;font-size:13px;background:var(--white)}
+.count-grid .wide{grid-column:1/-1}
+.count-var{font-weight:800}.count-var.pos{color:var(--ok)}.count-var.neg{color:var(--danger)}
+.count-history{font-size:12px;border-top:1px dashed var(--line);padding:7px 0;color:var(--muted)}
+
 </style>
 </head>
 <body>
 <header>
   <div class="hd-inner">
     <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
-    <div class="hd-sub">ICD Phúc Long — session bảo mật theo depot · v4.2</div>
+    <div class="hd-sub">ICD Phúc Long — kiểm kê có truy vết · v4.3</div>
     <div class="controls">
       <div class="seg" id="segDepot">
         <button data-v="DP1" class="on">Tổ DP1</button>
@@ -183,6 +213,7 @@ body.dexuat .adjust-row{display:none}
     <div class="mode" id="modeSwitch">
       <button data-m="write" class="on">📝 Lập phiếu</button>
       <button data-m="view">📦 Xem kho</button>
+      <button data-m="count">🧮 Kiểm kê</button>
     </div>
   </div>
 </header>
@@ -235,6 +266,23 @@ body.dexuat .adjust-row{display:none}
     </div>
     <div id="vwHist" class="vw-load">—</div>
   </div>
+
+  <div class="countwrap">
+    <div class="count-note">Kiểm kê không sửa tồn trực tiếp. Chỉ khi phiên REVIEW được xác nhận và tồn hệ thống không đổi, backend mới tạo một transaction điều chỉnh có COUNT_ID, Request ID và Txn ID.</div>
+    <div class="count-card">
+      <div class="sender-row" style="border-top:0;padding:0 0 8px">
+        <label for="countActor">Người kiểm kê:</label>
+        <select id="countActor"><option value="">— Chọn —</option><option>Quỳnh (DP1)</option><option>Tâm (DP3)</option><option>Leon</option><option>Khác</option></select>
+      </div>
+      <input id="countSessionNote" class="count-search" type="text" placeholder="Ghi chú phiên kiểm kê (không bắt buộc)">
+      <button id="btnCountCreate" class="count-create">Mở phiên kiểm kê mới</button>
+      <div id="countSession"></div>
+    </div>
+    <input id="countSearch" class="count-search" type="search" placeholder="Tìm mã hoặc tên vật tư…">
+    <div id="countRows"><div class="vw-load">Chuyển sang Kiểm kê để tải phiên hiện tại.</div></div>
+    <div class="vw-sec">PHIÊN GẦN ĐÂY</div>
+    <div id="countRecent" class="vw-load">—</div>
+  </div>
 </div>
 
 <div class="bar">
@@ -286,14 +334,14 @@ body.dexuat .adjust-row{display:none}
 <script>
 // ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
-const APP_VERSION = "2026.07.23-MR-v4.2-CATALOG-ACTIVATION";
+const APP_VERSION = "2026.07.23-MR-v4.3-STOCK-INTEGRITY";
 const REQUEST_TIMEOUT_MS = 35000;
 // =================================================================================
 
 const state = {
   depot:"DP1", type:"XUAT", slip:{}, mode:"write", viewData:null,
   versionOk:false, sending:false, pendingRequest:null, versionWarned:false,
-  clientId:"", loginBusy:false
+  clientId:"", loginBusy:false, countData:null, countBusy:false, countFilter:""
 };
 
 function stripAccent(s){
@@ -357,7 +405,7 @@ function clearPendingRequest(){
   try{localStorage.removeItem(pendingStorageKey());}catch(_){}
 }
 
-function sessionKey(depot){return "mr_kho_access_v411_"+String(depot||"").toUpperCase();}
+function sessionKey(depot){return "mr_kho_access_v43_"+String(depot||"").toUpperCase();}
 function getAccessToken(depot){
   try{return sessionStorage.getItem(sessionKey(depot))||"";}catch(_){return "";}
 }
@@ -404,7 +452,7 @@ function setVersionState(version){
   state.versionOk=version===APP_VERSION;
   const sub=document.querySelector(".hd-sub");
   if(state.versionOk){
-    if(sub)sub.textContent="ICD Phúc Long — session bảo mật theo depot · v4.2";
+    if(sub)sub.textContent="ICD Phúc Long — kiểm kê có truy vết · v4.3";
   }else{
     if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
     if(!state.versionWarned){
@@ -440,7 +488,7 @@ $("btnLogin").onclick=async()=>{
     }
     saveAccessToken(state.depot,j.accessToken);
     $("loginPin").value="";$("ovLogin").classList.remove("show");
-    await refreshStock(false);
+    if(state.mode==="count") await loadStockCount(); else await refreshStock(false);
   }catch(err){
     $("loginErr").textContent="Không kết nối được backend. Kiểm tra mạng rồi thử lại.";$("loginErr").style.display="block";
   }finally{state.loginBusy=false;$("btnLogin").disabled=false;}
@@ -465,7 +513,10 @@ function segInit(id, key){
       renderResults();
       renderSlip();
       if(key==="depot"){
-        if(requireSession(true))refreshStock(true);
+        state.countData=null;
+        if(requireSession(true)){
+          if(state.mode==="count") loadStockCount(); else refreshStock(true);
+        }
       }else if(state.mode==="view") renderView();
     };
   });
@@ -474,7 +525,9 @@ segInit("segDepot","depot");
 segInit("segType","type");
 
 function setDefaultSender(){
-  $("nguoi").value = state.depot==="DP1" ? "Quỳnh (DP1)" : "Tâm (DP3)";
+  const v=state.depot==="DP1" ? "Quỳnh (DP1)" : "Tâm (DP3)";
+  $("nguoi").value=v;
+  if($("countActor")) $("countActor").value=v;
 }
 setDefaultSender();
 
@@ -499,14 +552,16 @@ function setAdjustMode(on){
 }
 $("adjustChk").onchange = ()=>setAdjustMode($("adjustChk").checked);
 
-// Mode switch: write <-> view
+// Mode switch: write / view / stock count
 document.querySelectorAll("#modeSwitch button").forEach(b=>{
   b.onclick = ()=>{
     document.querySelectorAll("#modeSwitch button").forEach(x=>x.classList.remove("on"));
     b.classList.add("on");
     state.mode = b.dataset.m;
     document.body.classList.toggle("viewing", state.mode==="view");
+    document.body.classList.toggle("counting", state.mode==="count");
     if(state.mode==="view") loadView();
+    if(state.mode==="count") loadStockCount();
   };
 });
 
@@ -793,6 +848,130 @@ function resetAll(){
   setAdjustMode(false);
   refreshStock(true);
 }
+
+
+// ===== KIỂM KÊ v4.3 =====
+const COUNT_REASON_LABELS={
+  COUNTING_ERROR:"Sai sót khi đếm",UNRECORDED_ISSUE:"Xuất chưa ghi nhận",UNRECORDED_RECEIPT:"Nhập chưa ghi nhận",
+  DAMAGED_MATERIAL:"Vật tư hư hỏng",UNIT_CONVERSION:"Sai quy đổi ĐVT",HISTORICAL_DATA:"Dữ liệu lịch sử",OTHER:"Khác"
+};
+function countActor(){return $("countActor").value||"";}
+function countApiPayload(type,extra={}){
+  return {type,depot:state.depot,clientId:state.clientId,clientVersion:APP_VERSION,accessToken:getAccessToken(state.depot),...extra};
+}
+async function runCountApi(type,extra={}){
+  if(state.countBusy)return null;
+  if(!requireSession(true))return null;
+  state.countBusy=true;
+  try{
+    const j=await postJson(countApiPayload(type,extra));
+    if(isAccessError(j.status)){clearAccessToken(state.depot);showLogin(j.message||"Phiên đăng nhập đã hết hạn.");return null;}
+    if(j.status==="version_mismatch"){setVersionState(j.version||j.serverVersion);alert(j.message||"Phiên bản chưa đồng bộ.");return null;}
+    if(j.status==="error"||j.status==="request_conflict"||j.status==="manual_review"){alert(j.message||"Thao tác kiểm kê thất bại.");return j;}
+    return j;
+  }catch(err){alert("Không kết nối được backend kiểm kê. Kiểm tra mạng rồi thử lại.");return null;}
+  finally{state.countBusy=false;}
+}
+async function loadStockCount(){
+  if(!requireSession(true))return;
+  $("countRows").innerHTML='<div class="vw-load">Đang tải phiên kiểm kê…</div>';
+  const j=await runCountApi("STOCK_COUNT_VIEW");
+  if(j&&j.status==="ok"){state.countData=j;renderStockCount();}
+}
+function countDetails(){return state.countData&&Array.isArray(state.countData.details)?state.countData.details:[];}
+function renderStockCount(){
+  const d=state.countData||{},s=d.active;
+  $("btnCountCreate").style.display=s?"none":"block";
+  $("countSessionNote").style.display=s?"none":"block";
+  if(!s){
+    $("countSession").innerHTML='<div class="vw-load">Không có phiên đang mở cho '+state.depot+'.</div>';
+    $("countRows").innerHTML='<div class="vw-load">Mở phiên mới để chụp tồn hệ thống và bắt đầu đếm.</div>';
+  }else{
+    const editable=["DRAFT","COUNTING"].includes(s.status);
+    $("countSession").innerHTML='<div class="count-head"><div><div class="count-id">'+s.countId+'</div><div class="count-meta">Snapshot: '+s.snapshotAt+' · tạo bởi '+s.createdBy+'</div></div><span class="count-status">'+s.status+'</span></div>'+
+      '<div class="count-actions">'+
+      (editable?'<button id="btnCountSave" class="count-primary">Lưu tiến độ</button><button id="btnCountSubmit" class="count-amber">Gửi REVIEW</button>':'')+
+      (s.status==="REVIEW"?'<button id="btnCountConfirm" class="count-amber">Xác nhận điều chỉnh</button>':'')+
+      (["DRAFT","COUNTING","REVIEW"].includes(s.status)?'<button id="btnCountCancel" class="count-danger">Hủy phiên</button>':'')+
+      '<button id="btnCountReload" class="count-muted">Tải lại</button></div>';
+    if($("btnCountSave")) $("btnCountSave").onclick=saveStockCount;
+    if($("btnCountSubmit")) $("btnCountSubmit").onclick=submitStockCount;
+    if($("btnCountConfirm")) $("btnCountConfirm").onclick=confirmStockCount;
+    if($("btnCountCancel")) $("btnCountCancel").onclick=cancelStockCount;
+    $("btnCountReload").onclick=loadStockCount;
+    renderCountRows();
+  }
+  const recent=d.recent||[];
+  $("countRecent").className="";
+  $("countRecent").innerHTML=recent.length?recent.map(r=>'<div class="count-history"><b>'+r.countId+'</b> · '+r.status+' · '+(r.confirmedAt||r.cancelledAt||r.createdAt)+(r.adjustmentTxnId?' · '+r.adjustmentTxnId:'')+'</div>').join(""):'<div class="vw-load">Chưa có lịch sử kiểm kê.</div>';
+}
+function renderCountRows(){
+  const s=state.countData&&state.countData.active;if(!s)return;
+  const editable=["DRAFT","COUNTING"].includes(s.status),q=stripAccent($("countSearch").value.trim());
+  const rows=countDetails().filter(r=>!q||stripAccent(r.ma+" "+r.ten).includes(q));
+  $("countRows").innerHTML="";
+  if(!rows.length){$("countRows").innerHTML='<div class="vw-load">Không có mã khớp.</div>';return;}
+  rows.forEach(r=>{
+    const v=r.actualQty==null?null:Number(r.actualQty)-Number(r.systemQty),div=document.createElement("div");
+    div.className="count-row"+((v||0)!==0?" changed":"");
+    const opts=['<option value="">— Nguyên nhân —</option>'].concat((state.countData.reasons||[]).map(x=>'<option value="'+x+'" '+(r.reasonCode===x?'selected':'')+'>'+COUNT_REASON_LABELS[x]+'</option>')).join("");
+    div.innerHTML='<div class="top"><span>'+escapeHtml(r.ten)+' ('+escapeHtml(r.ma)+')</span><span>'+r.systemQty+' '+escapeHtml(r.dvt)+'</span></div><div class="sub">Tồn hệ thống tại snapshot</div>'+
+      '<div class="count-grid"><input data-f="actual" type="number" min="0" step="1" placeholder="Tồn thực tế" value="'+(r.actualQty==null?'':r.actualQty)+'" '+(editable?'':'disabled')+'>'+
+      '<div class="count-var '+(v>0?'pos':v<0?'neg':'')+'">Chênh: '+(v==null?'—':v)+'</div><select data-f="reason" '+(editable?'':'disabled')+'>'+opts+'</select>'+
+      '<input class="wide" data-f="note" type="text" placeholder="Ghi chú (bắt buộc với OTHER/HISTORICAL)" value="'+escapeHtml(r.note||'')+'" '+(editable?'':'disabled')+'>'+
+      '<input class="wide" data-f="evidence" type="url" placeholder="Evidence URL (bắt buộc khi vật tư hư hỏng)" value="'+escapeHtml(r.evidenceUrl||'')+'" '+(editable?'':'disabled')+'></div>';
+    if(editable){
+      div.querySelector('[data-f="actual"]').oninput=e=>{
+        r.actualQty=e.target.value===""?null:Number(e.target.value);
+        const vv=r.actualQty==null?null:Number(r.actualQty)-Number(r.systemQty),box=div.querySelector(".count-var");
+        box.textContent="Chênh: "+(vv==null?"—":vv);box.className="count-var "+(vv>0?"pos":vv<0?"neg":"");
+        div.classList.toggle("changed",(vv||0)!==0);
+      };
+      div.querySelector('[data-f="reason"]').onchange=e=>{r.reasonCode=e.target.value;};
+      div.querySelector('[data-f="note"]').oninput=e=>{r.note=e.target.value;};
+      div.querySelector('[data-f="evidence"]').oninput=e=>{r.evidenceUrl=e.target.value;};
+    }
+    $("countRows").appendChild(div);
+  });
+}
+function escapeHtml(s){return String(s||"").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function countPayloadItems(){return countDetails().map(r=>({ma:r.ma,actualQty:r.actualQty,reasonCode:r.reasonCode||"",note:r.note||"",evidenceUrl:r.evidenceUrl||""}));}
+$("countSearch").addEventListener("input",renderCountRows);
+$("btnCountCreate").onclick=async()=>{
+  if(!countActor()){alert("Chọn người kiểm kê.");return;}
+  if(!confirm("Mở phiên kiểm kê mới cho "+state.depot+"? Hệ thống sẽ chụp tồn hiện tại của toàn bộ danh mục ACTIVE."))return;
+  const j=await runCountApi("STOCK_COUNT_CREATE",{actor:countActor(),note:$("countSessionNote").value.trim()});
+  if(j&&j.status==="ok"){state.countData=j;renderStockCount();}
+};
+async function saveStockCount(){
+  if(!countActor()){alert("Chọn người kiểm kê.");return false;}
+  const s=state.countData.active,j=await runCountApi("STOCK_COUNT_SAVE",{countId:s.countId,actor:countActor(),items:countPayloadItems()});
+  if(j&&j.status==="ok"){state.countData=j;renderStockCount();return true;}return false;
+}
+async function submitStockCount(){
+  if(!(await saveStockCount()))return;
+  if(!confirm("Gửi phiên sang REVIEW? Sau bước này dữ liệu đếm sẽ khóa chỉnh sửa cho đến khi backend phát hiện cần đếm lại."))return;
+  const s=state.countData.active,j=await runCountApi("STOCK_COUNT_SUBMIT",{countId:s.countId,actor:countActor()});
+  if(j&&j.status==="ok"){state.countData=j;renderStockCount();}
+}
+async function confirmStockCount(){
+  if(!countActor()){alert("Chọn người xác nhận.");return;}
+  const s=state.countData.active;if(!confirm("Xác nhận phiên "+s.countId+"? Backend sẽ kiểm tra giao dịch phát sinh và chỉ ghi một transaction điều chỉnh."))return;
+  const j=await runCountApi("STOCK_COUNT_CONFIRM",{countId:s.countId,actor:countActor()});
+  if(!j)return;
+  if(j.status==="stock_changed"){
+    alert(j.message+"\n"+(j.changedItems||[]).map(x=>x.ma+": "+x.before+" → "+x.current).join("\n"));
+    await loadStockCount();return;
+  }
+  if(j.status==="ok"){alert(j.message+(j.txnId?"\nTxn ID: "+j.txnId:"")+("\nSố dòng điều chỉnh: "+Number(j.adjustmentRows||0)));await loadStockCount();}
+}
+async function cancelStockCount(){
+  if(!countActor()){alert("Chọn người hủy.");return;}
+  const s=state.countData.active;if(!confirm("Hủy phiên "+s.countId+"? Thao tác này không thay đổi tồn kho."))return;
+  const j=await runCountApi("STOCK_COUNT_CANCEL",{countId:s.countId,actor:countActor(),note:$("countSessionNote").value.trim()});
+  if(j&&j.status==="ok"){state.countData=j;renderStockCount();}
+}
+
 
 // ===== XEM KHO =====
 async function loadView(){
