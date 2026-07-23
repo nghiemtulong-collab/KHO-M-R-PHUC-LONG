@@ -481,7 +481,7 @@ $("ngay").value = localIsoDate(today);
 $("ngay").max = localIsoDate(today);
 $("ngay").min = daysAgoIso(7);
 function selectedBackdateDays(id="ngay"){const v=$(id).value;if(!v)return 0;const d=new Date(v+"T00:00:00"),t=new Date();t.setHours(0,0,0,0);return Math.round((t-d)/86400000);}
-function renderBackdateHint(){const n=selectedBackdateDays();const box=$("backdateHint");if(n>0){box.textContent="Phiếu lùi "+n+" ngày · hệ thống vẫn lưu thời điểm tạo thực tế và ghi audit.";box.className="backdate-hint warn";}else{box.textContent="Có thể chọn ngày trong 7 ngày gần nhất.";box.className="backdate-hint";}}
+function renderBackdateHint(){const n=selectedBackdateDays();const box=$("backdateHint");if(n>0){box.textContent="Phiếu lùi "+n+" ngày · hệ thống vẫn lưu thời điểm tạo thực tế và ghi audit.";box.className="backdate-hint warn";}else{box.textContent="Có thể chọn ngày trong 30 ngày gần nhất.";box.className="backdate-hint";}}
 $("ngay").addEventListener("change",renderBackdateHint);renderBackdateHint();
 
 $("btnLogin").onclick=async()=>{
