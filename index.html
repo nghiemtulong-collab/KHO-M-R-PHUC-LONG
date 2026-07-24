@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.5 LIVE SNAPSHOT)</title>
+<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.6 DIRECT HISTORY + DRAFT SAFETY)</title>
 <style>
 :root{
   --navy:#14263F; --navy-2:#1F3864; --amber:#F5A623; --amber-dark:#D98E0B;
@@ -23,7 +23,7 @@ header{background:var(--navy);color:var(--white);padding:16px 14px 14px;position
 .hd-accent{color:var(--amber)}
 
 /* Toggle groups */
-.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.controls{display:block;margin-top:12px}
 .seg{display:flex;background:#0E1B30;border-radius:10px;padding:3px}
 .seg button{flex:1;border:0;background:transparent;color:#9FB0C7;font-family:inherit;font-weight:700;font-size:15px;padding:10px 0;border-radius:8px;cursor:pointer;transition:background .15s,color .15s}
 .seg button.on{background:var(--amber);color:var(--navy)}
@@ -32,7 +32,7 @@ header{background:var(--navy);color:var(--white);padding:16px 14px 14px;position
 .date-row input{flex:1;border:0;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:16px;background:#0E1B30;color:var(--white)}
 
 /* Search */
-.search-box{position:sticky;top:158px;z-index:20;background:var(--paper);padding:12px 0 8px}
+.search-box{position:relative;top:auto;z-index:1;background:var(--paper);padding:12px 0 8px}
 .search-box input{width:100%;border:2px solid var(--line);border-radius:12px;padding:13px 14px;font-family:inherit;font-size:16px;background:var(--white)}
 .search-box input:focus{outline:none;border-color:var(--amber)}
 .hint{font-size:12.5px;color:var(--muted);margin-top:6px}
@@ -164,86 +164,112 @@ body.dexuat .adjust-detail{display:none!important}
 
 .live-status{margin-top:7px;font-size:11.5px;color:#B8C4D6;display:flex;align-items:center;gap:6px}.live-dot{width:8px;height:8px;border-radius:50%;background:#9CA3AF;display:inline-block}.live-status.online .live-dot{background:#34D399}.live-status.syncing .live-dot{background:#F5A623}.live-status.offline .live-dot{background:#EF4444}.live-status.stale .live-dot{background:#F59E0B}.more-wrap{text-align:center;margin:10px 0 18px}.more-btn{border:1.5px solid var(--line);border-radius:10px;background:var(--white);font-family:inherit;font-weight:700;padding:10px 18px;color:var(--navy-2);cursor:pointer}.more-btn[hidden]{display:none}
 
+/* Direct navigation + independent screens */
+.direct-nav{margin-top:10px}
+.direct-nav-top{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;background:#0E1B30;border-radius:10px;padding:3px}
+.direct-nav button{border:0;background:transparent;color:#9FB0C7;font-family:inherit;font-weight:750;font-size:13px;padding:10px 3px;border-radius:8px;cursor:pointer}
+.direct-nav button.on{background:var(--white);color:var(--navy)}
+.direct-nav .history-nav{display:block;width:100%;margin-top:6px;background:#0E1B30;color:#B8C4D6;padding:10px}
+.direct-nav .history-nav.on{background:var(--amber);color:var(--navy)}
+.stock-screen,.history-screen{display:none}
+body.screen-stock .write-panel,body.screen-stock .history-screen,body.screen-stock .bar,body.screen-stock #writeDateRow,body.screen-stock #backdateHint{display:none}
+body.screen-stock .stock-screen{display:block}
+body.screen-history .write-panel,body.screen-history .stock-screen,body.screen-history .bar,body.screen-history #writeDateRow,body.screen-history #backdateHint{display:none}
+body.screen-history .history-screen{display:block}
+body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
+.draft-notice{display:none;margin:10px 0 0;background:#EEF4FF;border:1px solid #9AB7E8;border-radius:10px;padding:9px 10px;font-size:12.5px;color:var(--navy-2);align-items:center;gap:8px}
+.draft-notice.show{display:flex}.draft-notice span{flex:1}.draft-notice button{border:0;border-radius:8px;background:#FDE8E6;color:var(--danger);font-family:inherit;font-weight:750;padding:7px 9px;cursor:pointer}
+.history-update{display:none;margin:10px 0;background:#FFF3DC;border:1px solid var(--amber);border-radius:10px;padding:9px 10px;font-size:13px;align-items:center;gap:8px;color:#7A5200}
+.history-update.show{display:flex}.history-update span{flex:1}.history-update button{border:0;border-radius:8px;background:var(--amber);color:var(--navy);font-family:inherit;font-weight:800;padding:8px 10px;cursor:pointer}
+.screen-title{font-weight:850;font-size:15px;color:var(--navy-2);margin:14px 0 8px}
+
 </style>
 </head>
 <body>
 <header>
   <div class="hd-inner">
     <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
-    <div class="hd-sub">ICD Phúc Long — nhanh · đồng bộ gần realtime · v4.3.5</div>
+    <div class="hd-sub">ICD Phúc Long — thao tác trực tiếp · draft an toàn · v4.3.6</div>
     <div id="liveStatus" class="live-status stale"><span class="live-dot"></span><span id="liveStatusText">Đang khởi tạo…</span></div>
     <div class="controls">
       <div class="seg" id="segDepot">
         <button data-v="DP1" class="on">Tổ DP1</button>
         <button data-v="DP3">Tổ DP3</button>
       </div>
-      <div class="seg" id="segType">
-        <button data-v="XUAT" class="on">Xuất</button>
-        <button data-v="NHAP">Nhập</button>
-        <button data-v="DEXUAT">Đề xuất</button>
-      </div>
     </div>
-    <div class="date-row">
+    <div class="direct-nav" id="directNav">
+      <div class="direct-nav-top">
+        <button data-screen="stock">📦 Tồn</button>
+        <button data-screen="write" data-type="XUAT" class="on">📤 Xuất</button>
+        <button data-screen="write" data-type="NHAP">📥 Nhập</button>
+        <button data-screen="write" data-type="DEXUAT">🧾 Đề xuất</button>
+      </div>
+      <button class="history-nav" data-screen="history">🕘 Lịch sử</button>
+    </div>
+    <div class="date-row" id="writeDateRow">
       <label for="ngay">Ngày:</label>
       <input type="date" id="ngay">
     </div>
     <div id="backdateHint" class="backdate-hint"></div>
-    <div class="mode" id="modeSwitch">
-      <button data-m="write" class="on">📝 Lập phiếu</button>
-      <button data-m="view">📦 Xem kho</button>
-    </div>
   </div>
 </header>
 
 <div class="wrap">
-  <div class="search-box">
-    <input type="search" id="q" placeholder="Gõ tên vật tư… (vd: bat khoa, ton noc)" autocomplete="off">
-    <div class="hint">Gõ không dấu cũng tìm được. Bấm vào vật tư để thêm vào phiếu.</div>
-  </div>
-  <div class="results" id="results"></div>
-  <div id="newMaterialBar" class="new-material-bar"><button id="btnNewMaterial" class="new-material-btn">➕ Vật tư mới/chưa có trong danh mục<small>Tên, ĐVT, ngày và số lượng bắt buộc; MRVT/MRPL có thể bổ sung sau.</small></button></div>
+  <div class="write-panel" id="writePanel">
+    <div id="draftNotice" class="draft-notice"><span id="draftNoticeText"></span><button id="btnClearDraft" type="button">Xóa phiếu</button></div>
+    <div class="search-box">
+      <input type="search" id="q" placeholder="Gõ tên vật tư… (vd: bat khoa, ton noc)" autocomplete="off">
+      <div class="hint">Gõ không dấu cũng tìm được. Bấm vào vật tư để thêm vào phiếu.</div>
+    </div>
+    <div class="results" id="results"></div>
+    <div id="newMaterialBar" class="new-material-bar"><button id="btnNewMaterial" class="new-material-btn">➕ Vật tư mới/chưa có trong danh mục<small>Tên, ĐVT, ngày và số lượng bắt buộc; MRVT/MRPL có thể bổ sung sau.</small></button></div>
 
-  <div class="slip">
-    <div class="slip-head">
-      <span id="slipTitle">PHIẾU XUẤT — DP1</span>
-      <span class="badge" id="slipCount">0 mã</span>
-    </div>
-    <div id="slipRows"><div class="slip-empty">Chưa có vật tư nào trong phiếu.<br>Tìm và bấm chọn ở trên.</div></div>
-    <div class="note-row"><input type="text" id="note" placeholder="Ghi chú (không bắt buộc)"></div>
-    <div class="sender-row">
-      <label for="nguoi">Người gửi:</label>
-      <select id="nguoi">
-        <option value="">— Chọn người gửi —</option>
-        <option>Quỳnh (DP1)</option>
-        <option>Tâm (DP3)</option>
-        <option>Khác</option>
-      </select>
-    </div>
-    <label class="adjust-row reset-toggle" id="adjustRow" for="adjustChk">
-      <input type="checkbox" id="adjustChk">
-      <div><div class="lbl">Phiếu điều chỉnh tồn (nhập/xuất bù)</div>
-      <div class="sub">Dùng khi số thực tế lệch hệ thống. Nhập bù ở Phiếu Nhập, xuất bù ở Phiếu Xuất; số lượng luôn là số dương.</div></div>
-    </label>
-    <div class="adjust-detail" id="adjustDetail">
-      <select id="adjustReason">
-        <option value="">— Chọn nguyên nhân điều chỉnh —</option>
-        <option value="UNRECORDED_RECEIPT">Đã nhận nhưng chưa lập phiếu nhập</option>
-        <option value="UNRECORDED_ISSUE">Đã cấp nhưng chưa lập phiếu xuất</option>
-        <option value="COUNT_DIFFERENCE">Chênh lệch khi đối chiếu thực tế</option>
-        <option value="DAMAGED_MATERIAL">Vật tư hư hỏng/không sử dụng được</option>
-        <option value="HISTORICAL_DATA">Sai lệch dữ liệu lịch sử</option>
-        <option value="OTHER">Nguyên nhân khác</option>
-      </select>
-      <input id="adjustNoteHint" type="text" value="Bắt buộc ghi rõ tại ô Ghi chú phía trên" disabled>
+    <div class="slip">
+      <div class="slip-head">
+        <span id="slipTitle">PHIẾU XUẤT — DP1</span>
+        <span class="badge" id="slipCount">0 mã</span>
+      </div>
+      <div id="slipRows"><div class="slip-empty">Chưa có vật tư nào trong phiếu.<br>Tìm và bấm chọn ở trên.</div></div>
+      <div class="note-row"><input type="text" id="note" placeholder="Ghi chú (không bắt buộc)"></div>
+      <div class="sender-row">
+        <label for="nguoi">Người gửi:</label>
+        <select id="nguoi">
+          <option value="">— Chọn người gửi —</option>
+          <option>Quỳnh (DP1)</option>
+          <option>Tâm (DP3)</option>
+          <option>Khác</option>
+        </select>
+      </div>
+      <label class="adjust-row reset-toggle" id="adjustRow" for="adjustChk">
+        <input type="checkbox" id="adjustChk">
+        <div><div class="lbl">Phiếu điều chỉnh tồn (nhập/xuất bù)</div>
+        <div class="sub">Dùng khi số thực tế lệch hệ thống. Nhập bù ở Phiếu Nhập, xuất bù ở Phiếu Xuất; số lượng luôn là số dương.</div></div>
+      </label>
+      <div class="adjust-detail" id="adjustDetail">
+        <select id="adjustReason">
+          <option value="">— Chọn nguyên nhân điều chỉnh —</option>
+          <option value="UNRECORDED_RECEIPT">Đã nhận nhưng chưa lập phiếu nhập</option>
+          <option value="UNRECORDED_ISSUE">Đã cấp nhưng chưa lập phiếu xuất</option>
+          <option value="COUNT_DIFFERENCE">Chênh lệch khi đối chiếu thực tế</option>
+          <option value="DAMAGED_MATERIAL">Vật tư hư hỏng/không sử dụng được</option>
+          <option value="HISTORICAL_DATA">Sai lệch dữ liệu lịch sử</option>
+          <option value="OTHER">Nguyên nhân khác</option>
+        </select>
+        <input id="adjustNoteHint" type="text" value="Bắt buộc ghi rõ tại ô Ghi chú phía trên" disabled>
+      </div>
     </div>
   </div>
 
-  <div class="viewwrap">
-    <div class="vw-note">Số tồn được tính từ các phiếu đã ghi. Nếu lệch thực tế, dùng Phiếu Nhập/Xuất bù và tích Phiếu điều chỉnh tồn.</div>
+  <div class="stock-screen" id="stockScreen">
+    <div class="vw-note">Số tồn được đọc từ snapshot nhanh; phiếu nhập/xuất vẫn là nguồn dữ liệu gốc.</div>
     <div class="vw-search"><input type="search" id="vwq" placeholder="Tìm vật tư trong kho…" autocomplete="off"></div>
     <div class="vw-sec" id="vwStockTitle">TỒN KHO DP1</div>
-    <div id="vwStock" class="vw-load">Bấm "Xem kho" để tải dữ liệu…</div>
-    <div class="vw-sec">LỊCH SỬ GẦN NHẤT</div>
+    <div id="vwStock" class="vw-load">Bấm tab Tồn để tải dữ liệu…</div>
+  </div>
+
+  <div class="history-screen" id="historyScreen">
+    <div class="vw-note">Mỗi phiếu có Request ID và Txn ID riêng. Lịch sử tải độc lập, không phải tải tồn trước.</div>
+    <div id="historyUpdate" class="history-update"><span>Có giao dịch mới.</span><button id="btnRefreshHistory" type="button">Cập nhật</button></div>
     <div class="vw-types" id="vwTypes">
       <button data-t="all" class="active">Tất cả</button>
       <button data-t="x">Xuất</button>
@@ -254,10 +280,9 @@ body.dexuat .adjust-detail{display:none!important}
       <input type="date" id="vwDate" title="Lọc theo ngày">
       <button id="vwDateAll" class="active">Mọi ngày</button>
     </div>
-    <div id="vwHist" class="vw-load">—</div>
+    <div id="vwHist" class="vw-load">Bấm tab Lịch sử để tải dữ liệu…</div>
     <div class="more-wrap"><button id="btnMoreHistory" class="more-btn" hidden>Xem thêm</button></div>
   </div>
-
 </div>
 
 <div class="bar">
@@ -327,18 +352,56 @@ body.dexuat .adjust-detail{display:none!important}
 <script>
 // ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
-const APP_VERSION="2026.07.24-MR-v4.3.5-LIVE-SNAPSHOT-HF4";
+const APP_VERSION="2026.07.24-MR-v4.3.6-DIRECT-HISTORY-DRAFT-SAFETY-HF5";
 const REQUEST_TIMEOUT_MS = 35000;
 // =================================================================================
 
 const state = {
-  depot:"DP1", type:"XUAT", slip:{}, mode:"write", viewData:null,
+  depot:"DP1", type:"XUAT", slip:{}, screen:"write", viewData:null,
   versionOk:false, sending:false, pendingRequest:null, versionWarned:false,
   clientId:"", loginBusy:false, newMaterialDraft:null, latestSeq:0,
-  pollTimer:null,pollBusy:false,pollDelay:10000,lastSyncAt:"",historyOffset:0,historyHasMore:false,historyLoading:false
+  pollTimer:null,pollBusy:false,pollDelay:10000,lastSyncAt:"",historyOffset:0,historyHasMore:false,historyLoading:false,
+  historyUpdatePending:false,draftSaveTimer:null,suppressDraftSave:false
 };
 
-function viewCacheKey(depot){return "mr_kho_view_cache_v435_"+String(depot||"").toUpperCase();}
+const DRAFT_PREFIX="mr_kho_draft_v436_";
+function draftKey(depot,type){return DRAFT_PREFIX+String(depot||"").toUpperCase()+"_"+String(type||"").toUpperCase();}
+function draftTypeLabel(type){return type==="XUAT"?"Xuất":(type==="NHAP"?"Nhập":"Đề xuất");}
+function meaningfulDraft(d){return !!d&&(Object.keys(d.slip||{}).length>0||String(d.note||"").trim()!==""||d.adjust===true);}
+function currentDraftPayload(){return {version:APP_VERSION,depot:state.depot,type:state.type,slip:state.slip,note:$("note").value,date:$("ngay").value,sender:$("nguoi").value,adjust:isAdjustOn(),adjustReason:$("adjustReason").value,savedAt:Date.now()};}
+function saveCurrentDraft(){
+  if(state.suppressDraftSave)return;
+  const d=currentDraftPayload(),key=draftKey(state.depot,state.type);
+  try{if(meaningfulDraft(d))sessionStorage.setItem(key,JSON.stringify(d));else sessionStorage.removeItem(key);}catch(_){}
+  renderDraftNotice();
+}
+function scheduleDraftSave(){if(state.suppressDraftSave)return;clearTimeout(state.draftSaveTimer);state.draftSaveTimer=setTimeout(saveCurrentDraft,180);}
+function clearCurrentDraftStorage(){try{sessionStorage.removeItem(draftKey(state.depot,state.type));}catch(_){}renderDraftNotice();}
+function restoreCurrentDraft(){
+  state.suppressDraftSave=true;
+  let d=null;try{d=JSON.parse(sessionStorage.getItem(draftKey(state.depot,state.type))||"null");}catch(_){}
+  state.slip=d&&d.slip&&typeof d.slip==="object"?d.slip:{};
+  $("note").value=d?String(d.note||""):"";
+  $("ngay").value=d&&d.date?d.date:localIsoDate(new Date());
+  $("nguoi").value=d&&d.sender?d.sender:(state.depot==="DP1"?"Quỳnh (DP1)":"Tâm (DP3)");
+  const adjust=!!(d&&d.adjust)&&state.type!=="DEXUAT";
+  $("adjustChk").checked=adjust;$("adjustReason").value=adjust?String(d.adjustReason||""):"";
+  document.body.classList.toggle("adjusting",adjust);$("adjustRow").classList.toggle("on",adjust);$("adjustDetail").classList.toggle("on",adjust);
+  state.pendingRequest=null;state.suppressDraftSave=false;
+  renderBackdateHint();renderSlipHead();renderResults();renderSlip();renderDraftNotice();
+}
+function renderDraftNotice(){
+  const box=$("draftNotice"),text=$("draftNoticeText");if(!box||!text)return;
+  const count=Object.keys(state.slip||{}).length,has=count>0||$("note").value.trim()!==""||isAdjustOn();
+  box.classList.toggle("show",has&&state.screen==="write");
+  text.textContent=has?("Phiếu "+draftTypeLabel(state.type)+" "+state.depot+" đang có "+count+" mã chưa gửi."):"";
+}
+function hasAnyUnsentDraft(){
+  try{for(let i=0;i<sessionStorage.length;i++){const k=sessionStorage.key(i)||"";if(!k.startsWith(DRAFT_PREFIX))continue;const d=JSON.parse(sessionStorage.getItem(k)||"null");if(meaningfulDraft(d))return true;}}catch(_){}return false;
+}
+window.addEventListener("beforeunload",e=>{saveCurrentDraft();if(hasAnyUnsentDraft()){e.preventDefault();e.returnValue="";}});
+
+function viewCacheKey(depot){return "mr_kho_view_cache_v436_"+String(depot||"").toUpperCase();}
 function restoreViewCache(depot){
   try{
     const raw=JSON.parse(sessionStorage.getItem(viewCacheKey(depot))||"null");
@@ -346,7 +409,7 @@ function restoreViewCache(depot){
     if(Date.now()-Number(raw.savedAt)>10*60*1000)return false;
     state.viewData=raw.data;state.latestSeq=Number(raw.data.latestSeq||0);
     if(raw.data.version)setVersionState(raw.data.version);
-    renderResults();renderSlip();if(state.mode==="view")renderView();
+    renderResults();renderSlip();renderActiveScreen();
     setLiveStatus("stale","Đang dùng dữ liệu lưu lúc "+new Date(raw.savedAt).toLocaleTimeString("vi-VN"));
     return true;
   }catch(_){return false;}
@@ -355,7 +418,7 @@ function saveViewCache(depot,data){try{sessionStorage.setItem(viewCacheKey(depot
 function ensureViewData(){if(!state.viewData)state.viewData={status:"ok",stock:{},history:{},version:APP_VERSION,latestSeq:state.latestSeq};if(!state.viewData.stock)state.viewData.stock={};if(!state.viewData.history)state.viewData.history={};return state.viewData;}
 function setLiveStatus(kind,text){const box=$("liveStatus"),label=$("liveStatusText");if(!box||!label)return;box.className="live-status "+kind;label.textContent=text;}
 function mergeStockPayload(j,depot=state.depot){const d=ensureViewData();d.stock[depot]=(j.stock&&j.stock[depot])||[];d.updated=j.updated||d.updated;d.catalogSource=j.catalogSource||d.catalogSource;d.version=j.version||d.version;d.latestSeq=Number(j.latestSeq||d.latestSeq||0);state.latestSeq=d.latestSeq;saveViewCache(state.depot,d);}
-function applyAffectedStock(rows){if(!Array.isArray(rows)||!rows.length)return;const d=ensureViewData(),list=d.stock[state.depot]||[];rows.forEach(r=>{const key=String(r.itemUid||r.ma||"");let idx=list.findIndex(x=>String(x.itemUid||x.ma||"")===key||String(x.ma)===String(r.ma));if(idx>=0)list[idx]={...list[idx],...r};else list.push(r);});d.stock[state.depot]=list;d.updated=new Date().toLocaleString("vi-VN");saveViewCache(state.depot,d);renderResults();renderSlip();if(state.mode==="view")renderView();}
+function applyAffectedStock(rows){if(!Array.isArray(rows)||!rows.length)return;const d=ensureViewData(),list=d.stock[state.depot]||[];rows.forEach(r=>{const key=String(r.itemUid||r.ma||"");let idx=list.findIndex(x=>String(x.itemUid||x.ma||"")===key||String(x.ma)===String(r.ma));if(idx>=0)list[idx]={...list[idx],...r};else list.push(r);});d.stock[state.depot]=list;d.updated=new Date().toLocaleString("vi-VN");saveViewCache(state.depot,d);renderResults();renderSlip();renderActiveScreen();}
 
 function stripAccent(s){
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
@@ -467,7 +530,7 @@ function setVersionState(version){
   state.versionOk=version===APP_VERSION;
   const sub=document.querySelector(".hd-sub");
   if(state.versionOk){
-    if(sub)sub.textContent="ICD Phúc Long — nhanh · đồng bộ gần realtime · v4.3.5";
+    if(sub)sub.textContent="ICD Phúc Long — thao tác trực tiếp · draft an toàn · v4.3.6";
   }else{
     if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
     if(!state.versionWarned){
@@ -488,7 +551,7 @@ $("ngay").max = localIsoDate(today);
 $("ngay").min = daysAgoIso(7);
 function selectedBackdateDays(id="ngay"){const v=$(id).value;if(!v)return 0;const d=new Date(v+"T00:00:00"),t=new Date();t.setHours(0,0,0,0);return Math.round((t-d)/86400000);}
 function renderBackdateHint(){const n=selectedBackdateDays();const box=$("backdateHint");if(n>0){box.textContent="Phiếu lùi "+n+" ngày · hệ thống vẫn lưu thời điểm tạo thực tế và ghi audit.";box.className="backdate-hint warn";}else{box.textContent="Có thể chọn ngày trong 7 ngày gần nhất.";box.className="backdate-hint";}}
-$("ngay").addEventListener("change",renderBackdateHint);renderBackdateHint();
+$("ngay").addEventListener("change",()=>{renderBackdateHint();scheduleDraftSave();});renderBackdateHint();
 
 $("btnLogin").onclick=async()=>{
   if(state.loginBusy)return;
@@ -517,64 +580,54 @@ $("btnLogin").onclick=async()=>{
 };
 $("loginPin").addEventListener("keydown",e=>{if(e.key==="Enter")$("btnLogin").click();});
 
-function segInit(id, key){
-  $(id).querySelectorAll("button").forEach(b=>{
-    b.onclick = ()=>{
-      $(id).querySelectorAll("button").forEach(x=>x.classList.remove("on"));
-      b.classList.add("on");
-      state[key] = b.dataset.v;
-      state.pendingRequest=null;
-      if(key==="depot"){
-        setDefaultSender();
-        state.viewData=null;state.latestSeq=0;state.historyOffset=0;state.historyHasMore=false;
-        state.slip={};
-        $("q").value="";
-      }
-      if(key==="type" && state.type==="DEXUAT") setAdjustMode(false);
-      renderSlipHead();
-      renderResults();
-      renderSlip();
-      if(key==="depot"){
-        restoreViewCache(state.depot);
-        if(requireSession(true)){refreshStock(true,true);startLivePolling(true);}
-      }else if(state.mode==="view") renderView();
-    };
+function updateDirectNav(){
+  document.querySelectorAll("#directNav button").forEach(b=>{
+    const sameScreen=b.dataset.screen===state.screen;
+    const sameType=state.screen!=="write"||b.dataset.type===state.type;
+    b.classList.toggle("on",sameScreen&&sameType);
   });
 }
-segInit("segDepot","depot");
-segInit("segType","type");
+function applyScreenClass(){
+  document.body.classList.toggle("screen-write",state.screen==="write");
+  document.body.classList.toggle("screen-stock",state.screen==="stock");
+  document.body.classList.toggle("screen-history",state.screen==="history");
+  updateDirectNav();renderDraftNotice();
+}
+async function switchScreen(screen,type){
+  if(state.screen==="write")saveCurrentDraft();
+  if(screen==="write"&&type&&type!==state.type){state.type=type;restoreCurrentDraft();}
+  state.screen=screen;applyScreenClass();renderSlipHead();renderActiveScreen();
+  if(screen==="stock")await loadStockScreen();
+  if(screen==="history"){state.historyUpdatePending=false;renderHistoryUpdate();await loadHistory(true);}
+}
+document.querySelectorAll("#directNav button").forEach(b=>{b.onclick=()=>switchScreen(b.dataset.screen,b.dataset.type||"");});
+
+$("segDepot").querySelectorAll("button").forEach(b=>{
+  b.onclick=async()=>{
+    if(b.dataset.v===state.depot)return;
+    if(state.screen==="write")saveCurrentDraft();
+    $("segDepot").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+    state.depot=b.dataset.v;state.pendingRequest=null;state.viewData=null;state.latestSeq=0;state.historyOffset=0;state.historyHasMore=false;state.historyUpdatePending=false;
+    $("q").value="";restoreViewCache(state.depot);restoreCurrentDraft();renderActiveScreen();
+    if(!requireSession(true))return;
+    if(state.screen==="history")await loadHistory(true);else await refreshStock(true,true);
+    startLivePolling(true);
+  };
+});
 
 function setDefaultSender(){
-  const v=state.depot==="DP1" ? "Quỳnh (DP1)" : "Tâm (DP3)";
-  $("nguoi").value=v;
-
+  $("nguoi").value=state.depot==="DP1"?"Quỳnh (DP1)":"Tâm (DP3)";
 }
 setDefaultSender();
 
-function isAdjustOn(){
-  return state.type!=="DEXUAT" && $("adjustChk").checked;
-}
+function isAdjustOn(){return state.type!=="DEXUAT"&&$("adjustChk").checked;}
 function setAdjustMode(on){
-  on = !!on && state.type!=="DEXUAT";
-  $("adjustChk").checked = on;
-  document.body.classList.toggle("adjusting", on);
-  $("adjustRow").classList.toggle("on", on);
-  $("adjustDetail").classList.toggle("on", on);
-  if(!on) $("adjustReason").value="";
-  Object.values(state.slip).forEach(r=>{r.qty=Math.max(1,Math.abs(parseInt(r.qty,10)||1));});
-  renderSlipHead();renderResults();renderSlip();
+  on=!!on&&state.type!=="DEXUAT";$("adjustChk").checked=on;
+  document.body.classList.toggle("adjusting",on);$("adjustRow").classList.toggle("on",on);$("adjustDetail").classList.toggle("on",on);
+  if(!on)$("adjustReason").value="";Object.values(state.slip).forEach(r=>{r.qty=Math.max(1,Math.abs(parseInt(r.qty,10)||1));});
+  renderSlipHead();renderResults();renderSlip();scheduleDraftSave();
 }
-$("adjustChk").onchange = ()=>setAdjustMode($("adjustChk").checked);
-
-// Mode switch: write / view
- document.querySelectorAll("#modeSwitch button").forEach(b=>{
-  b.onclick = ()=>{
-    document.querySelectorAll("#modeSwitch button").forEach(x=>x.classList.remove("on"));
-    b.classList.add("on");state.mode=b.dataset.m;
-    document.body.classList.toggle("viewing",state.mode==="view");
-    renderSlipHead();if(state.mode==="view")loadView();
-  };
-});
+$("adjustChk").onchange=()=>setAdjustMode($("adjustChk").checked);
 
 function typeLabel(){ return state.type==="XUAT"?"XUẤT":(state.type==="NHAP"?"NHẬP":"ĐỀ XUẤT"); }
 function renderSlipHead(){
@@ -582,7 +635,7 @@ function renderSlipHead(){
   $("slipTitle").textContent = "PHIẾU " + adj + typeLabel() + " — " + state.depot;
   document.body.classList.toggle("dexuat", state.type==="DEXUAT");
   $("note").placeholder = state.type==="DEXUAT" ? "V/v — lý do đề xuất (nên ghi rõ)" : (isAdjustOn()?"Ghi chú nguyên nhân điều chỉnh (bắt buộc)":"Ghi chú (không bắt buộc)");
-  $("newMaterialBar").classList.toggle("on",state.mode==="write"&&(state.type==="NHAP"||state.type==="DEXUAT"));
+  $("newMaterialBar").classList.toggle("on",state.screen==="write"&&(state.type==="NHAP"||state.type==="DEXUAT"));
 }
 
 function stockItem(ma){
@@ -627,7 +680,7 @@ async function refreshStock(silent,bootstrap=false){
     const source=j.catalogSource?" · danh mục "+j.catalogSource:"";
     $("sessionNote").innerHTML="<b>Phiên đăng nhập:</b> "+state.depot+" · token chỉ lưu trong tab này"+source;
     state.lastSyncAt=j.updated||new Date().toLocaleTimeString("vi-VN");setLiveStatus("online","Trực tuyến · cập nhật "+state.lastSyncAt);
-    renderResults();renderSlip();if(state.mode==="view")renderView();return true;
+    renderResults();renderSlip();renderActiveScreen();return true;
   }catch(err){
     const hasCache=!!(state.viewData&&state.viewData.stock&&state.viewData.stock[state.depot]);
     setLiveStatus(hasCache?"stale":"offline",(hasCache?"Mất kết nối · đang dùng dữ liệu cũ":"Mất kết nối"));
@@ -649,7 +702,10 @@ async function livePoll(){
     if(j.changed||j.resetRequired){
       const stockChanged=j.resetRequired||(j.events||[]).some(e=>e.stockChanged===true);
       if(stockChanged)await refreshStock(true,false);
-      if(state.mode==="view")await loadHistory(true);
+      if(state.screen==="history"){
+        if(historyAtTop())await loadHistory(true);
+        else{state.historyUpdatePending=true;renderHistoryUpdate();}
+      }
     }
     state.lastSyncAt=j.serverTime||new Date().toLocaleTimeString("vi-VN");setLiveStatus("online","Trực tuyến · cập nhật "+state.lastSyncAt);
   }catch(err){state.pollDelay=Math.min(60000,state.pollDelay*2);const hasCache=!!state.viewData;setLiveStatus(hasCache?"stale":"offline","Mất kết nối · thử lại sau "+Math.round(state.pollDelay/1000)+" giây");}
@@ -668,7 +724,7 @@ async function loadHistory(reset=true){
     if(j.status!=="ok")throw new Error(j.message||"Không tải được lịch sử.");if(requestDepot!==state.depot)return false;
     const d=ensureViewData(),rows=Array.isArray(j.rows)?j.rows:[];
     if(reset)d.historyRows=rows;else d.historyRows=(d.historyRows||[]).concat(rows);
-    state.historyOffset=Number(j.nextOffset||d.historyRows.length);state.historyHasMore=j.hasMore===true;d.latestSeq=Number(j.latestSeq||d.latestSeq||0);state.latestSeq=Math.max(state.latestSeq,d.latestSeq);renderView();return true;
+    state.historyOffset=Number(j.nextOffset||d.historyRows.length);state.historyHasMore=j.hasMore===true;d.latestSeq=Number(j.latestSeq||d.latestSeq||0);state.latestSeq=Math.max(state.latestSeq,d.latestSeq);if(reset){state.historyUpdatePending=false;renderHistoryUpdate();}renderHistory();return true;
   }catch(err){$("vwHist").className="vw-load";$("vwHist").textContent="Không tải được lịch sử — kiểm tra mạng.";return false;}
   finally{state.historyLoading=false;$("btnMoreHistory").hidden=!state.historyHasMore;}
 }
@@ -720,9 +776,9 @@ function addItem(it){
   if(!state.slip[it.ma]){
     state.slip[it.ma] = {key:it.ma,ma:it.ma,ten:it.ten,dvt:it.dvt,qty:1,isNew:false,catalogStatus:it.catalogStatus||"ACTIVE"};
   }
-  renderSlip(); renderResults();
+  renderSlip(); renderResults(); scheduleDraftSave();
 }
-function removeItem(key){ delete state.slip[key]; renderSlip(); renderResults(); }
+function removeItem(key){ delete state.slip[key]; renderSlip(); renderResults(); scheduleDraftSave(); }
 function setQty(key,v){
   const row=state.slip[key],ma=row?row.ma:key;v=parseInt(v,10);
   if(isNaN(v)||v<=0)v=1;if(v>9999)v=9999;
@@ -732,7 +788,7 @@ function setQty(key,v){
       if(v>ton){alert("Số lượng xuất tối đa theo tồn hiện tại là "+ton+" "+s.dvt+".");v=ton;}
     }
   }
-  state.slip[key].qty=v;renderSlip();
+  state.slip[key].qty=v;renderSlip();scheduleDraftSave();
 }
 
 function renderSlip(){
@@ -781,8 +837,13 @@ $("btnAddNewMaterial").onclick=()=>{
   if(!name){alert("Tên vật tư là bắt buộc.");return;}if(!unit){alert("Đơn vị tính là bắt buộc.");return;}if(!Number.isInteger(qty)||qty<=0||qty>9999){alert("Số lượng phải là số nguyên từ 1 đến 9999.");return;}
   if(proposedItemCode&&!/^MRVT\d{2,4}$/.test(proposedItemCode)){alert("Mã vật tư nếu điền phải dạng MRVTxx/MRVTxxx.");return;}
   const similar=similarCatalogItem_(name,unit);if(similar){const useExisting=confirm("Tìm thấy vật tư gần giống: "+similar.ma+" — "+similar.ten+" ("+similar.dvt+").\nOK: dùng vật tư hiện có.\nCancel: vẫn tạo vật tư mới.");if(useExisting){addItem(similar);setQty(similar.ma,qty);$("ovNewMaterial").classList.remove("show");return;}}
-  const key=randomId("newitem");state.slip[key]={key,ma:key,clientItemId:key,isNew:true,ten:name,dvt:unit,qty,newName:name,newUnit:unit,proposedItemCode,proposedAccountingCode,newItemNote:$("newItemNote").value.trim(),catalogStatus:"PENDING_CATALOG"};state.pendingRequest=null;$("ovNewMaterial").classList.remove("show");renderSlip();renderResults();
+  const key=randomId("newitem");state.slip[key]={key,ma:key,clientItemId:key,isNew:true,ten:name,dvt:unit,qty,newName:name,newUnit:unit,proposedItemCode,proposedAccountingCode,newItemNote:$("newItemNote").value.trim(),catalogStatus:"PENDING_CATALOG"};state.pendingRequest=null;$("ovNewMaterial").classList.remove("show");renderSlip();renderResults();scheduleDraftSave();
 };
+
+$("note").addEventListener("input",scheduleDraftSave);
+$("nguoi").addEventListener("change",scheduleDraftSave);
+$("adjustReason").addEventListener("change",scheduleDraftSave);
+$("btnClearDraft").onclick=()=>{if(confirm("Xóa toàn bộ phiếu "+draftTypeLabel(state.type)+" "+state.depot+" đang lập?")){resetAll();}};
 
 $("btnSend").onclick = async ()=>{
   let list = Object.values(state.slip);
@@ -851,6 +912,8 @@ $("btnConfirm").onclick = async ()=>{
     }
     if(j2.status==="ok"){
       clearPendingRequest();
+      state.suppressDraftSave=true;state.slip={};$("note").value="";$("q").value="";$("adjustReason").value="";$("adjustChk").checked=false;$("ngay").value=localIsoDate(new Date());
+      document.body.classList.remove("adjusting");$("adjustRow").classList.remove("on");$("adjustDetail").classList.remove("on");state.suppressDraftSave=false;clearCurrentDraftStorage();renderBackdateHint();renderSlipHead();renderResults();renderSlip();
       if(Number(j2.latestSeq||0)>0){state.latestSeq=Number(j2.latestSeq);const d=ensureViewData();d.latestSeq=state.latestSeq;}
       applyAffectedStock(j2.affectedStock||[]);startLivePolling(true);
       $("doneIcon").textContent="✅";
@@ -878,72 +941,43 @@ function showFail(message){
   $("btnDoneAction").onclick=()=>{$("ovDone").classList.remove("show");};
 }
 function resetAll(){
-  $("docLinkWrap").innerHTML="";
-  $("ovDone").classList.remove("show");
-  state.slip={};state.sending=false;$("note").value="";$("q").value="";$("adjustReason").value="";
-  clearPendingRequest();
-  setAdjustMode(false);
-  refreshStock(true);
+  $("docLinkWrap").innerHTML="";$("ovDone").classList.remove("show");
+  state.suppressDraftSave=true;state.slip={};state.sending=false;$("note").value="";$("q").value="";$("adjustReason").value="";$("ngay").value=localIsoDate(new Date());
+  clearPendingRequest();$("adjustChk").checked=false;document.body.classList.remove("adjusting");$("adjustRow").classList.remove("on");$("adjustDetail").classList.remove("on");
+  state.suppressDraftSave=false;clearCurrentDraftStorage();renderBackdateHint();renderSlipHead();renderResults();renderSlip();refreshStock(true);
 }
 
 
-// ===== XEM KHO =====
-async function loadView(){
-  if(!state.viewData){$("vwStock").className="vw-load";$("vwStock").textContent="Đang tải tồn kho…";}
-  renderView();const ok=await refreshStock(true,false);if(!ok&&!state.viewData)$("vwStock").textContent="Không tải được — kiểm tra mạng.";
-  await loadHistory(true);
+// ===== TỒN / LỊCH SỬ TÁCH ĐỘC LẬP =====
+async function loadStockScreen(){
+  renderStock();const ok=await refreshStock(true,false);if(!ok&&!(state.viewData&&state.viewData.stock))$("vwStock").textContent="Không tải được — kiểm tra mạng.";
 }
-$("vwq").addEventListener("input", ()=>renderView());
-let vwType = "all";
-document.querySelectorAll("#vwTypes button").forEach(b=>{
-  b.onclick = ()=>{
-    document.querySelectorAll("#vwTypes button").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");
-    vwType = b.dataset.t;
-    loadHistory(true);
-  };
-});
-$("vwDate").addEventListener("change", ()=>{
-  $("vwDateAll").classList.toggle("active", !$("vwDate").value);
-  loadHistory(true);
-});
-$("vwDateAll").onclick = ()=>{
-  $("vwDate").value = "";
-  $("vwDateAll").classList.add("active");
-  loadHistory(true);
-};
-
+$("vwq").addEventListener("input",renderStock);
+let vwType="all";
+document.querySelectorAll("#vwTypes button").forEach(b=>{b.onclick=()=>{document.querySelectorAll("#vwTypes button").forEach(x=>x.classList.remove("active"));b.classList.add("active");vwType=b.dataset.t;loadHistory(true);};});
+$("vwDate").addEventListener("change",()=>{$("vwDateAll").classList.toggle("active",!$("vwDate").value);loadHistory(true);});
+$("vwDateAll").onclick=()=>{$("vwDate").value="";$("vwDateAll").classList.add("active");loadHistory(true);};
 $("btnMoreHistory").onclick=()=>loadHistory(false);
-function renderView(){
-  const d = state.viewData; if(!d){$("vwStock").innerHTML='<div class="vw-load">Chưa có dữ liệu tồn.</div>';$("vwHist").innerHTML='<div class="vw-load">—</div>';return;}
-  const dp = state.depot;
-  $("vwStockTitle").textContent = "TỒN KHO " + dp + (d.updated ? " — cập nhật " + d.updated : "");
-  const q = stripAccent($("vwq").value.trim());
-  const rows = (d.stock[dp]||[]).filter(r=>!q || stripAccent(r.ten+" "+r.ma).includes(q));
-  const box = $("vwStock"); box.className=""; box.innerHTML="";
-  if(!rows.length){ box.innerHTML='<div class="vw-load">Không có vật tư khớp.</div>'; }
-  rows.forEach(r=>{
-    const div=document.createElement("div");
-    const low = r.min>0 && r.ton<=r.min;
-    div.className="stock-row"+(r.ton<=0?" zero":"")+(low?" low":"");
-    div.innerHTML='<div><div class="nm">'+r.ten+(r.catalogStatus&&r.catalogStatus!=="ACTIVE"?'<span class="pending-tag">'+escapeHtml(r.catalogStatus)+'</span>':'')+(low?'<span class="low-tag">⚠ DƯỚI NGƯỠNG</span>':'')+'</div><div class="cd">'+r.ma+(r.macu?' ('+r.macu+')':'')+' · Nhập '+r.nhap+' · Xuất '+r.xuat+(r.min>0?' · Min '+r.min:'')+'</div></div>'
-                 +'<div class="ton">'+r.ton+' <small>'+r.dvt+'</small></div>';
-    box.appendChild(div);
-  });
-  let hist=Array.isArray(d.historyRows)?d.historyRows:[];
-  const hb=$("vwHist"); hb.className=""; hb.innerHTML="";
-  if(!hist.length){ hb.innerHTML='<div class="vw-load">'+(($("vwDate").value||vwType!=="all")?"Không có phiếu nào khớp bộ lọc.":"Chưa có phiếu nào.")+'</div>'; }
-  hist.forEach(h=>{
-    const div=document.createElement("div");
-    div.className="hist-row"+(h.sl<0?" neg":"");
-    const isAdj=String(h.ghichu||"").startsWith("[ĐIỀU CHỈNH TỒN:")||String(h.ghichu||"").startsWith("[ĐIỀU CHỈNH]")||String(h.ghichu||"").startsWith("[KIỂM KÊ")||String(h.ghichu||"").startsWith("[ĐIỀU CHỈNH NHANH");
-    div.innerHTML='<div class="top"><span><span class="hist-tag '+h.t+'">'+(h.t==="x"?"XUẤT":(h.t==="n"?"NHẬP":"ĐỀ XUẤT"))+'</span>'+(isAdj?'<span class="backdated-tag">ĐIỀU CHỈNH</span>':'')+h.vt+'</span><b>'+(h.sl>0?h.sl:h.sl)+'</b></div>'
-                 +'<div class="sub">Ngày '+h.ngay+(h.isBackdated?' <span class="backdated-tag">LÙI '+h.backdatedDays+' NGÀY</span>':'')+' · gửi lúc '+h.ts+(h.nguoi?' · <span class="who">'+h.nguoi+'</span>':'')+(h.catalogStatus&&h.catalogStatus!=="ACTIVE"?' · <span class="pending-tag">'+escapeHtml(h.catalogStatus)+'</span>':'')+(h.ghichu?' · '+h.ghichu:'')+(h.txnId?' · '+h.txnId:'')+'</div>';
-    hb.appendChild(div);
-  });
+$("btnRefreshHistory").onclick=()=>loadHistory(true);
+function historyAtTop(){return window.scrollY<180;}
+function renderHistoryUpdate(){$("historyUpdate").classList.toggle("show",state.screen==="history"&&state.historyUpdatePending);}
+function renderActiveScreen(){if(state.screen==="stock")renderStock();else if(state.screen==="history")renderHistory();else{renderResults();renderSlip();renderDraftNotice();}}
+function renderStock(){
+  const d=state.viewData,dp=state.depot;if(!d||!d.stock){$("vwStock").innerHTML='<div class="vw-load">Chưa có dữ liệu tồn.</div>';return;}
+  $("vwStockTitle").textContent="TỒN KHO "+dp+(d.updated?" — cập nhật "+d.updated:"");
+  const q=stripAccent($("vwq").value.trim()),rows=(d.stock[dp]||[]).filter(r=>!q||stripAccent(r.ten+" "+r.ma).includes(q));
+  const box=$("vwStock");box.className="";box.innerHTML="";if(!rows.length)box.innerHTML='<div class="vw-load">Không có vật tư khớp.</div>';
+  rows.forEach(r=>{const div=document.createElement("div"),low=r.min>0&&r.ton<=r.min;div.className="stock-row"+(r.ton<=0?" zero":"")+(low?" low":"");
+    div.innerHTML='<div><div class="nm">'+r.ten+(r.catalogStatus&&r.catalogStatus!=="ACTIVE"?'<span class="pending-tag">'+escapeHtml(r.catalogStatus)+'</span>':'')+(low?'<span class="low-tag">⚠ DƯỚI NGƯỠNG</span>':'')+'</div><div class="cd">'+r.ma+(r.macu?' ('+r.macu+')':'')+' · Nhập '+r.nhap+' · Xuất '+r.xuat+(r.min>0?' · Min '+r.min:'')+'</div></div><div class="ton">'+r.ton+' <small>'+r.dvt+'</small></div>';box.appendChild(div);});
+}
+function renderHistory(){
+  renderHistoryUpdate();const d=state.viewData||{},hist=Array.isArray(d.historyRows)?d.historyRows:[],hb=$("vwHist");hb.className="";hb.innerHTML="";
+  if(!hist.length)hb.innerHTML='<div class="vw-load">'+(($("vwDate").value||vwType!=="all")?"Không có phiếu nào khớp bộ lọc.":"Chưa có phiếu nào.")+'</div>';
+  hist.forEach(h=>{const div=document.createElement("div");div.className="hist-row"+(h.sl<0?" neg":" ");const isAdj=String(h.ghichu||"").startsWith("[ĐIỀU CHỈNH TỒN:")||String(h.ghichu||"").startsWith("[ĐIỀU CHỈNH]")||String(h.ghichu||"").startsWith("[KIỂM KÊ")||String(h.ghichu||"").startsWith("[ĐIỀU CHỈNH NHANH");
+    div.innerHTML='<div class="top"><span><span class="hist-tag '+h.t+'">'+(h.t==="x"?"XUẤT":(h.t==="n"?"NHẬP":"ĐỀ XUẤT"))+'</span>'+(isAdj?'<span class="backdated-tag">ĐIỀU CHỈNH</span>':'')+h.vt+'</span><b>'+h.sl+'</b></div><div class="sub">Ngày '+h.ngay+(h.isBackdated?' <span class="backdated-tag">LÙI '+h.backdatedDays+' NGÀY</span>':'')+' · gửi lúc '+h.ts+(h.nguoi?' · <span class="who">'+h.nguoi+'</span>':'')+(h.catalogStatus&&h.catalogStatus!=="ACTIVE"?' · <span class="pending-tag">'+escapeHtml(h.catalogStatus)+'</span>':'')+(h.ghichu?' · '+h.ghichu:'')+(h.txnId?' · '+h.txnId:'')+'</div>';hb.appendChild(div);});
 }
 
-renderSlip(); renderSlipHead();
+document.body.classList.add("screen-write");updateDirectNav();restoreCurrentDraft();renderSlip();renderSlipHead();renderDraftNotice();
 if(requireSession(false)){restoreViewCache(state.depot);refreshStock(true,true);startLivePolling(true);}else showLogin("");
 </script>
 </body>
