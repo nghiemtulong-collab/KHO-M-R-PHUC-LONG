@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.2 BACKDATED + CATALOG INBOX)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.5 LIVE SNAPSHOT)</title>
 <style>
 :root{
   --navy:#14263F; --navy-2:#1F3864; --amber:#F5A623; --amber-dark:#D98E0B;
@@ -15,7 +12,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{font-family:'Be Vietnam Pro',system-ui,sans-serif;background:var(--paper);color:var(--ink);font-size:16px;line-height:1.45}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--paper);color:var(--ink);font-size:16px;line-height:1.45}
 .wrap{max-width:520px;margin:0 auto;padding:0 14px 120px}
 
 /* Header */
@@ -165,6 +162,7 @@ body.dexuat .adjust-detail{display:none!important}
 .vw-types button.active{background:var(--navy-2);color:var(--white);border-color:var(--navy-2)}
 
 
+.live-status{margin-top:7px;font-size:11.5px;color:#B8C4D6;display:flex;align-items:center;gap:6px}.live-dot{width:8px;height:8px;border-radius:50%;background:#9CA3AF;display:inline-block}.live-status.online .live-dot{background:#34D399}.live-status.syncing .live-dot{background:#F5A623}.live-status.offline .live-dot{background:#EF4444}.live-status.stale .live-dot{background:#F59E0B}.more-wrap{text-align:center;margin:10px 0 18px}.more-btn{border:1.5px solid var(--line);border-radius:10px;background:var(--white);font-family:inherit;font-weight:700;padding:10px 18px;color:var(--navy-2);cursor:pointer}.more-btn[hidden]{display:none}
 
 </style>
 </head>
@@ -172,7 +170,8 @@ body.dexuat .adjust-detail{display:none!important}
 <header>
   <div class="hd-inner">
     <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
-    <div class="hd-sub">ICD Phúc Long — thao tác đơn giản · v4.3.4</div>
+    <div class="hd-sub">ICD Phúc Long — nhanh · đồng bộ gần realtime · v4.3.5</div>
+    <div id="liveStatus" class="live-status stale"><span class="live-dot"></span><span id="liveStatusText">Đang khởi tạo…</span></div>
     <div class="controls">
       <div class="seg" id="segDepot">
         <button data-v="DP1" class="on">Tổ DP1</button>
@@ -256,6 +255,7 @@ body.dexuat .adjust-detail{display:none!important}
       <button id="vwDateAll" class="active">Mọi ngày</button>
     </div>
     <div id="vwHist" class="vw-load">—</div>
+    <div class="more-wrap"><button id="btnMoreHistory" class="more-btn" hidden>Xem thêm</button></div>
   </div>
 
 </div>
@@ -327,29 +327,35 @@ body.dexuat .adjust-detail{display:none!important}
 <script>
 // ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
-const APP_VERSION="2026.07.23-MR-v4.3.4-STOCK-COUNT-REMOVAL-HF3";
+const APP_VERSION="2026.07.24-MR-v4.3.5-LIVE-SNAPSHOT-HF4";
 const REQUEST_TIMEOUT_MS = 35000;
 // =================================================================================
 
 const state = {
   depot:"DP1", type:"XUAT", slip:{}, mode:"write", viewData:null,
   versionOk:false, sending:false, pendingRequest:null, versionWarned:false,
-  clientId:"", loginBusy:false, newMaterialDraft:null
+  clientId:"", loginBusy:false, newMaterialDraft:null, latestSeq:0,
+  pollTimer:null,pollBusy:false,pollDelay:10000,lastSyncAt:"",historyOffset:0,historyHasMore:false,historyLoading:false
 };
 
-function viewCacheKey(depot){return "mr_kho_view_cache_v433_"+String(depot||"").toUpperCase();}
+function viewCacheKey(depot){return "mr_kho_view_cache_v435_"+String(depot||"").toUpperCase();}
 function restoreViewCache(depot){
   try{
     const raw=JSON.parse(sessionStorage.getItem(viewCacheKey(depot))||"null");
     if(!raw||!raw.savedAt||!raw.data)return false;
     if(Date.now()-Number(raw.savedAt)>10*60*1000)return false;
-    state.viewData=raw.data;
+    state.viewData=raw.data;state.latestSeq=Number(raw.data.latestSeq||0);
     if(raw.data.version)setVersionState(raw.data.version);
     renderResults();renderSlip();if(state.mode==="view")renderView();
+    setLiveStatus("stale","Đang dùng dữ liệu lưu lúc "+new Date(raw.savedAt).toLocaleTimeString("vi-VN"));
     return true;
   }catch(_){return false;}
 }
 function saveViewCache(depot,data){try{sessionStorage.setItem(viewCacheKey(depot),JSON.stringify({savedAt:Date.now(),data}));}catch(_){}}
+function ensureViewData(){if(!state.viewData)state.viewData={status:"ok",stock:{},history:{},version:APP_VERSION,latestSeq:state.latestSeq};if(!state.viewData.stock)state.viewData.stock={};if(!state.viewData.history)state.viewData.history={};return state.viewData;}
+function setLiveStatus(kind,text){const box=$("liveStatus"),label=$("liveStatusText");if(!box||!label)return;box.className="live-status "+kind;label.textContent=text;}
+function mergeStockPayload(j,depot=state.depot){const d=ensureViewData();d.stock[depot]=(j.stock&&j.stock[depot])||[];d.updated=j.updated||d.updated;d.catalogSource=j.catalogSource||d.catalogSource;d.version=j.version||d.version;d.latestSeq=Number(j.latestSeq||d.latestSeq||0);state.latestSeq=d.latestSeq;saveViewCache(state.depot,d);}
+function applyAffectedStock(rows){if(!Array.isArray(rows)||!rows.length)return;const d=ensureViewData(),list=d.stock[state.depot]||[];rows.forEach(r=>{const key=String(r.itemUid||r.ma||"");let idx=list.findIndex(x=>String(x.itemUid||x.ma||"")===key||String(x.ma)===String(r.ma));if(idx>=0)list[idx]={...list[idx],...r};else list.push(r);});d.stock[state.depot]=list;d.updated=new Date().toLocaleString("vi-VN");saveViewCache(state.depot,d);renderResults();renderSlip();if(state.mode==="view")renderView();}
 
 function stripAccent(s){
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
@@ -461,7 +467,7 @@ function setVersionState(version){
   state.versionOk=version===APP_VERSION;
   const sub=document.querySelector(".hd-sub");
   if(state.versionOk){
-    if(sub)sub.textContent="ICD Phúc Long — thao tác đơn giản · v4.3.4";
+    if(sub)sub.textContent="ICD Phúc Long — nhanh · đồng bộ gần realtime · v4.3.5";
   }else{
     if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
     if(!state.versionWarned){
@@ -504,7 +510,7 @@ $("btnLogin").onclick=async()=>{
     }
     saveAccessToken(state.depot,j.accessToken);
     $("loginPin").value="";$("ovLogin").classList.remove("show");
-    restoreViewCache(state.depot); await refreshStock(false);
+    restoreViewCache(state.depot); await refreshStock(false,true); startLivePolling(true);
   }catch(err){
     $("loginErr").textContent="Không kết nối được backend. Kiểm tra mạng rồi thử lại.";$("loginErr").style.display="block";
   }finally{state.loginBusy=false;$("btnLogin").disabled=false;}
@@ -520,7 +526,7 @@ function segInit(id, key){
       state.pendingRequest=null;
       if(key==="depot"){
         setDefaultSender();
-        state.viewData=null;
+        state.viewData=null;state.latestSeq=0;state.historyOffset=0;state.historyHasMore=false;
         state.slip={};
         $("q").value="";
       }
@@ -530,7 +536,7 @@ function segInit(id, key){
       renderSlip();
       if(key==="depot"){
         restoreViewCache(state.depot);
-        if(requireSession(true)) refreshStock(true);
+        if(requireSession(true)){refreshStock(true,true);startLivePolling(true);}
       }else if(state.mode==="view") renderView();
     };
   });
@@ -610,35 +616,61 @@ function validateSlipStock(list){
   }
   return true;
 }
-async function refreshStock(silent){
-  if(!requireSession(!silent))return false;
+async function refreshStock(silent,bootstrap=false){
+  if(!requireSession(!silent))return false;const requestDepot=state.depot;
+  setLiveStatus("syncing","Đang đồng bộ tồn…");
   try{
-    const j=await postJson({
-      type:"VIEW",depot:state.depot,accessToken:getAccessToken(state.depot),
-      clientId:state.clientId,clientVersion:APP_VERSION
-    });
-    if(isAccessError(j.status)){
-      clearAccessToken(state.depot);state.versionOk=false;
-      showLogin(j.message||"Phiên đăng nhập đã hết hạn.");
-      return false;
-    }
+    const j=await postJson({type:bootstrap?"BOOTSTRAP":"STOCK_VIEW",depot:requestDepot,accessToken:getAccessToken(requestDepot),clientId:state.clientId,clientVersion:APP_VERSION});
+    if(isAccessError(j.status)){clearAccessToken(requestDepot);state.versionOk=false;stopLivePolling();showLogin(j.message||"Phiên đăng nhập đã hết hạn.");return false;}
     if(j.status!=="ok")throw new Error(j.message||"Không tải được tồn kho.");
-    setVersionState(j.version);
-    if(!state.versionOk)return false;
-    state.viewData=j;saveViewCache(state.depot,j);
+    setVersionState(j.version);if(!state.versionOk)return false;if(requestDepot!==state.depot)return true;mergeStockPayload(j,requestDepot);
     const source=j.catalogSource?" · danh mục "+j.catalogSource:"";
     $("sessionNote").innerHTML="<b>Phiên đăng nhập:</b> "+state.depot+" · token chỉ lưu trong tab này"+source;
-    renderResults();renderSlip();
-    if(state.mode==="view")renderView();
-    return true;
+    state.lastSyncAt=j.updated||new Date().toLocaleTimeString("vi-VN");setLiveStatus("online","Trực tuyến · cập nhật "+state.lastSyncAt);
+    renderResults();renderSlip();if(state.mode==="view")renderView();return true;
   }catch(err){
-    state.versionOk=false;
-    const sub=document.querySelector(".hd-sub");
-    if(sub)sub.textContent="Không kết nối backend — tạm khóa gửi phiếu";
-    renderSlip();
-    if(!silent)alert("Không tải được tồn kho: "+(err&&err.message?err.message:err));
-    return false;
+    const hasCache=!!(state.viewData&&state.viewData.stock&&state.viewData.stock[state.depot]);
+    setLiveStatus(hasCache?"stale":"offline",(hasCache?"Mất kết nối · đang dùng dữ liệu cũ":"Mất kết nối"));
+    if(!hasCache){state.versionOk=false;const sub=document.querySelector(".hd-sub");if(sub)sub.textContent="Không kết nối backend — tạm khóa gửi phiếu";renderSlip();}
+    if(!silent)alert("Không tải được tồn kho: "+(err&&err.message?err.message:err));return false;
   }
+}
+function stopLivePolling(){if(state.pollTimer){clearTimeout(state.pollTimer);state.pollTimer=null;}}
+function scheduleLivePoll(ms){stopLivePolling();if(document.visibilityState!=="visible"||!getAccessToken(state.depot))return;state.pollTimer=setTimeout(livePoll,Math.max(1000,ms||state.pollDelay));}
+function startLivePolling(immediate=false){state.pollDelay=10000;scheduleLivePoll(immediate?500:state.pollDelay);}
+async function livePoll(){
+  const requestDepot=state.depot;if(state.pollBusy||document.visibilityState!=="visible"||!getAccessToken(state.depot)){scheduleLivePoll(state.pollDelay);return;}
+  state.pollBusy=true;
+  try{
+    const j=await postJson({type:"LIVE_POLL",depot:requestDepot,sinceSeq:state.latestSeq,accessToken:getAccessToken(requestDepot),clientId:state.clientId,clientVersion:APP_VERSION});
+    if(isAccessError(j.status)){clearAccessToken(requestDepot);stopLivePolling();showLogin(j.message||"Phiên đăng nhập đã hết hạn.");return;}
+    if(j.status!=="ok")throw new Error(j.message||"Live poll lỗi.");if(requestDepot!==state.depot)return;
+    setVersionState(j.version);const prior=state.latestSeq;state.latestSeq=Number(j.latestSeq||prior);state.pollDelay=10000;
+    if(j.changed||j.resetRequired){
+      const stockChanged=j.resetRequired||(j.events||[]).some(e=>e.stockChanged===true);
+      if(stockChanged)await refreshStock(true,false);
+      if(state.mode==="view")await loadHistory(true);
+    }
+    state.lastSyncAt=j.serverTime||new Date().toLocaleTimeString("vi-VN");setLiveStatus("online","Trực tuyến · cập nhật "+state.lastSyncAt);
+  }catch(err){state.pollDelay=Math.min(60000,state.pollDelay*2);const hasCache=!!state.viewData;setLiveStatus(hasCache?"stale":"offline","Mất kết nối · thử lại sau "+Math.round(state.pollDelay/1000)+" giây");}
+  finally{state.pollBusy=false;scheduleLivePoll(state.pollDelay);}
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")stopLivePolling();else startLivePolling(true);});
+window.addEventListener("online",()=>startLivePolling(true));window.addEventListener("offline",()=>{stopLivePolling();setLiveStatus("offline","Mất kết nối mạng");});
+function backendHistoryType(){return vwType==="x"?"XUAT":(vwType==="n"?"NHAP":(vwType==="d"?"DEXUAT":"ALL"));}
+async function loadHistory(reset=true){
+  const requestDepot=state.depot;if(state.historyLoading||!requireSession(false))return false;state.historyLoading=true;
+  if(reset){state.historyOffset=0;state.historyHasMore=false;$("vwHist").className="vw-load";$("vwHist").textContent="Đang tải lịch sử…";}
+  try{
+    const df=$("vwDate").value,p=df?df.split("-"):[],dateVN=p.length===3?p[2]+"/"+p[1]+"/"+p[0]:"";
+    const j=await postJson({type:"HISTORY_VIEW",depot:requestDepot,historyType:backendHistoryType(),date:dateVN,limit:30,offset:reset?0:state.historyOffset,accessToken:getAccessToken(requestDepot),clientId:state.clientId,clientVersion:APP_VERSION});
+    if(isAccessError(j.status)){clearAccessToken(requestDepot);showLogin(j.message||"Phiên đăng nhập đã hết hạn.");return false;}
+    if(j.status!=="ok")throw new Error(j.message||"Không tải được lịch sử.");if(requestDepot!==state.depot)return false;
+    const d=ensureViewData(),rows=Array.isArray(j.rows)?j.rows:[];
+    if(reset)d.historyRows=rows;else d.historyRows=(d.historyRows||[]).concat(rows);
+    state.historyOffset=Number(j.nextOffset||d.historyRows.length);state.historyHasMore=j.hasMore===true;d.latestSeq=Number(j.latestSeq||d.latestSeq||0);state.latestSeq=Math.max(state.latestSeq,d.latestSeq);renderView();return true;
+  }catch(err){$("vwHist").className="vw-load";$("vwHist").textContent="Không tải được lịch sử — kiểm tra mạng.";return false;}
+  finally{state.historyLoading=false;$("btnMoreHistory").hidden=!state.historyHasMore;}
 }
 
 function renderResults(){
@@ -819,6 +851,8 @@ $("btnConfirm").onclick = async ()=>{
     }
     if(j2.status==="ok"){
       clearPendingRequest();
+      if(Number(j2.latestSeq||0)>0){state.latestSeq=Number(j2.latestSeq);const d=ensureViewData();d.latestSeq=state.latestSeq;}
+      applyAffectedStock(j2.affectedStock||[]);startLivePolling(true);
       $("doneIcon").textContent="✅";
       $("doneTitle").textContent=j2.duplicate?"Phiếu đã được ghi trước đó":"Đã gửi thành công";
       const loai=state.type==="XUAT"?"xuất":(state.type==="NHAP"?"nhập":"đề xuất");
@@ -855,13 +889,9 @@ function resetAll(){
 
 // ===== XEM KHO =====
 async function loadView(){
-  $("vwStock").className="vw-load"; $("vwStock").textContent="Đang tải dữ liệu kho…";
-  $("vwHist").className="vw-load"; $("vwHist").textContent="…";
-  const ok = await refreshStock(true);
-  if(!ok){
-    $("vwStock").textContent="Không tải được — kiểm tra mạng rồi bấm lại tab Xem kho.";
-    $("vwHist").textContent="—";
-  }
+  if(!state.viewData){$("vwStock").className="vw-load";$("vwStock").textContent="Đang tải tồn kho…";}
+  renderView();const ok=await refreshStock(true,false);if(!ok&&!state.viewData)$("vwStock").textContent="Không tải được — kiểm tra mạng.";
+  await loadHistory(true);
 }
 $("vwq").addEventListener("input", ()=>renderView());
 let vwType = "all";
@@ -870,21 +900,22 @@ document.querySelectorAll("#vwTypes button").forEach(b=>{
     document.querySelectorAll("#vwTypes button").forEach(x=>x.classList.remove("active"));
     b.classList.add("active");
     vwType = b.dataset.t;
-    renderView();
+    loadHistory(true);
   };
 });
 $("vwDate").addEventListener("change", ()=>{
   $("vwDateAll").classList.toggle("active", !$("vwDate").value);
-  renderView();
+  loadHistory(true);
 });
 $("vwDateAll").onclick = ()=>{
   $("vwDate").value = "";
   $("vwDateAll").classList.add("active");
-  renderView();
+  loadHistory(true);
 };
 
+$("btnMoreHistory").onclick=()=>loadHistory(false);
 function renderView(){
-  const d = state.viewData; if(!d) return;
+  const d = state.viewData; if(!d){$("vwStock").innerHTML='<div class="vw-load">Chưa có dữ liệu tồn.</div>';$("vwHist").innerHTML='<div class="vw-load">—</div>';return;}
   const dp = state.depot;
   $("vwStockTitle").textContent = "TỒN KHO " + dp + (d.updated ? " — cập nhật " + d.updated : "");
   const q = stripAccent($("vwq").value.trim());
@@ -899,19 +930,7 @@ function renderView(){
                  +'<div class="ton">'+r.ton+' <small>'+r.dvt+'</small></div>';
     box.appendChild(div);
   });
-  // history: merge XUAT+NHAP of current depot
-  const hx=(d.history["XUAT_"+dp]||[]).map(h=>({...h,t:"x"}));
-  const hn=(d.history["NHAP_"+dp]||[]).map(h=>({...h,t:"n"}));
-  const hd=(d.history["DEXUAT_"+dp]||[]).map(h=>({...h,t:"d"}));
-  let hist=[...hx,...hn,...hd].sort((a,b)=> (b.ts>a.ts?1:-1));
-  if(vwType!=="all") hist = hist.filter(h=>h.t===vwType);
-  const df = $("vwDate").value; // yyyy-mm-dd
-  if(df){
-    const p = df.split("-"); const dfVN = p[2]+"/"+p[1]+"/"+p[0]; // dd/MM/yyyy
-    hist = hist.filter(h=> h.ngay === dfVN);
-  } else {
-    hist = hist.slice(0,30); // không lọc: chỉ hiện 30 dòng gần nhất cho gọn
-  }
+  let hist=Array.isArray(d.historyRows)?d.historyRows:[];
   const hb=$("vwHist"); hb.className=""; hb.innerHTML="";
   if(!hist.length){ hb.innerHTML='<div class="vw-load">'+(($("vwDate").value||vwType!=="all")?"Không có phiếu nào khớp bộ lọc.":"Chưa có phiếu nào.")+'</div>'; }
   hist.forEach(h=>{
@@ -925,7 +944,7 @@ function renderView(){
 }
 
 renderSlip(); renderSlipHead();
-if(requireSession(false)){restoreViewCache(state.depot);refreshStock(true);}else showLogin("");
+if(requireSession(false)){restoreViewCache(state.depot);refreshStock(true,true);startLivePolling(true);}else showLogin("");
 </script>
 </body>
 </html>
