@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.6.2 FIELD UX STABILITY HF2)</title>
+<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.6.3 ESCAPEHTML RUNTIME HF3)</title>
 <style>
 :root{
   --navy:#14263F; --navy-2:#1F3864; --amber:#F5A623; --amber-dark:#D98E0B;
@@ -200,7 +200,7 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
 <header>
   <div class="hd-inner">
     <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
-    <div class="hd-sub">ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.6.2</div>
+    <div class="hd-sub">ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.6.3</div>
     <div id="liveStatus" class="live-status stale"><span class="live-dot"></span><span id="liveStatusText">Đang khởi tạo…</span></div>
     <div class="controls">
       <div class="seg" id="segDepot">
@@ -366,7 +366,7 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
 <script>
 // ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
-const APP_VERSION="2026.07.25-MR-v4.3.6.2-FIELD-UX-STABILITY-HF2";
+const APP_VERSION="2026.07.25-MR-v4.3.6.3-ESCAPEHTML-RUNTIME-HF3";
 const REQUEST_TIMEOUT_MS = 35000;
 // =================================================================================
 
@@ -443,6 +443,15 @@ function applyRuntimeMeta(j){if(!j)return;if(j.serverDate)state.serverDate=Strin
 function mergeStockPayload(j,depot=state.depot){applyRuntimeMeta(j);const d=ensureViewData();d.stock[depot]=(j.stock&&j.stock[depot])||[];d.updated=j.updated||d.updated;d.stockChangedAt=j.stockChangedAt||j.updated||d.stockChangedAt;d.stockVerifiedAt=j.stockVerifiedAt||d.stockVerifiedAt;state.stockChangedAt=d.stockChangedAt||state.stockChangedAt;state.stockVerifiedAt=d.stockVerifiedAt||state.stockVerifiedAt;d.catalogSource=j.catalogSource||d.catalogSource;d.version=j.version||d.version;d.latestSeq=Number(j.latestSeq||d.latestSeq||0);state.latestSeq=d.latestSeq;saveViewCache(depot,d);}
 function stockKey(r){return String((r&&r.itemUid)||(r&&r.ma)||"");}
 function applyAffectedStock(rows){if(!Array.isArray(rows)||!rows.length)return;const d=ensureViewData(),list=d.stock[state.depot]||[],changed=[];rows.forEach(r=>{const key=stockKey(r);let idx=list.findIndex(x=>stockKey(x)===key||String(x.ma)===String(r.ma));if(idx>=0)list[idx]={...list[idx],...r};else list.push(r);changed.push(String(r.ma||key));});d.stock[state.depot]=list;state.stockChangedAt=new Date().toLocaleString("vi-VN");d.stockChangedAt=state.stockChangedAt;saveViewCache(state.depot,d);renderResults();renderSlip();if(state.screen==="stock")patchStockCards(changed);}
+
+function escapeHtml(value){
+  return String(value == null ? "" : value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
 
 function stripAccent(s){
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
@@ -554,7 +563,7 @@ function setVersionState(version){
   state.versionOk=version===APP_VERSION;
   const sub=document.querySelector(".hd-sub");
   if(state.versionOk){
-    if(sub)sub.textContent="ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.6.2";
+    if(sub)sub.textContent="ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.6.3";
   }else{
     if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
     if(!state.versionWarned){
