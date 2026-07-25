@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.6.1 CONFIG + AUTH HF1)</title>
+<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.6.2 FIELD UX STABILITY HF2)</title>
 <style>
 :root{
   --navy:#14263F; --navy-2:#1F3864; --amber:#F5A623; --amber-dark:#D98E0B;
@@ -183,13 +183,24 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
 .history-update.show{display:flex}.history-update span{flex:1}.history-update button{border:0;border-radius:8px;background:var(--amber);color:var(--navy);font-family:inherit;font-weight:800;padding:8px 10px;cursor:pointer}
 .screen-title{font-weight:850;font-size:15px;color:var(--navy-2);margin:14px 0 8px}
 
+.stock-meta{font-size:12px;color:var(--muted);margin:-2px 0 8px;line-height:1.5}
+.stock-meta b{color:var(--navy-2)}
+.stock-count{font-size:12.5px;color:var(--muted);margin:8px 0;text-align:center}
+.stock-more-wrap{text-align:center;padding:8px 0 18px}
+.stock-more-btn{border:0;border-radius:10px;background:var(--navy-2);color:var(--white);font-family:inherit;font-weight:800;padding:11px 18px;cursor:pointer}
+.stock-row.updated{outline:2px solid var(--amber);animation:rowPulse 1.2s ease-out}
+@keyframes rowPulse{0%{background:#FFF2CC}100%{background:var(--white)}}
+.skeleton-row{height:67px;border-radius:10px;margin-bottom:7px;background:linear-gradient(90deg,#ece8df 25%,#f7f5f0 37%,#ece8df 63%);background-size:400% 100%;animation:skeletonMove 1.3s ease infinite}
+@keyframes skeletonMove{0%{background-position:100% 0}100%{background-position:0 0}}
+.date-row input.invalid{outline:2px solid #FF8A80;background:#2D1C26}
+
 </style>
 </head>
 <body>
 <header>
   <div class="hd-inner">
     <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
-    <div class="hd-sub">ICD Phúc Long — thao tác trực tiếp · draft an toàn · v4.3.6.1</div>
+    <div class="hd-sub">ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.6.2</div>
     <div id="liveStatus" class="live-status stale"><span class="live-dot"></span><span id="liveStatusText">Đang khởi tạo…</span></div>
     <div class="controls">
       <div class="seg" id="segDepot">
@@ -264,7 +275,10 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
     <div class="vw-note">Số tồn được đọc từ snapshot nhanh; phiếu nhập/xuất vẫn là nguồn dữ liệu gốc.</div>
     <div class="vw-search"><input type="search" id="vwq" placeholder="Tìm vật tư trong kho…" autocomplete="off"></div>
     <div class="vw-sec" id="vwStockTitle">TỒN KHO DP1</div>
+    <div id="vwStockMeta" class="stock-meta">Chưa xác nhận dữ liệu với server.</div>
+    <div id="vwStockCount" class="stock-count"></div>
     <div id="vwStock" class="vw-load">Bấm tab Tồn để tải dữ liệu…</div>
+    <div class="stock-more-wrap"><button id="btnMoreStock" class="stock-more-btn" hidden>Xem thêm 20</button></div>
   </div>
 
   <div class="history-screen" id="historyScreen">
@@ -352,7 +366,7 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
 <script>
 // ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
-const APP_VERSION="2026.07.25-MR-v4.3.6.1-CONFIG-AUTH-HF1";
+const APP_VERSION="2026.07.25-MR-v4.3.6.2-FIELD-UX-STABILITY-HF2";
 const REQUEST_TIMEOUT_MS = 35000;
 // =================================================================================
 
@@ -361,7 +375,9 @@ const state = {
   versionOk:false, sending:false, pendingRequest:null, versionWarned:false,
   clientId:"", loginBusy:false, newMaterialDraft:null, latestSeq:0,
   pollTimer:null,pollBusy:false,pollDelay:10000,lastSyncAt:"",historyOffset:0,historyHasMore:false,historyLoading:false,
-  historyUpdatePending:false,draftSaveTimer:null,suppressDraftSave:false
+  historyUpdatePending:false,draftSaveTimer:null,suppressDraftSave:false,
+  backdateMaxDays:7,serverDate:"",stockVerifiedAt:"",stockChangedAt:"",stockVisibleCount:20,stockPageSize:20,
+  stockRequestPromises:{},requestEpoch:0,stockSearchTimer:null,changedItemCodes:[],scrollPositions:{write:0,stock:0,history:0}
 };
 
 const DRAFT_PREFIX="mr_kho_draft_v436_";
@@ -408,6 +424,8 @@ function restoreViewCache(depot){
     if(!raw||!raw.savedAt||!raw.data)return false;
     if(Date.now()-Number(raw.savedAt)>10*60*1000)return false;
     state.viewData=raw.data;state.latestSeq=Number(raw.data.latestSeq||0);
+    state.serverDate=String(raw.data.serverDate||state.serverDate||"");state.backdateMaxDays=Number(raw.data.backdateMaxDays||state.backdateMaxDays||7);
+    state.stockVerifiedAt=String(raw.data.stockVerifiedAt||"");state.stockChangedAt=String(raw.data.stockChangedAt||raw.data.updated||"");applyDateBounds();
     if(raw.data.version)setVersionState(raw.data.version);
     renderResults();renderSlip();renderActiveScreen();
     setLiveStatus("stale","Đang dùng dữ liệu lưu lúc "+new Date(raw.savedAt).toLocaleTimeString("vi-VN"));
@@ -417,8 +435,14 @@ function restoreViewCache(depot){
 function saveViewCache(depot,data){try{sessionStorage.setItem(viewCacheKey(depot),JSON.stringify({savedAt:Date.now(),data}));}catch(_){}}
 function ensureViewData(){if(!state.viewData)state.viewData={status:"ok",stock:{},history:{},version:APP_VERSION,latestSeq:state.latestSeq};if(!state.viewData.stock)state.viewData.stock={};if(!state.viewData.history)state.viewData.history={};return state.viewData;}
 function setLiveStatus(kind,text){const box=$("liveStatus"),label=$("liveStatusText");if(!box||!label)return;box.className="live-status "+kind;label.textContent=text;}
-function mergeStockPayload(j,depot=state.depot){const d=ensureViewData();d.stock[depot]=(j.stock&&j.stock[depot])||[];d.updated=j.updated||d.updated;d.catalogSource=j.catalogSource||d.catalogSource;d.version=j.version||d.version;d.latestSeq=Number(j.latestSeq||d.latestSeq||0);state.latestSeq=d.latestSeq;saveViewCache(state.depot,d);}
-function applyAffectedStock(rows){if(!Array.isArray(rows)||!rows.length)return;const d=ensureViewData(),list=d.stock[state.depot]||[];rows.forEach(r=>{const key=String(r.itemUid||r.ma||"");let idx=list.findIndex(x=>String(x.itemUid||x.ma||"")===key||String(x.ma)===String(r.ma));if(idx>=0)list[idx]={...list[idx],...r};else list.push(r);});d.stock[state.depot]=list;d.updated=new Date().toLocaleString("vi-VN");saveViewCache(state.depot,d);renderResults();renderSlip();renderActiveScreen();}
+function parseIsoUtc(iso){const p=String(iso||"").split("-").map(Number);return p.length===3&&p.every(Number.isFinite)?Date.UTC(p[0],p[1]-1,p[2]):NaN;}
+function shiftIsoDate(iso,days){const ms=parseIsoUtc(iso);if(!Number.isFinite(ms))return "";return new Date(ms+Number(days||0)*86400000).toISOString().slice(0,10);}
+function diffIsoDays(later,earlier){const a=parseIsoUtc(later),b=parseIsoUtc(earlier);return Number.isFinite(a)&&Number.isFinite(b)?Math.round((a-b)/86400000):0;}
+function applyDateBounds(){const server=state.serverDate||localIsoDate(new Date()),maxDays=Math.max(0,Number(state.backdateMaxDays)||0),input=$("ngay");input.max=server;input.min=shiftIsoDate(server,-maxDays);if(!input.value)input.value=server;const valid=isBusinessDateValid();input.classList.toggle("invalid",!valid);renderBackdateHint();renderSlip();}
+function applyRuntimeMeta(j){if(!j)return;if(j.serverDate)state.serverDate=String(j.serverDate);if(j.backdateMaxDays!==undefined)state.backdateMaxDays=Math.max(0,Number(j.backdateMaxDays)||0);if(j.stockVerifiedAt)state.stockVerifiedAt=String(j.stockVerifiedAt);if(j.stockChangedAt)state.stockChangedAt=String(j.stockChangedAt);const d=ensureViewData();d.serverDate=state.serverDate;d.backdateMaxDays=state.backdateMaxDays;d.stockVerifiedAt=state.stockVerifiedAt;d.stockChangedAt=state.stockChangedAt;applyDateBounds();}
+function mergeStockPayload(j,depot=state.depot){applyRuntimeMeta(j);const d=ensureViewData();d.stock[depot]=(j.stock&&j.stock[depot])||[];d.updated=j.updated||d.updated;d.stockChangedAt=j.stockChangedAt||j.updated||d.stockChangedAt;d.stockVerifiedAt=j.stockVerifiedAt||d.stockVerifiedAt;state.stockChangedAt=d.stockChangedAt||state.stockChangedAt;state.stockVerifiedAt=d.stockVerifiedAt||state.stockVerifiedAt;d.catalogSource=j.catalogSource||d.catalogSource;d.version=j.version||d.version;d.latestSeq=Number(j.latestSeq||d.latestSeq||0);state.latestSeq=d.latestSeq;saveViewCache(depot,d);}
+function stockKey(r){return String((r&&r.itemUid)||(r&&r.ma)||"");}
+function applyAffectedStock(rows){if(!Array.isArray(rows)||!rows.length)return;const d=ensureViewData(),list=d.stock[state.depot]||[],changed=[];rows.forEach(r=>{const key=stockKey(r);let idx=list.findIndex(x=>stockKey(x)===key||String(x.ma)===String(r.ma));if(idx>=0)list[idx]={...list[idx],...r};else list.push(r);changed.push(String(r.ma||key));});d.stock[state.depot]=list;state.stockChangedAt=new Date().toLocaleString("vi-VN");d.stockChangedAt=state.stockChangedAt;saveViewCache(state.depot,d);renderResults();renderSlip();if(state.screen==="stock")patchStockCards(changed);}
 
 function stripAccent(s){
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
@@ -530,7 +554,7 @@ function setVersionState(version){
   state.versionOk=version===APP_VERSION;
   const sub=document.querySelector(".hd-sub");
   if(state.versionOk){
-    if(sub)sub.textContent="ICD Phúc Long — thao tác trực tiếp · draft an toàn · v4.3.6.1";
+    if(sub)sub.textContent="ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.6.2";
   }else{
     if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
     if(!state.versionWarned){
@@ -543,15 +567,12 @@ function setVersionState(version){
 state.clientId=initClientId();
 
 const $ = id => document.getElementById(id);
-const today = new Date();
 function localIsoDate(d){const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10);}
-function daysAgoIso(days){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-days);return localIsoDate(d);}
-$("ngay").value = localIsoDate(today);
-$("ngay").max = localIsoDate(today);
-$("ngay").min = daysAgoIso(7);
-function selectedBackdateDays(id="ngay"){const v=$(id).value;if(!v)return 0;const d=new Date(v+"T00:00:00"),t=new Date();t.setHours(0,0,0,0);return Math.round((t-d)/86400000);}
-function renderBackdateHint(){const n=selectedBackdateDays();const box=$("backdateHint");if(n>0){box.textContent="Phiếu lùi "+n+" ngày · hệ thống vẫn lưu thời điểm tạo thực tế và ghi audit.";box.className="backdate-hint warn";}else{box.textContent="Có thể chọn ngày trong 7 ngày gần nhất.";box.className="backdate-hint";}}
-$("ngay").addEventListener("change",()=>{renderBackdateHint();scheduleDraftSave();});renderBackdateHint();
+function selectedBackdateDays(id="ngay"){const v=$(id).value,server=state.serverDate||localIsoDate(new Date());return v?diffIsoDays(server,v):0;}
+function isBusinessDateValid(){const v=$("ngay").value,server=state.serverDate||localIsoDate(new Date()),days=selectedBackdateDays();return !!v&&v<=server&&days>=0&&days<=Number(state.backdateMaxDays||0);}
+function renderBackdateHint(){const n=selectedBackdateDays(),box=$("backdateHint"),max=Number(state.backdateMaxDays||0);if(!isBusinessDateValid()){box.textContent="Ngày không hợp lệ. Chọn trong "+max+" ngày gần nhất theo ngày server "+(state.serverDate||"")+".";box.className="backdate-hint warn";}else if(n>0){box.textContent="Phiếu lùi "+n+" ngày · hệ thống vẫn lưu thời điểm tạo thực tế và ghi audit.";box.className="backdate-hint warn";}else{box.textContent="Có thể chọn ngày trong "+max+" ngày gần nhất.";box.className="backdate-hint";}$("ngay").classList.toggle("invalid",!isBusinessDateValid());}
+$("ngay").value=state.serverDate||localIsoDate(new Date());
+$("ngay").addEventListener("change",()=>{renderBackdateHint();renderSlip();scheduleDraftSave();});renderBackdateHint();
 
 $("btnLogin").onclick=async()=>{
   if(state.loginBusy)return;
@@ -571,7 +592,7 @@ $("btnLogin").onclick=async()=>{
       const wait=j.retryAfter?" Thử lại sau "+j.retryAfter+" giây.":"";
       $("loginErr").textContent=(j.message||"Đăng nhập thất bại.")+wait;$("loginErr").style.display="block";return;
     }
-    saveAccessToken(state.depot,j.accessToken);
+    applyRuntimeMeta(j);saveAccessToken(state.depot,j.accessToken);
     $("loginPin").value="";$("ovLogin").classList.remove("show");
     restoreViewCache(state.depot); await refreshStock(false,true); startLivePolling(true);
   }catch(err){
@@ -594,11 +615,13 @@ function applyScreenClass(){
   updateDirectNav();renderDraftNotice();
 }
 async function switchScreen(screen,type){
+  state.scrollPositions[state.screen]=window.scrollY||0;
   if(state.screen==="write")saveCurrentDraft();
   if(screen==="write"&&type&&type!==state.type){state.type=type;restoreCurrentDraft();}
   state.screen=screen;applyScreenClass();renderSlipHead();renderActiveScreen();
   if(screen==="stock")await loadStockScreen();
   if(screen==="history"){state.historyUpdatePending=false;renderHistoryUpdate();await loadHistory(true);}
+  requestAnimationFrame(()=>window.scrollTo(0,Number(state.scrollPositions[screen]||0)));
 }
 document.querySelectorAll("#directNav button").forEach(b=>{b.onclick=()=>switchScreen(b.dataset.screen,b.dataset.type||"");});
 
@@ -607,8 +630,8 @@ $("segDepot").querySelectorAll("button").forEach(b=>{
     if(b.dataset.v===state.depot)return;
     if(state.screen==="write")saveCurrentDraft();
     $("segDepot").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
-    state.depot=b.dataset.v;state.pendingRequest=null;state.viewData=null;state.latestSeq=0;state.historyOffset=0;state.historyHasMore=false;state.historyUpdatePending=false;
-    $("q").value="";restoreViewCache(state.depot);restoreCurrentDraft();renderActiveScreen();
+    state.requestEpoch++;state.depot=b.dataset.v;state.pendingRequest=null;state.viewData=null;state.latestSeq=0;state.historyOffset=0;state.historyHasMore=false;state.historyUpdatePending=false;state.stockVisibleCount=state.stockPageSize;
+    $("q").value="";$("vwq").value="";restoreViewCache(state.depot);restoreCurrentDraft();renderActiveScreen();
     if(!requireSession(true))return;
     if(state.screen==="history")await loadHistory(true);else await refreshStock(true,true);
     startLivePolling(true);
@@ -669,24 +692,34 @@ function validateSlipStock(list){
   }
   return true;
 }
-async function refreshStock(silent,bootstrap=false){
-  if(!requireSession(!silent))return false;const requestDepot=state.depot;
-  setLiveStatus("syncing","Đang đồng bộ tồn…");
-  try{
-    const j=await postJson({type:bootstrap?"BOOTSTRAP":"STOCK_VIEW",depot:requestDepot,accessToken:getAccessToken(requestDepot),clientId:state.clientId,clientVersion:APP_VERSION});
-    if(isAccessError(j.status)){clearAccessToken(requestDepot);state.versionOk=false;stopLivePolling();showLogin(j.message||"Phiên đăng nhập đã hết hạn.");return false;}
-    if(j.status!=="ok")throw new Error(j.message||"Không tải được tồn kho.");
-    setVersionState(j.version);if(!state.versionOk)return false;if(requestDepot!==state.depot)return true;mergeStockPayload(j,requestDepot);
-    const source=j.catalogSource?" · danh mục "+j.catalogSource:"";
-    $("sessionNote").innerHTML="<b>Phiên đăng nhập:</b> "+state.depot+" · token chỉ lưu trong tab này"+source;
-    state.lastSyncAt=j.updated||new Date().toLocaleTimeString("vi-VN");setLiveStatus("online","Trực tuyến · cập nhật "+state.lastSyncAt);
-    renderResults();renderSlip();renderActiveScreen();return true;
-  }catch(err){
-    const hasCache=!!(state.viewData&&state.viewData.stock&&state.viewData.stock[state.depot]);
-    setLiveStatus(hasCache?"stale":"offline",(hasCache?"Mất kết nối · đang dùng dữ liệu cũ":"Mất kết nối"));
-    if(!hasCache){state.versionOk=false;const sub=document.querySelector(".hd-sub");if(sub)sub.textContent="Không kết nối backend — tạm khóa gửi phiếu";renderSlip();}
-    if(!silent)alert("Không tải được tồn kho: "+(err&&err.message?err.message:err));return false;
-  }
+async function refreshStock(silent,bootstrap=false,options={}){
+  if(!requireSession(!silent))return false;
+  const requestDepot=state.depot,epoch=state.requestEpoch;
+  if(state.stockRequestPromises[requestDepot])return state.stockRequestPromises[requestDepot];
+  const task=(async()=>{
+    setLiveStatus("syncing","Đang đồng bộ tồn…");
+    try{
+      const j=await postJson({type:bootstrap?"BOOTSTRAP":"STOCK_VIEW",depot:requestDepot,accessToken:getAccessToken(requestDepot),clientId:state.clientId,clientVersion:APP_VERSION});
+      if(isAccessError(j.status)){clearAccessToken(requestDepot);state.versionOk=false;stopLivePolling();showLogin(j.message||"Phiên đăng nhập đã hết hạn.");return false;}
+      if(j.status!=="ok")throw new Error(j.message||"Không tải được tồn kho.");
+      setVersionState(j.version);if(!state.versionOk)return false;
+      if(epoch!==state.requestEpoch||requestDepot!==state.depot)return true;
+      mergeStockPayload(j,requestDepot);
+      const source=j.catalogSource?" · danh mục "+j.catalogSource:"";
+      $("sessionNote").innerHTML="<b>Phiên đăng nhập:</b> "+state.depot+" · token chỉ lưu trong tab này"+source;
+      state.lastSyncAt=j.stockVerifiedAt||j.updated||new Date().toLocaleTimeString("vi-VN");setLiveStatus("online","Trực tuyến · xác nhận "+state.lastSyncAt);
+      renderResults();renderSlip();
+      if(state.screen==="stock"&&options.patchOnly&&Array.isArray(options.changedCodes)&&options.changedCodes.length){updateStockMeta();patchStockCards(options.changedCodes);}else renderActiveScreen();
+      return true;
+    }catch(err){
+      const hasCache=!!(state.viewData&&state.viewData.stock&&state.viewData.stock[state.depot]);
+      setLiveStatus(hasCache?"stale":"offline",(hasCache?"Mất kết nối · đang dùng dữ liệu cũ":"Mất kết nối"));
+      if(!hasCache){state.versionOk=false;const sub=document.querySelector(".hd-sub");if(sub)sub.textContent="Không kết nối backend — tạm khóa gửi phiếu";renderSlip();}
+      if(!silent)alert("Không tải được tồn kho: "+(err&&err.message?err.message:err));return false;
+    }
+  })();
+  state.stockRequestPromises[requestDepot]=task;
+  try{return await task;}finally{if(state.stockRequestPromises[requestDepot]===task)delete state.stockRequestPromises[requestDepot];}
 }
 function stopLivePolling(){if(state.pollTimer){clearTimeout(state.pollTimer);state.pollTimer=null;}}
 function scheduleLivePoll(ms){stopLivePolling();if(document.visibilityState!=="visible"||!getAccessToken(state.depot))return;state.pollTimer=setTimeout(livePoll,Math.max(1000,ms||state.pollDelay));}
@@ -698,16 +731,17 @@ async function livePoll(){
     const j=await postJson({type:"LIVE_POLL",depot:requestDepot,sinceSeq:state.latestSeq,accessToken:getAccessToken(requestDepot),clientId:state.clientId,clientVersion:APP_VERSION});
     if(isAccessError(j.status)){clearAccessToken(requestDepot);stopLivePolling();showLogin(j.message||"Phiên đăng nhập đã hết hạn.");return;}
     if(j.status!=="ok")throw new Error(j.message||"Live poll lỗi.");if(requestDepot!==state.depot)return;
-    setVersionState(j.version);const prior=state.latestSeq;state.latestSeq=Number(j.latestSeq||prior);state.pollDelay=10000;
+    setVersionState(j.version);applyRuntimeMeta(j);const prior=state.latestSeq;state.latestSeq=Number(j.latestSeq||prior);state.pollDelay=10000;
     if(j.changed||j.resetRequired){
-      const stockChanged=j.resetRequired||(j.events||[]).some(e=>e.stockChanged===true);
-      if(stockChanged)await refreshStock(true,false);
+      const stockEvents=(j.events||[]).filter(e=>e.stockChanged===true),stockChanged=j.resetRequired||stockEvents.length>0;
+      const changedCodes=[...new Set(stockEvents.flatMap(e=>Array.isArray(e.itemCodes)?e.itemCodes:[]))];
+      if(stockChanged)await refreshStock(true,false,{patchOnly:!j.resetRequired,changedCodes});
       if(state.screen==="history"){
         if(historyAtTop())await loadHistory(true);
         else{state.historyUpdatePending=true;renderHistoryUpdate();}
       }
     }
-    state.lastSyncAt=j.serverTime||new Date().toLocaleTimeString("vi-VN");setLiveStatus("online","Trực tuyến · cập nhật "+state.lastSyncAt);
+    state.lastSyncAt=j.stockVerifiedAt||j.serverTime||new Date().toLocaleTimeString("vi-VN");setLiveStatus("online","Trực tuyến · xác nhận "+state.lastSyncAt);if(state.screen==="stock")updateStockMeta();
   }catch(err){state.pollDelay=Math.min(60000,state.pollDelay*2);const hasCache=!!state.viewData;setLiveStatus(hasCache?"stale":"offline","Mất kết nối · thử lại sau "+Math.round(state.pollDelay/1000)+" giây");}
   finally{state.pollBusy=false;scheduleLivePoll(state.pollDelay);}
 }
@@ -796,7 +830,7 @@ function renderSlip(){
   const list = Object.values(state.slip);
   $("slipCount").textContent = list.length + " mã";
   $("barSum").innerHTML = "<b>"+list.length+"</b> mã vật tư";
-  $("btnSend").disabled = list.length===0 || !state.versionOk || state.sending;
+  $("btnSend").disabled = list.length===0 || !state.versionOk || state.sending || !isBusinessDateValid();
   if(!list.length){ rows.innerHTML = '<div class="slip-empty">Chưa có vật tư nào trong phiếu.<br>Tìm và bấm chọn ở trên.</div>'; return; }
   rows.innerHTML = "";
   list.forEach(r=>{
@@ -850,6 +884,7 @@ $("btnSend").onclick = async ()=>{
   if(!list.length)return;
   if(!requireSession(true))return;
   if(!state.versionOk){alert("Chưa xác nhận được phiên bản backend. Đăng nhập lại hoặc tải lại trang.");return;}
+  if(!isBusinessDateValid()){renderBackdateHint();alert("Ngày nghiệp vụ không hợp lệ. Chọn trong "+state.backdateMaxDays+" ngày gần nhất.");return;}
   if(!$("nguoi").value){ alert("Chọn Người gửi trước khi gửi phiếu."); return; }
   if(isAdjustOn() && !$("adjustReason").value){ alert("Phiếu điều chỉnh tồn bắt buộc chọn nguyên nhân."); return; }
   if(isAdjustOn() && !$("note").value.trim()){ alert("Phiếu điều chỉnh tồn bắt buộc ghi chú lý do."); return; }
@@ -912,7 +947,7 @@ $("btnConfirm").onclick = async ()=>{
     }
     if(j2.status==="ok"){
       clearPendingRequest();
-      state.suppressDraftSave=true;state.slip={};$("note").value="";$("q").value="";$("adjustReason").value="";$("adjustChk").checked=false;$("ngay").value=localIsoDate(new Date());
+      state.suppressDraftSave=true;state.slip={};$("note").value="";$("q").value="";$("adjustReason").value="";$("adjustChk").checked=false;$("ngay").value=state.serverDate||localIsoDate(new Date());
       document.body.classList.remove("adjusting");$("adjustRow").classList.remove("on");$("adjustDetail").classList.remove("on");state.suppressDraftSave=false;clearCurrentDraftStorage();renderBackdateHint();renderSlipHead();renderResults();renderSlip();
       if(Number(j2.latestSeq||0)>0){state.latestSeq=Number(j2.latestSeq);const d=ensureViewData();d.latestSeq=state.latestSeq;}
       applyAffectedStock(j2.affectedStock||[]);startLivePolling(true);
@@ -942,7 +977,7 @@ function showFail(message){
 }
 function resetAll(){
   $("docLinkWrap").innerHTML="";$("ovDone").classList.remove("show");
-  state.suppressDraftSave=true;state.slip={};state.sending=false;$("note").value="";$("q").value="";$("adjustReason").value="";$("ngay").value=localIsoDate(new Date());
+  state.suppressDraftSave=true;state.slip={};state.sending=false;$("note").value="";$("q").value="";$("adjustReason").value="";$("ngay").value=state.serverDate||localIsoDate(new Date());
   clearPendingRequest();$("adjustChk").checked=false;document.body.classList.remove("adjusting");$("adjustRow").classList.remove("on");$("adjustDetail").classList.remove("on");
   state.suppressDraftSave=false;clearCurrentDraftStorage();renderBackdateHint();renderSlipHead();renderResults();renderSlip();refreshStock(true);
 }
@@ -952,7 +987,8 @@ function resetAll(){
 async function loadStockScreen(){
   renderStock();const ok=await refreshStock(true,false);if(!ok&&!(state.viewData&&state.viewData.stock))$("vwStock").textContent="Không tải được — kiểm tra mạng.";
 }
-$("vwq").addEventListener("input",renderStock);
+$("vwq").addEventListener("input",()=>{clearTimeout(state.stockSearchTimer);state.stockVisibleCount=state.stockPageSize;state.stockSearchTimer=setTimeout(renderStock,280);});
+$("btnMoreStock").onclick=()=>{state.stockVisibleCount+=state.stockPageSize;renderStock();};
 let vwType="all";
 document.querySelectorAll("#vwTypes button").forEach(b=>{b.onclick=()=>{document.querySelectorAll("#vwTypes button").forEach(x=>x.classList.remove("active"));b.classList.add("active");vwType=b.dataset.t;loadHistory(true);};});
 $("vwDate").addEventListener("change",()=>{$("vwDateAll").classList.toggle("active",!$("vwDate").value);loadHistory(true);});
@@ -962,13 +998,21 @@ $("btnRefreshHistory").onclick=()=>loadHistory(true);
 function historyAtTop(){return window.scrollY<180;}
 function renderHistoryUpdate(){$("historyUpdate").classList.toggle("show",state.screen==="history"&&state.historyUpdatePending);}
 function renderActiveScreen(){if(state.screen==="stock")renderStock();else if(state.screen==="history")renderHistory();else{renderResults();renderSlip();renderDraftNotice();}}
+function renderStockSkeleton(){const box=$("vwStock");box.className="";box.innerHTML=Array.from({length:5},()=>'<div class="skeleton-row"></div>').join("");$("vwStockCount").textContent="Đang tải dữ liệu tồn…";$("btnMoreStock").hidden=true;}
+function updateStockMeta(){const d=state.viewData||{};$("vwStockTitle").textContent="TỒN KHO "+state.depot;const verified=state.stockVerifiedAt||d.stockVerifiedAt||"chưa có",changed=state.stockChangedAt||d.stockChangedAt||d.updated||"chưa có";$("vwStockMeta").innerHTML="Đã xác nhận với server: <b>"+escapeHtml(verified)+"</b><br>Lần thay đổi tồn gần nhất: <b>"+escapeHtml(changed)+"</b>";}
+function stockFilteredRows(){const d=state.viewData,dp=state.depot;if(!d||!d.stock)return[];const q=stripAccent($("vwq").value.trim());return(d.stock[dp]||[]).filter(r=>!q||stripAccent(r.ten+" "+r.ma+" "+(r.macu||"")).includes(q));}
+function stockRowHtml(r){const low=r.min>0&&r.ton<=r.min;return '<div><div class="nm">'+escapeHtml(r.ten)+(r.catalogStatus&&r.catalogStatus!=="ACTIVE"?'<span class="pending-tag">'+escapeHtml(r.catalogStatus)+'</span>':'')+(low?'<span class="low-tag">⚠ DƯỚI NGƯỠNG</span>':'')+'</div><div class="cd">'+escapeHtml(r.ma)+(r.macu?' ('+escapeHtml(r.macu)+')':'')+' · Nhập '+r.nhap+' · Xuất '+r.xuat+(r.min>0?' · Min '+r.min:'')+'</div></div><div class="ton">'+r.ton+' <small>'+escapeHtml(r.dvt)+'</small></div>';}
 function renderStock(){
-  const d=state.viewData,dp=state.depot;if(!d||!d.stock){$("vwStock").innerHTML='<div class="vw-load">Chưa có dữ liệu tồn.</div>';return;}
-  $("vwStockTitle").textContent="TỒN KHO "+dp+(d.updated?" — cập nhật "+d.updated:"");
-  const q=stripAccent($("vwq").value.trim()),rows=(d.stock[dp]||[]).filter(r=>!q||stripAccent(r.ten+" "+r.ma).includes(q));
-  const box=$("vwStock");box.className="";box.innerHTML="";if(!rows.length)box.innerHTML='<div class="vw-load">Không có vật tư khớp.</div>';
-  rows.forEach(r=>{const div=document.createElement("div"),low=r.min>0&&r.ton<=r.min;div.className="stock-row"+(r.ton<=0?" zero":"")+(low?" low":"");
-    div.innerHTML='<div><div class="nm">'+r.ten+(r.catalogStatus&&r.catalogStatus!=="ACTIVE"?'<span class="pending-tag">'+escapeHtml(r.catalogStatus)+'</span>':'')+(low?'<span class="low-tag">⚠ DƯỚI NGƯỠNG</span>':'')+'</div><div class="cd">'+r.ma+(r.macu?' ('+r.macu+')':'')+' · Nhập '+r.nhap+' · Xuất '+r.xuat+(r.min>0?' · Min '+r.min:'')+'</div></div><div class="ton">'+r.ton+' <small>'+r.dvt+'</small></div>';box.appendChild(div);});
+  const d=state.viewData;if(!d||!d.stock){renderStockSkeleton();return;}updateStockMeta();
+  const rows=stockFilteredRows(),visible=rows.slice(0,state.stockVisibleCount),box=$("vwStock");box.className="";box.innerHTML="";
+  $("vwStockCount").textContent=rows.length?("Đang hiển thị "+visible.length+"/"+rows.length+" mã"):"";
+  $("btnMoreStock").hidden=visible.length>=rows.length;$("btnMoreStock").textContent="Xem thêm "+Math.min(state.stockPageSize,rows.length-visible.length)+" mã";
+  if(!rows.length){box.innerHTML='<div class="vw-load">Không có vật tư khớp.</div>';return;}
+  visible.forEach(r=>{const div=document.createElement("div"),low=r.min>0&&r.ton<=r.min;div.className="stock-row"+(r.ton<=0?" zero":"")+(low?" low":"");div.dataset.itemKey=stockKey(r);div.dataset.itemCode=String(r.ma||"");div.innerHTML=stockRowHtml(r);box.appendChild(div);});
+}
+function patchStockCards(codes){
+  const changed=new Set((codes||[]).map(String)),rows=state.viewData&&state.viewData.stock?(state.viewData.stock[state.depot]||[]):[];updateStockMeta();
+  let needsFull=false;changed.forEach(code=>{const r=rows.find(x=>String(x.ma)===code||stockKey(x)===code);if(!r)return;const el=[...document.querySelectorAll("#vwStock .stock-row")].find(x=>x.dataset.itemCode===String(r.ma)||x.dataset.itemKey===stockKey(r));if(el){const low=r.min>0&&r.ton<=r.min;el.className="stock-row updated"+(r.ton<=0?" zero":"")+(low?" low":"");el.innerHTML=stockRowHtml(r);setTimeout(()=>el.classList.remove("updated"),1300);}else{const filtered=stockFilteredRows(),idx=filtered.findIndex(x=>String(x.ma)===String(r.ma)||stockKey(x)===stockKey(r));if(idx>=0&&idx<state.stockVisibleCount)needsFull=true;}});if(needsFull)renderStock();
 }
 function renderHistory(){
   renderHistoryUpdate();const d=state.viewData||{},hist=Array.isArray(d.historyRows)?d.historyRows:[],hb=$("vwHist");hb.className="";hb.innerHTML="";
@@ -977,7 +1021,7 @@ function renderHistory(){
     div.innerHTML='<div class="top"><span><span class="hist-tag '+h.t+'">'+(h.t==="x"?"XUẤT":(h.t==="n"?"NHẬP":"ĐỀ XUẤT"))+'</span>'+(isAdj?'<span class="backdated-tag">ĐIỀU CHỈNH</span>':'')+h.vt+'</span><b>'+h.sl+'</b></div><div class="sub">Ngày '+h.ngay+(h.isBackdated?' <span class="backdated-tag">LÙI '+h.backdatedDays+' NGÀY</span>':'')+' · gửi lúc '+h.ts+(h.nguoi?' · <span class="who">'+h.nguoi+'</span>':'')+(h.catalogStatus&&h.catalogStatus!=="ACTIVE"?' · <span class="pending-tag">'+escapeHtml(h.catalogStatus)+'</span>':'')+(h.ghichu?' · '+h.ghichu:'')+(h.txnId?' · '+h.txnId:'')+'</div>';hb.appendChild(div);});
 }
 
-document.body.classList.add("screen-write");updateDirectNav();restoreCurrentDraft();renderSlip();renderSlipHead();renderDraftNotice();
+document.body.classList.add("screen-write");updateDirectNav();applyDateBounds();restoreCurrentDraft();renderSlip();renderSlipHead();renderDraftNotice();
 if(requireSession(false)){restoreViewCache(state.depot);refreshStock(true,true);startLivePolling(true);}else showLogin("");
 </script>
 </body>
