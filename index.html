@@ -37,7 +37,6 @@ header{background:var(--navy);color:var(--white);padding:16px 14px 14px;position
 .search-box input:focus{outline:none;border-color:var(--amber)}
 .hint{font-size:12.5px;color:var(--muted);margin-top:6px}
 
-
 .backdate-hint{font-size:11.5px;color:#F7C96B;margin-top:5px;padding-left:48px}.backdate-hint.warn{color:#FFD4CF}.new-material-bar{display:none;margin:8px 0 4px}.new-material-bar.on{display:block}.new-material-btn{width:100%;border:1.5px dashed var(--amber-dark);background:#FFF9EC;color:#7A5200;border-radius:11px;padding:10px 12px;font-family:inherit;font-weight:800;cursor:pointer}.new-material-btn small{display:block;font-weight:500;color:var(--muted);margin-top:2px}.form-grid{text-align:left;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.form-grid label{font-size:12px;font-weight:700}.form-grid label.wide{grid-column:1/-1}.form-grid input{width:100%;margin-top:4px;border:1.5px solid var(--line);border-radius:9px;padding:10px;font-family:inherit;font-size:14px}.form-grid input:focus{outline:none;border-color:var(--amber)}.pending-tag{display:inline-block;margin-left:5px;border-radius:8px;padding:1px 6px;background:#FFF3DC;color:#8A5A00;font-size:10px;font-weight:800}.backdated-tag{display:inline-block;margin-left:5px;border-radius:8px;padding:1px 6px;background:#FDE8E6;color:var(--danger);font-size:10px;font-weight:800}
 
 /* Item list */
@@ -90,10 +89,12 @@ header{background:var(--navy);color:var(--white);padding:16px 14px 14px;position
 .spinner{width:36px;height:36px;border:4px solid var(--line);border-top-color:var(--amber);border-radius:50%;margin:0 auto 14px;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+
 /* Mode switch */
 .mode{display:flex;background:#0E1B30;border-radius:10px;padding:3px;margin-top:10px}
 .mode button{flex:1;border:0;background:transparent;color:#9FB0C7;font-family:inherit;font-weight:700;font-size:14px;padding:9px 0;border-radius:8px;cursor:pointer}
 .mode button.on{background:var(--white);color:var(--navy)}
+
 /* View mode */
 .viewwrap{display:none}
 body.viewing .viewwrap{display:block}
@@ -117,12 +118,15 @@ body.viewing .slip, body.viewing .bar, body.viewing .search-box, body.viewing .r
 .hist-tag.n{background:#E3F2E9;color:var(--ok)}
 .hist-tag.d{background:#FFF3DC;color:#8A5A00}
 .vw-load{text-align:center;color:var(--muted);padding:20px 0;font-size:14px}
+
 /* PIN */
 .pin-row{margin-bottom:14px}
 .pin-row label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;text-align:left}
 .pin-row input{width:100%;border:2px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:20px;text-align:center;letter-spacing:6px}
 .pin-row input:focus{outline:none;border-color:var(--amber)}
 .pin-err{color:var(--danger);font-size:12.5px;margin-top:5px;display:none;text-align:left}
+#loginDepot{margin-bottom:14px}
+#loginDepot button{font-size:14px;padding:9px 0}
 .session-note{background:#f3f6fa;border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:14px;text-align:left;font-size:13px;color:var(--muted)}
 .session-note b{color:var(--ink)}
 .login-meta{font-size:12px;color:var(--muted);margin:-4px 0 12px}
@@ -161,7 +165,6 @@ body.dexuat .adjust-detail{display:none!important}
 .vw-types button{flex:1;border:1.5px solid var(--line);border-radius:10px;background:var(--white);font-family:inherit;font-weight:700;font-size:13px;padding:9px 0;cursor:pointer;color:var(--muted)}
 .vw-types button.active{background:var(--navy-2);color:var(--white);border-color:var(--navy-2)}
 
-
 .live-status{margin-top:7px;font-size:11.5px;color:#B8C4D6;display:flex;align-items:center;gap:6px}.live-dot{width:8px;height:8px;border-radius:50%;background:#9CA3AF;display:inline-block}.live-status.online .live-dot{background:#34D399}.live-status.syncing .live-dot{background:#F5A623}.live-status.offline .live-dot{background:#EF4444}.live-status.stale .live-dot{background:#F59E0B}.more-wrap{text-align:center;margin:10px 0 18px}.more-btn{border:1.5px solid var(--line);border-radius:10px;background:var(--white);font-family:inherit;font-weight:700;padding:10px 18px;color:var(--navy-2);cursor:pointer}.more-btn[hidden]{display:none}
 
 /* Direct navigation + independent screens */
@@ -182,7 +185,6 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
 .history-update{display:none;margin:10px 0;background:#FFF3DC;border:1px solid var(--amber);border-radius:10px;padding:9px 10px;font-size:13px;align-items:center;gap:8px;color:#7A5200}
 .history-update.show{display:flex}.history-update span{flex:1}.history-update button{border:0;border-radius:8px;background:var(--amber);color:var(--navy);font-family:inherit;font-weight:800;padding:8px 10px;cursor:pointer}
 .screen-title{font-weight:850;font-size:15px;color:var(--navy-2);margin:14px 0 8px}
-
 .stock-meta{font-size:12px;color:var(--muted);margin:-2px 0 8px;line-height:1.5}
 .stock-meta b{color:var(--navy-2)}
 .stock-count{font-size:12.5px;color:var(--muted);margin:8px 0;text-align:center}
@@ -193,7 +195,6 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
 .skeleton-row{height:67px;border-radius:10px;margin-bottom:7px;background:linear-gradient(90deg,#ece8df 25%,#f7f5f0 37%,#ece8df 63%);background-size:400% 100%;animation:skeletonMove 1.3s ease infinite}
 @keyframes skeletonMove{0%{background-position:100% 0}100%{background-position:0 0}}
 .date-row input.invalid{outline:2px solid #FF8A80;background:#2D1C26}
-
 </style>
 </head>
 <body>
@@ -234,7 +235,6 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
     </div>
     <div class="results" id="results"></div>
     <div id="newMaterialBar" class="new-material-bar"><button id="btnNewMaterial" class="new-material-btn">➕ Vật tư mới/chưa có trong danh mục<small>Tên, ĐVT, ngày và số lượng bắt buộc; MRVT/MRPL có thể bổ sung sau.</small></button></div>
-
     <div class="slip">
       <div class="slip-head">
         <span id="slipTitle">PHIẾU XUẤT — DP1</span>
@@ -310,7 +310,11 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
   <div class="card">
     <div class="big">🔐</div>
     <h2 id="loginTitle">Đăng nhập kho DP1</h2>
-    <p class="login-meta">PIN chỉ dùng một lần để tạo phiên trên tab trình duyệt này.</p>
+    <p class="login-meta">Chọn đúng tổ trước khi nhập PIN. PIN chỉ dùng một lần để tạo phiên trên tab trình duyệt này.</p>
+    <div class="seg" id="loginDepot">
+      <button type="button" data-v="DP1" class="on">Tổ DP1</button>
+      <button type="button" data-v="DP3">Tổ DP3</button>
+    </div>
     <div class="pin-row">
       <label for="loginPin">Mã PIN depot</label>
       <input type="password" id="loginPin" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="••••••">
@@ -452,7 +456,6 @@ function escapeHtml(value){
     .replace(/"/g,"&quot;")
     .replace(/'/g,"&#39;");
 }
-
 function stripAccent(s){
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
 }
@@ -464,7 +467,6 @@ function catalogItems(){
     key:stripAccent(String(r.ten||"")+" "+String(r.ma||""))
   }));
 }
-
 function randomId(prefix="id"){
   if(window.crypto && crypto.randomUUID){
     return prefix+"_"+crypto.randomUUID().replace(/-/g,"");
@@ -529,19 +531,57 @@ function clearAccessToken(depot){
 function isAccessError(status){
   return ["access_required","access_invalid","access_expired","access_forbidden"].includes(String(status||""));
 }
+
+function syncDepotButtons(){
+  const seg=$("segDepot");
+  if(seg)seg.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x.dataset.v===state.depot));
+  const ld=$("loginDepot");
+  if(ld)ld.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x.dataset.v===state.depot));
+  const t=$("loginTitle");
+  if(t)t.textContent="Đăng nhập kho "+state.depot;
+}
+
 function showLogin(message){
-  $("loginTitle").textContent="Đăng nhập kho "+state.depot;
+  syncDepotButtons();
   $("loginErr").textContent=message||"Nhập PIN để mở phiên làm việc.";
   $("loginErr").style.display=message?"block":"none";
   $("loginPin").value="";
   $("ovLogin").classList.add("show");
   setTimeout(()=>$("loginPin").focus(),50);
 }
+
+async function applyDepotChange(next){
+  next=String(next||"").toUpperCase();
+  if(next!=="DP1"&&next!=="DP3")return;
+  if(next===state.depot){
+    if(!getAccessToken(state.depot))showLogin("");
+    return;
+  }
+  if(state.screen==="write")saveCurrentDraft();
+  state.requestEpoch++;
+  state.depot=next;
+  state.pendingRequest=null;state.viewData=null;state.latestSeq=0;
+  state.historyOffset=0;state.historyHasMore=false;state.historyUpdatePending=false;
+  state.stockVisibleCount=state.stockPageSize;
+  $("q").value="";$("vwq").value="";
+  syncDepotButtons();
+  restoreViewCache(state.depot);restoreCurrentDraft();renderActiveScreen();
+  if(!getAccessToken(state.depot)){
+    stopLivePolling();
+    showLogin("");
+    return;
+  }
+  $("ovLogin").classList.remove("show");
+  if(state.screen==="history")await loadHistory(true);else await refreshStock(true,true);
+  startLivePolling(true);
+}
+
 function requireSession(interactive=true){
   if(getAccessToken(state.depot))return true;
   if(interactive)showLogin("");
   return false;
 }
+
 async function postJson(payload){
   const ctl=new AbortController();
   const timer=setTimeout(()=>ctl.abort(),REQUEST_TIMEOUT_MS);
@@ -635,15 +675,14 @@ async function switchScreen(screen,type){
 document.querySelectorAll("#directNav button").forEach(b=>{b.onclick=()=>switchScreen(b.dataset.screen,b.dataset.type||"");});
 
 $("segDepot").querySelectorAll("button").forEach(b=>{
-  b.onclick=async()=>{
-    if(b.dataset.v===state.depot)return;
-    if(state.screen==="write")saveCurrentDraft();
-    $("segDepot").querySelectorAll("button").forEach(x=>x.classList.remove("on"));b.classList.add("on");
-    state.requestEpoch++;state.depot=b.dataset.v;state.pendingRequest=null;state.viewData=null;state.latestSeq=0;state.historyOffset=0;state.historyHasMore=false;state.historyUpdatePending=false;state.stockVisibleCount=state.stockPageSize;
-    $("q").value="";$("vwq").value="";restoreViewCache(state.depot);restoreCurrentDraft();renderActiveScreen();
-    if(!requireSession(true))return;
-    if(state.screen==="history")await loadHistory(true);else await refreshStock(true,true);
-    startLivePolling(true);
+  b.onclick=()=>applyDepotChange(b.dataset.v);
+});
+$("loginDepot").querySelectorAll("button").forEach(b=>{
+  b.onclick=()=>{
+    if(state.loginBusy)return;
+    $("loginErr").style.display="none";
+    $("loginPin").value="";
+    applyDepotChange(b.dataset.v);
   };
 });
 
@@ -701,6 +740,7 @@ function validateSlipStock(list){
   }
   return true;
 }
+
 async function refreshStock(silent,bootstrap=false,options={}){
   if(!requireSession(!silent))return false;
   const requestDepot=state.depot,epoch=state.requestEpoch;
@@ -730,6 +770,7 @@ async function refreshStock(silent,bootstrap=false,options={}){
   state.stockRequestPromises[requestDepot]=task;
   try{return await task;}finally{if(state.stockRequestPromises[requestDepot]===task)delete state.stockRequestPromises[requestDepot];}
 }
+
 function stopLivePolling(){if(state.pollTimer){clearTimeout(state.pollTimer);state.pollTimer=null;}}
 function scheduleLivePoll(ms){stopLivePolling();if(document.visibilityState!=="visible"||!getAccessToken(state.depot))return;state.pollTimer=setTimeout(livePoll,Math.max(1000,ms||state.pollDelay));}
 function startLivePolling(immediate=false){state.pollDelay=10000;scheduleLivePoll(immediate?500:state.pollDelay);}
@@ -756,6 +797,7 @@ async function livePoll(){
 }
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")stopLivePolling();else startLivePolling(true);});
 window.addEventListener("online",()=>startLivePolling(true));window.addEventListener("offline",()=>{stopLivePolling();setLiveStatus("offline","Mất kết nối mạng");});
+
 function backendHistoryType(){return vwType==="x"?"XUAT":(vwType==="n"?"NHAP":(vwType==="d"?"DEXUAT":"ALL"));}
 async function loadHistory(reset=true){
   const requestDepot=state.depot;if(state.historyLoading||!requireSession(false))return false;state.historyLoading=true;
@@ -863,7 +905,6 @@ function renderSlip(){
   });
 }
 
-
 function similarCatalogItem_(name,unit){
   const n=stripAccent(String(name||"").trim()),u=stripAccent(String(unit||"").trim());
   const rows=catalogItems();
@@ -898,14 +939,12 @@ $("btnSend").onclick = async ()=>{
   if(isAdjustOn() && !$("adjustReason").value){ alert("Phiếu điều chỉnh tồn bắt buộc chọn nguyên nhân."); return; }
   if(isAdjustOn() && !$("note").value.trim()){ alert("Phiếu điều chỉnh tồn bắt buộc ghi chú lý do."); return; }
   if(!validateSlipSign(list)) return;
-
   // Kiểm tra UX bằng tồn mới nhất; backend vẫn kiểm lại lần cuối dưới ScriptLock.
   if(transactionDepletesStock()){
     await refreshStock(true);
     list = Object.values(state.slip);
     if(!validateSlipStock(list)) return;
   }
-
   const d = $("ngay").value.split("-"); // yyyy-mm-dd
   if(d.length!==3){ alert("Chọn ngày phiếu."); return; }
   const dateVN = d[2]+"/"+d[1]+"/"+d[0];
@@ -917,7 +956,6 @@ $("btnSend").onclick = async ()=>{
 };
 $("btnCancel").onclick = e=>{ e.preventDefault(); $("ovConfirm").classList.remove("show"); };
 
-
 $("btnConfirm").onclick = async ()=>{
   if(state.sending)return;
   if(!state.versionOk){
@@ -927,7 +965,6 @@ $("btnConfirm").onclick = async ()=>{
   if(!requireSession(false)){
     $("ovConfirm").classList.remove("show");showLogin("Phiên đăng nhập không còn hiệu lực.");return;
   }
-
   const d=$("ngay").value.split("-");
   const payloadCore={
     nguoi:$("nguoi").value,adjust:isAdjustOn(),adjustReason:isAdjustOn()?$("adjustReason").value:"",depot:state.depot,type:state.type,
@@ -939,7 +976,6 @@ $("btnConfirm").onclick = async ()=>{
     ...payloadCore,requestId,clientId:state.clientId,clientVersion:APP_VERSION,
     accessToken:getAccessToken(state.depot)
   };
-
   state.sending=true;renderSlip();$("btnConfirm").disabled=true;
   $("ovConfirm").classList.remove("show");$("ovSending").classList.add("show");
   try{
@@ -976,6 +1012,7 @@ $("btnConfirm").onclick = async ()=>{
     showFail(msg);$("ovDone").classList.add("show");
   }finally{state.sending=false;$("btnConfirm").disabled=false;renderSlip();}
 };
+
 function showFail(message){
   $("docLinkWrap").innerHTML="";
   $("doneIcon").textContent="⚠️";
@@ -990,7 +1027,6 @@ function resetAll(){
   clearPendingRequest();$("adjustChk").checked=false;document.body.classList.remove("adjusting");$("adjustRow").classList.remove("on");$("adjustDetail").classList.remove("on");
   state.suppressDraftSave=false;clearCurrentDraftStorage();renderBackdateHint();renderSlipHead();renderResults();renderSlip();refreshStock(true);
 }
-
 
 // ===== TỒN / LỊCH SỬ TÁCH ĐỘC LẬP =====
 async function loadStockScreen(){
@@ -1030,7 +1066,7 @@ function renderHistory(){
     div.innerHTML='<div class="top"><span><span class="hist-tag '+h.t+'">'+(h.t==="x"?"XUẤT":(h.t==="n"?"NHẬP":"ĐỀ XUẤT"))+'</span>'+(isAdj?'<span class="backdated-tag">ĐIỀU CHỈNH</span>':'')+h.vt+'</span><b>'+h.sl+'</b></div><div class="sub">Ngày '+h.ngay+(h.isBackdated?' <span class="backdated-tag">LÙI '+h.backdatedDays+' NGÀY</span>':'')+' · gửi lúc '+h.ts+(h.nguoi?' · <span class="who">'+h.nguoi+'</span>':'')+(h.catalogStatus&&h.catalogStatus!=="ACTIVE"?' · <span class="pending-tag">'+escapeHtml(h.catalogStatus)+'</span>':'')+(h.ghichu?' · '+h.ghichu:'')+(h.txnId?' · '+h.txnId:'')+'</div>';hb.appendChild(div);});
 }
 
-document.body.classList.add("screen-write");updateDirectNav();applyDateBounds();restoreCurrentDraft();renderSlip();renderSlipHead();renderDraftNotice();
+document.body.classList.add("screen-write");updateDirectNav();syncDepotButtons();applyDateBounds();restoreCurrentDraft();renderSlip();renderSlipHead();renderDraftNotice();
 if(requireSession(false)){restoreViewCache(state.depot);refreshStock(true,true);startLivePolling(true);}else showLogin("");
 </script>
 </body>
