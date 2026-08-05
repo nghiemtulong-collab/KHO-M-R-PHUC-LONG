@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.6.4 MANUAL EDIT GUARD HF4)</title>
+<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.7 CATALOG EDIT GUARD)</title>
 <style>
 :root{
   --navy:#14263F; --navy-2:#1F3864; --amber:#F5A623; --amber-dark:#D98E0B;
@@ -201,7 +201,7 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
 <header>
   <div class="hd-inner">
     <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
-    <div class="hd-sub">ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.6.4</div>
+    <div class="hd-sub">ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.7</div>
     <div id="liveStatus" class="live-status stale"><span class="live-dot"></span><span id="liveStatusText">Đang khởi tạo…</span></div>
     <div class="controls">
       <div class="seg" id="segDepot">
@@ -370,7 +370,7 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
 <script>
 // ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
-const APP_VERSION="2026.07.25-MR-v4.3.6.4-MANUAL-EDIT-GUARD-HF4";
+const APP_VERSION="2026.08.05-MR-v4.3.7-CATALOG-EDIT-GUARD";
 const REQUEST_TIMEOUT_MS = 35000;
 // =================================================================================
 
@@ -419,7 +419,9 @@ function renderDraftNotice(){
 function hasAnyUnsentDraft(){
   try{for(let i=0;i<sessionStorage.length;i++){const k=sessionStorage.key(i)||"";if(!k.startsWith(DRAFT_PREFIX))continue;const d=JSON.parse(sessionStorage.getItem(k)||"null");if(meaningfulDraft(d))return true;}}catch(_){}return false;
 }
-window.addEventListener("beforeunload",e=>{saveCurrentDraft();if(hasAnyUnsentDraft()){e.preventDefault();e.returnValue="";}});
+// v4.3.7: bản cũ gọi saveViewCache() không tham số -> ghi rác vào key "..._UNDEFINED".
+// Sửa thành saveCurrentDraft() (ý định đúng) + flush cache tồn đang chờ ghi.
+window.addEventListener("beforeunload",e=>{saveCurrentDraft();flushViewCache();if(hasAnyUnsentDraft()){e.preventDefault();e.returnValue="";}});
 
 function viewCacheKey(depot){return "mr_kho_view_cache_v436_"+String(depot||"").toUpperCase();}
 function restoreViewCache(depot){
@@ -430,13 +432,34 @@ function restoreViewCache(depot){
     state.viewData=raw.data;state.latestSeq=Number(raw.data.latestSeq||0);
     state.serverDate=String(raw.data.serverDate||state.serverDate||"");state.backdateMaxDays=Number(raw.data.backdateMaxDays||state.backdateMaxDays||7);
     state.stockVerifiedAt=String(raw.data.stockVerifiedAt||"");state.stockChangedAt=String(raw.data.stockChangedAt||raw.data.updated||"");applyDateBounds();
+    invalidateCatalogCache();
     if(raw.data.version)setVersionState(raw.data.version);
     renderResults();renderSlip();renderActiveScreen();
     setLiveStatus("stale","Đang dùng dữ liệu lưu lúc "+new Date(raw.savedAt).toLocaleTimeString("vi-VN"));
     return true;
   }catch(_){return false;}
 }
-function saveViewCache(depot,data){try{sessionStorage.setItem(viewCacheKey(depot),JSON.stringify({savedAt:Date.now(),data}));}catch(_){}}
+
+// ===== F4: ghi sessionStorage là thao tác ĐỒNG BỘ. Bản cũ stringify toàn bộ
+// viewData (105 mã + lịch sử) mỗi 10 giây khi poll -> khựng định kỳ.
+// Gom lại và ghi trễ 600ms; flush khi rời trang.
+let viewCacheTimer=null,viewCachePending=null;
+function saveViewCache(depot,data){
+  viewCachePending={depot,data};
+  clearTimeout(viewCacheTimer);
+  viewCacheTimer=setTimeout(()=>{
+    if(!viewCachePending)return;
+    const p=viewCachePending;viewCachePending=null;
+    try{sessionStorage.setItem(viewCacheKey(p.depot),JSON.stringify({savedAt:Date.now(),data:p.data}));}catch(_){}
+  },600);
+}
+function flushViewCache(){
+  if(!viewCachePending)return;
+  clearTimeout(viewCacheTimer);
+  const p=viewCachePending;viewCachePending=null;
+  try{sessionStorage.setItem(viewCacheKey(p.depot),JSON.stringify({savedAt:Date.now(),data:p.data}));}catch(_){}
+}
+
 function ensureViewData(){if(!state.viewData)state.viewData={status:"ok",stock:{},history:{},version:APP_VERSION,latestSeq:state.latestSeq};if(!state.viewData.stock)state.viewData.stock={};if(!state.viewData.history)state.viewData.history={};return state.viewData;}
 function setLiveStatus(kind,text){const box=$("liveStatus"),label=$("liveStatusText");if(!box||!label)return;box.className="live-status "+kind;label.textContent=text;}
 function parseIsoUtc(iso){const p=String(iso||"").split("-").map(Number);return p.length===3&&p.every(Number.isFinite)?Date.UTC(p[0],p[1]-1,p[2]):NaN;}
@@ -444,9 +467,9 @@ function shiftIsoDate(iso,days){const ms=parseIsoUtc(iso);if(!Number.isFinite(ms
 function diffIsoDays(later,earlier){const a=parseIsoUtc(later),b=parseIsoUtc(earlier);return Number.isFinite(a)&&Number.isFinite(b)?Math.round((a-b)/86400000):0;}
 function applyDateBounds(){const server=state.serverDate||localIsoDate(new Date()),maxDays=Math.max(0,Number(state.backdateMaxDays)||0),input=$("ngay");input.max=server;input.min=shiftIsoDate(server,-maxDays);if(!input.value)input.value=server;const valid=isBusinessDateValid();input.classList.toggle("invalid",!valid);renderBackdateHint();renderSlip();}
 function applyRuntimeMeta(j){if(!j)return;if(j.serverDate)state.serverDate=String(j.serverDate);if(j.backdateMaxDays!==undefined)state.backdateMaxDays=Math.max(0,Number(j.backdateMaxDays)||0);if(j.stockVerifiedAt)state.stockVerifiedAt=String(j.stockVerifiedAt);if(j.stockChangedAt)state.stockChangedAt=String(j.stockChangedAt);const d=ensureViewData();d.serverDate=state.serverDate;d.backdateMaxDays=state.backdateMaxDays;d.stockVerifiedAt=state.stockVerifiedAt;d.stockChangedAt=state.stockChangedAt;applyDateBounds();}
-function mergeStockPayload(j,depot=state.depot){applyRuntimeMeta(j);const d=ensureViewData();d.stock[depot]=(j.stock&&j.stock[depot])||[];d.updated=j.updated||d.updated;d.stockChangedAt=j.stockChangedAt||j.updated||d.stockChangedAt;d.stockVerifiedAt=j.stockVerifiedAt||d.stockVerifiedAt;state.stockChangedAt=d.stockChangedAt||state.stockChangedAt;state.stockVerifiedAt=d.stockVerifiedAt||state.stockVerifiedAt;d.catalogSource=j.catalogSource||d.catalogSource;d.version=j.version||d.version;d.latestSeq=Number(j.latestSeq||d.latestSeq||0);state.latestSeq=d.latestSeq;saveViewCache(depot,d);}
+function mergeStockPayload(j,depot=state.depot){applyRuntimeMeta(j);const d=ensureViewData();d.stock[depot]=(j.stock&&j.stock[depot])||[];d.updated=j.updated||d.updated;d.stockChangedAt=j.stockChangedAt||j.updated||d.stockChangedAt;d.stockVerifiedAt=j.stockVerifiedAt||d.stockVerifiedAt;state.stockChangedAt=d.stockChangedAt||state.stockChangedAt;state.stockVerifiedAt=d.stockVerifiedAt||state.stockVerifiedAt;d.catalogSource=j.catalogSource||d.catalogSource;d.version=j.version||d.version;d.latestSeq=Number(j.latestSeq||d.latestSeq||0);state.latestSeq=d.latestSeq;invalidateCatalogCache();saveViewCache(depot,d);}
 function stockKey(r){return String((r&&r.itemUid)||(r&&r.ma)||"");}
-function applyAffectedStock(rows){if(!Array.isArray(rows)||!rows.length)return;const d=ensureViewData(),list=d.stock[state.depot]||[],changed=[];rows.forEach(r=>{const key=stockKey(r);let idx=list.findIndex(x=>stockKey(x)===key||String(x.ma)===String(r.ma));if(idx>=0)list[idx]={...list[idx],...r};else list.push(r);changed.push(String(r.ma||key));});d.stock[state.depot]=list;state.stockChangedAt=new Date().toLocaleString("vi-VN");d.stockChangedAt=state.stockChangedAt;saveViewCache(state.depot,d);renderResults();renderSlip();if(state.screen==="stock")patchStockCards(changed);}
+function applyAffectedStock(rows){if(!Array.isArray(rows)||!rows.length)return;const d=ensureViewData(),list=d.stock[state.depot]||[],changed=[];rows.forEach(r=>{const key=stockKey(r);let idx=list.findIndex(x=>stockKey(x)===key||String(x.ma)===String(r.ma));if(idx>=0)list[idx]={...list[idx],...r};else list.push(r);changed.push(String(r.ma||key));});d.stock[state.depot]=list;state.stockChangedAt=new Date().toLocaleString("vi-VN");d.stockChangedAt=state.stockChangedAt;invalidateCatalogCache();saveViewCache(state.depot,d);renderResults();renderSlip();if(state.screen==="stock")patchStockCards(changed);}
 
 function escapeHtml(value){
   return String(value == null ? "" : value)
@@ -459,14 +482,25 @@ function escapeHtml(value){
 function stripAccent(s){
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase();
 }
+
+// ===== F1: cache danh sách đã stripAccent.
+// Bản cũ chạy normalize("NFD") cho TOÀN BỘ danh mục ở MỖI keystroke
+// -> nguyên nhân lag nặng nhất khi gõ tìm vật tư trên điện thoại.
+let catalogCache={depot:"",token:"",items:[]};
+function invalidateCatalogCache(){catalogCache={depot:"",token:"",items:[]};}
 function catalogItems(){
   const rows = state.viewData && state.viewData.stock ? (state.viewData.stock[state.depot] || []) : [];
-  return rows.map(r=>({
+  const token = state.depot+"|"+rows.length+"|"+state.latestSeq;
+  if(catalogCache.depot===state.depot && catalogCache.token===token) return catalogCache.items;
+  const items = rows.map(r=>({
     ma:String(r.ma||""),ten:String(r.ten||""),dvt:String(r.dvt||""),
     itemUid:String(r.itemUid||""),catalogStatus:String(r.catalogStatus||"ACTIVE"),tempCode:String(r.tempCode||""),
     key:stripAccent(String(r.ten||"")+" "+String(r.ma||""))
   }));
+  catalogCache={depot:state.depot,token,items};
+  return items;
 }
+
 function randomId(prefix="id"){
   if(window.crypto && crypto.randomUUID){
     return prefix+"_"+crypto.randomUUID().replace(/-/g,"");
@@ -563,6 +597,7 @@ async function applyDepotChange(next){
   state.pendingRequest=null;state.viewData=null;state.latestSeq=0;
   state.historyOffset=0;state.historyHasMore=false;state.historyUpdatePending=false;
   state.stockVisibleCount=state.stockPageSize;
+  invalidateCatalogCache();
   $("q").value="";$("vwq").value="";
   syncDepotButtons();
   restoreViewCache(state.depot);restoreCurrentDraft();renderActiveScreen();
@@ -603,7 +638,7 @@ function setVersionState(version){
   state.versionOk=version===APP_VERSION;
   const sub=document.querySelector(".hd-sub");
   if(state.versionOk){
-    if(sub)sub.textContent="ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.6.4";
+    if(sub)sub.textContent="ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.7";
   }else{
     if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
     if(!state.versionWarned){
@@ -755,7 +790,7 @@ async function refreshStock(silent,bootstrap=false,options={}){
       if(epoch!==state.requestEpoch||requestDepot!==state.depot)return true;
       mergeStockPayload(j,requestDepot);
       const source=j.catalogSource?" · danh mục "+j.catalogSource:"";
-      $("sessionNote").innerHTML="<b>Phiên đăng nhập:</b> "+state.depot+" · token chỉ lưu trong tab này"+source;
+      $("sessionNote").innerHTML="<b>Phiên đăng nhập:</b> "+escapeHtml(state.depot)+" · token chỉ lưu trong tab này"+escapeHtml(source);
       state.lastSyncAt=j.stockVerifiedAt||j.updated||new Date().toLocaleTimeString("vi-VN");setLiveStatus("online","Trực tuyến · xác nhận "+state.lastSyncAt);
       renderResults();renderSlip();
       if(state.screen==="stock"&&options.patchOnly&&Array.isArray(options.changedCodes)&&options.changedCodes.length){updateStockMeta();patchStockCards(options.changedCodes);}else renderActiveScreen();
@@ -795,7 +830,7 @@ async function livePoll(){
   }catch(err){state.pollDelay=Math.min(60000,state.pollDelay*2);const hasCache=!!state.viewData;setLiveStatus(hasCache?"stale":"offline","Mất kết nối · thử lại sau "+Math.round(state.pollDelay/1000)+" giây");}
   finally{state.pollBusy=false;scheduleLivePoll(state.pollDelay);}
 }
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")stopLivePolling();else startLivePolling(true);});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){flushViewCache();stopLivePolling();}else startLivePolling(true);});
 window.addEventListener("online",()=>startLivePolling(true));window.addEventListener("offline",()=>{stopLivePolling();setLiveStatus("offline","Mất kết nối mạng");});
 
 function backendHistoryType(){return vwType==="x"?"XUAT":(vwType==="n"?"NHAP":(vwType==="d"?"DEXUAT":"ALL"));}
@@ -823,15 +858,17 @@ function renderResults(){
   if(!items.length){ box.innerHTML = '<div class="empty-note">Chưa tải được danh mục kho. Đăng nhập hoặc tải lại Xem kho.</div>'; return; }
   const hits = items.filter(it => it.key.includes(q)).slice(0,20);
   if(!hits.length){ box.innerHTML = '<div class="empty-note">Không tìm thấy — thử gõ ngắn hơn.</div>'; return; }
+  const frag=document.createDocumentFragment();
   hits.forEach(it=>{
     const added = !!state.slip[it.ma];
     const s = stockItem(it.ma);
     const out = transactionDepletesStock() && s && Number(s.ton)<=0;
     const div = document.createElement("div");
     div.className = "item"+(added?" added":"")+(out?" out-of-stock":"");
-    const stockText = s ? " · Tồn: "+s.ton+" "+s.dvt : "";
+    const stockText = s ? " · Tồn: "+s.ton+" "+escapeHtml(s.dvt) : "";
     const catTag=it.catalogStatus!=="ACTIVE"?'<span class="pending-tag">'+escapeHtml(it.catalogStatus)+'</span>':'';
-    div.innerHTML = '<div><div class="nm">'+it.ten+catTag+'</div><div class="cd">'+it.ma+' · Đvt: '+it.dvt+stockText+'</div></div>'
+    // F5: escape tên/mã/ĐVT — tên vật tư nhập tay từ màn "Vật tư mới" đi thẳng vào innerHTML.
+    div.innerHTML = '<div><div class="nm">'+escapeHtml(it.ten)+catTag+'</div><div class="cd">'+escapeHtml(it.ma)+' · Đvt: '+escapeHtml(it.dvt)+stockText+'</div></div>'
                   + '<button class="add">'+(out?"HẾT":(added?"✓":"+"))+'</button>';
     div.onclick = ()=>{
       // Dòng đã chọn: chạm lại để bỏ chọn, kể cả khi tồn vừa chuyển về 0.
@@ -845,10 +882,13 @@ function renderResults(){
       }
       addItem(it);
     };
-    box.appendChild(div);
+    frag.appendChild(div);
   });
+  box.appendChild(frag);
 }
-$("q").addEventListener("input", renderResults);
+// F2: debounce 180ms. Bản cũ render lại toàn bộ kết quả ở MỖI keystroke.
+let searchTimer=null;
+$("q").addEventListener("input",()=>{clearTimeout(searchTimer);searchTimer=setTimeout(renderResults,180);});
 
 function addItem(it){
   // addItem chỉ thêm mới; thao tác bỏ chọn được xử lý ngay tại renderResults.
@@ -864,16 +904,33 @@ function addItem(it){
   renderSlip(); renderResults(); scheduleDraftSave();
 }
 function removeItem(key){ delete state.slip[key]; renderSlip(); renderResults(); scheduleDraftSave(); }
+
+// ===== F3: bấm +/- không dựng lại toàn bộ DOM phiếu nữa.
+// Bản cũ gọi renderSlip() mỗi lần đổi số -> bấm nhanh bị khựng và mất focus ô input.
 function setQty(key,v){
   const row=state.slip[key],ma=row?row.ma:key;v=parseInt(v,10);
   if(isNaN(v)||v<=0)v=1;if(v>9999)v=9999;
   if(transactionDepletesStock()){
     const s=stockItem(ma);if(s){const ton=Math.max(0,Number(s.ton)||0);
-      if(ton<=0){alert("Vật tư "+ma+" đã hết; dòng này được xóa khỏi phiếu.");delete state.slip[key];renderSlip();renderResults();return;}
+      if(ton<=0){alert("Vật tư "+ma+" đã hết; dòng này được xóa khỏi phiếu.");delete state.slip[key];renderSlip();renderResults();scheduleDraftSave();return;}
       if(v>ton){alert("Số lượng xuất tối đa theo tồn hiện tại là "+ton+" "+s.dvt+".");v=ton;}
     }
   }
-  state.slip[key].qty=v;renderSlip();scheduleDraftSave();
+  if(!state.slip[key])return;
+  state.slip[key].qty=v;
+  syncSlipQty(key);
+  scheduleDraftSave();
+}
+function syncSlipQty(key){
+  const r=state.slip[key];if(!r){renderSlip();return;}
+  const rows=$("slipRows").querySelectorAll(".slip-row");
+  for(let i=0;i<rows.length;i++){
+    if(rows[i].dataset.rowKey!==String(key))continue;
+    const inp=rows[i].querySelector(".qty input");
+    if(inp&&String(inp.value)!==String(r.qty))inp.value=r.qty;
+    return;
+  }
+  renderSlip();
 }
 
 function renderSlip(){
@@ -884,11 +941,12 @@ function renderSlip(){
   $("btnSend").disabled = list.length===0 || !state.versionOk || state.sending || !isBusinessDateValid();
   if(!list.length){ rows.innerHTML = '<div class="slip-empty">Chưa có vật tư nào trong phiếu.<br>Tìm và bấm chọn ở trên.</div>'; return; }
   rows.innerHTML = "";
+  const frag=document.createDocumentFragment();
   list.forEach(r=>{
     const d = document.createElement("div");
     d.className = "slip-row";
     d.innerHTML =
-      '<div class="info"><div class="nm">'+r.ten+(r.isNew?'<span class="pending-tag">VẬT TƯ MỚI</span>':'')+'</div><div class="cd">'+(r.isNew?'Mã tự tạo sau khi gửi':r.ma)+' · '+r.dvt+'</div></div>'
+      '<div class="info"><div class="nm">'+escapeHtml(r.ten)+(r.isNew?'<span class="pending-tag">VẬT TƯ MỚI</span>':'')+'</div><div class="cd">'+(r.isNew?'Mã tự tạo sau khi gửi':escapeHtml(r.ma))+' · '+escapeHtml(r.dvt)+'</div></div>'
      +'<div class="qty">'
      +'<button aria-label="Giảm">−</button>'
      +'<input type="number" inputmode="numeric" value="'+r.qty+'">'
@@ -897,12 +955,15 @@ function renderSlip(){
     const [minus, plus] = d.querySelectorAll(".qty button");
     const inp = d.querySelector(".qty input");
     const rowKey=r.key||r.ma;
-    minus.onclick = ()=>setQty(rowKey, r.qty-1);
-    plus.onclick  = ()=>setQty(rowKey, r.qty+1);
+    d.dataset.rowKey=String(rowKey);
+    // Đọc qty từ state (không phải closure r) vì DOM không còn dựng lại mỗi lần bấm.
+    minus.onclick = ()=>setQty(rowKey, state.slip[rowKey]?state.slip[rowKey].qty-1:1);
+    plus.onclick  = ()=>setQty(rowKey, state.slip[rowKey]?state.slip[rowKey].qty+1:1);
     inp.onchange  = e=>setQty(rowKey, e.target.value);
     d.querySelector(".rm").onclick = ()=>removeItem(rowKey);
-    rows.appendChild(d);
+    frag.appendChild(d);
   });
+  rows.appendChild(frag);
 }
 
 function similarCatalogItem_(name,unit){
@@ -949,9 +1010,9 @@ $("btnSend").onclick = async ()=>{
   if(d.length!==3){ alert("Chọn ngày phiếu."); return; }
   const dateVN = d[2]+"/"+d[1]+"/"+d[0];
   $("cfTitle").textContent = "Xác nhận PHIẾU "+(isAdjustOn()?"ĐIỀU CHỈNH TỒN — ":"")+typeLabel()+" — "+state.depot+" — "+dateVN;
-  $("cfSummary").innerHTML = (isAdjustOn()?"<b>Nguyên nhân:</b> "+$("adjustReason").selectedOptions[0].text+"<br><br>":"")+list.map(r=>"• "+r.ten+(r.isNew?" <span class='pending-tag'>VẬT TƯ MỚI</span>":"")+" — <b>"+r.qty+" "+r.dvt+"</b>").join("<br>")+(selectedBackdateDays()>0?"<br><br><span class='backdated-tag'>LÙI "+selectedBackdateDays()+" NGÀY</span>":"");
+  $("cfSummary").innerHTML = (isAdjustOn()?"<b>Nguyên nhân:</b> "+escapeHtml($("adjustReason").selectedOptions[0].text)+"<br><br>":"")+list.map(r=>"• "+escapeHtml(r.ten)+(r.isNew?" <span class='pending-tag'>VẬT TƯ MỚI</span>":"")+" — <b>"+r.qty+" "+escapeHtml(r.dvt)+"</b>").join("<br>")+(selectedBackdateDays()>0?"<br><br><span class='backdated-tag'>LÙI "+selectedBackdateDays()+" NGÀY</span>":"");
   const source=state.viewData&&state.viewData.catalogSource?" · danh mục "+state.viewData.catalogSource:"";
-  $("sessionNote").innerHTML="<b>Phiên đăng nhập:</b> "+state.depot+" · token chỉ lưu trong tab này"+source;
+  $("sessionNote").innerHTML="<b>Phiên đăng nhập:</b> "+escapeHtml(state.depot)+" · token chỉ lưu trong tab này"+escapeHtml(source);
   $("ovConfirm").classList.add("show");
 };
 $("btnCancel").onclick = e=>{ e.preventDefault(); $("ovConfirm").classList.remove("show"); };
@@ -1002,7 +1063,7 @@ $("btnConfirm").onclick = async ()=>{
       $("doneMsg").textContent=
         (j2.duplicate?"Hệ thống nhận diện lần gửi lại và không ghi trùng. ":payload.items.length+" mã vật tư đã được ghi vào sổ "+loai+" "+state.depot+". ")+
         (j2.txnId?"Mã giao dịch: "+j2.txnId+". ":"")+(j2.isBackdated?"Phiếu lùi "+j2.backdatedDays+" ngày và đã ghi audit. ":"")+((j2.pendingItems||[]).length?"Mã tạm: "+j2.pendingItems.map(x=>x.tempCode).join(", ")+". ":"")+(j2.recovered?"Giao dịch đã được tự đối soát. ":"")+(j2.warn||"");
-      $("docLinkWrap").innerHTML=j2.docUrl?'<a href="'+j2.docUrl+'" target="_blank" rel="noopener" class="doc-link">🖨 Mở phiếu đề xuất để in</a>':"";
+      $("docLinkWrap").innerHTML=j2.docUrl?'<a href="'+encodeURI(j2.docUrl)+'" target="_blank" rel="noopener" class="doc-link">🖨 Mở phiếu đề xuất để in</a>':"";
       $("btnDoneAction").textContent="Làm phiếu mới";$("btnDoneAction").onclick=resetAll;$("ovDone").classList.add("show");return;
     }
     showFail((j2.message||"Hệ thống từ chối phiếu.")+(j2.txnId?" Mã: "+j2.txnId:""));$("ovDone").classList.add("show");
@@ -1053,7 +1114,9 @@ function renderStock(){
   $("vwStockCount").textContent=rows.length?("Đang hiển thị "+visible.length+"/"+rows.length+" mã"):"";
   $("btnMoreStock").hidden=visible.length>=rows.length;$("btnMoreStock").textContent="Xem thêm "+Math.min(state.stockPageSize,rows.length-visible.length)+" mã";
   if(!rows.length){box.innerHTML='<div class="vw-load">Không có vật tư khớp.</div>';return;}
-  visible.forEach(r=>{const div=document.createElement("div"),low=r.min>0&&r.ton<=r.min;div.className="stock-row"+(r.ton<=0?" zero":"")+(low?" low":"");div.dataset.itemKey=stockKey(r);div.dataset.itemCode=String(r.ma||"");div.innerHTML=stockRowHtml(r);box.appendChild(div);});
+  const frag=document.createDocumentFragment();
+  visible.forEach(r=>{const div=document.createElement("div"),low=r.min>0&&r.ton<=r.min;div.className="stock-row"+(r.ton<=0?" zero":"")+(low?" low":"");div.dataset.itemKey=stockKey(r);div.dataset.itemCode=String(r.ma||"");div.innerHTML=stockRowHtml(r);frag.appendChild(div);});
+  box.appendChild(frag);
 }
 function patchStockCards(codes){
   const changed=new Set((codes||[]).map(String)),rows=state.viewData&&state.viewData.stock?(state.viewData.stock[state.depot]||[]):[];updateStockMeta();
@@ -1061,9 +1124,11 @@ function patchStockCards(codes){
 }
 function renderHistory(){
   renderHistoryUpdate();const d=state.viewData||{},hist=Array.isArray(d.historyRows)?d.historyRows:[],hb=$("vwHist");hb.className="";hb.innerHTML="";
-  if(!hist.length)hb.innerHTML='<div class="vw-load">'+(($("vwDate").value||vwType!=="all")?"Không có phiếu nào khớp bộ lọc.":"Chưa có phiếu nào.")+'</div>';
+  if(!hist.length){hb.innerHTML='<div class="vw-load">'+(($("vwDate").value||vwType!=="all")?"Không có phiếu nào khớp bộ lọc.":"Chưa có phiếu nào.")+'</div>';return;}
+  const frag=document.createDocumentFragment();
   hist.forEach(h=>{const div=document.createElement("div");div.className="hist-row"+(h.sl<0?" neg":" ");const isAdj=String(h.ghichu||"").startsWith("[ĐIỀU CHỈNH TỒN:")||String(h.ghichu||"").startsWith("[ĐIỀU CHỈNH]")||String(h.ghichu||"").startsWith("[KIỂM KÊ")||String(h.ghichu||"").startsWith("[ĐIỀU CHỈNH NHANH");
-    div.innerHTML='<div class="top"><span><span class="hist-tag '+h.t+'">'+(h.t==="x"?"XUẤT":(h.t==="n"?"NHẬP":"ĐỀ XUẤT"))+'</span>'+(isAdj?'<span class="backdated-tag">ĐIỀU CHỈNH</span>':'')+h.vt+'</span><b>'+h.sl+'</b></div><div class="sub">Ngày '+h.ngay+(h.isBackdated?' <span class="backdated-tag">LÙI '+h.backdatedDays+' NGÀY</span>':'')+' · gửi lúc '+h.ts+(h.nguoi?' · <span class="who">'+h.nguoi+'</span>':'')+(h.catalogStatus&&h.catalogStatus!=="ACTIVE"?' · <span class="pending-tag">'+escapeHtml(h.catalogStatus)+'</span>':'')+(h.ghichu?' · '+h.ghichu:'')+(h.txnId?' · '+h.txnId:'')+'</div>';hb.appendChild(div);});
+    div.innerHTML='<div class="top"><span><span class="hist-tag '+escapeHtml(h.t)+'">'+(h.t==="x"?"XUẤT":(h.t==="n"?"NHẬP":"ĐỀ XUẤT"))+'</span>'+(isAdj?'<span class="backdated-tag">ĐIỀU CHỈNH</span>':'')+escapeHtml(h.vt)+'</span><b>'+h.sl+'</b></div><div class="sub">Ngày '+escapeHtml(h.ngay)+(h.isBackdated?' <span class="backdated-tag">LÙI '+h.backdatedDays+' NGÀY</span>':'')+' · gửi lúc '+escapeHtml(h.ts)+(h.nguoi?' · <span class="who">'+escapeHtml(h.nguoi)+'</span>':'')+(h.catalogStatus&&h.catalogStatus!=="ACTIVE"?' · <span class="pending-tag">'+escapeHtml(h.catalogStatus)+'</span>':'')+(h.ghichu?' · '+escapeHtml(h.ghichu):'')+(h.txnId?' · '+escapeHtml(h.txnId):'')+'</div>';frag.appendChild(div);});
+  hb.appendChild(frag);
 }
 
 document.body.classList.add("screen-write");updateDirectNav();syncDepotButtons();applyDateBounds();restoreCurrentDraft();renderSlip();renderSlipHead();renderDraftNotice();
