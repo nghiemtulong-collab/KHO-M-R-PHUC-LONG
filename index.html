@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.7 CATALOG EDIT GUARD)</title>
+<title>Phiếu kho vật tư M&R — ICD Phúc Long (v4.3.8 CATALOG GROUP)</title>
 <style>
 :root{
   --navy:#14263F; --navy-2:#1F3864; --amber:#F5A623; --amber-dark:#D98E0B;
@@ -195,13 +195,29 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
 .skeleton-row{height:67px;border-radius:10px;margin-bottom:7px;background:linear-gradient(90deg,#ece8df 25%,#f7f5f0 37%,#ece8df 63%);background-size:400% 100%;animation:skeletonMove 1.3s ease infinite}
 @keyframes skeletonMove{0%{background-position:100% 0}100%{background-position:0 0}}
 .date-row input.invalid{outline:2px solid #FF8A80;background:#2D1C26}
+
+/* v4.3.8 — thanh lọc nhóm vật tư */
+.group-bar{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.group-bar button{border:1.5px solid var(--line);border-radius:20px;background:var(--white);
+  font-family:inherit;font-weight:800;font-size:11.5px;letter-spacing:.3px;
+  padding:8px 12px;cursor:pointer;color:var(--navy-2);white-space:nowrap}
+.group-bar button.on{background:var(--navy-2);color:var(--white);border-color:var(--navy-2)}
+.group-bar button .n{font-weight:600;opacity:.72;margin-left:5px}
+.group-bar button.on .n{opacity:.85}
+.group-bar button[data-g="CHO_MA"]{border-color:var(--amber-dark);color:#7A5200;background:#FFF9EC}
+.group-bar button[data-g="CHO_MA"].on{background:var(--amber);color:var(--navy);border-color:var(--amber)}
+.group-head{font-weight:800;font-size:11.5px;letter-spacing:.4px;color:var(--muted);
+  margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.group-head:first-child{margin-top:4px}
+.group-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.3px;
+  background:#EEF2F8;color:var(--navy-2);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle}
 </style>
 </head>
 <body>
 <header>
   <div class="hd-inner">
     <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
-    <div class="hd-sub">ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.7</div>
+    <div class="hd-sub">ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.8</div>
     <div id="liveStatus" class="live-status stale"><span class="live-dot"></span><span id="liveStatusText">Đang khởi tạo…</span></div>
     <div class="controls">
       <div class="seg" id="segDepot">
@@ -229,9 +245,10 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
 <div class="wrap">
   <div class="write-panel" id="writePanel">
     <div id="draftNotice" class="draft-notice"><span id="draftNoticeText"></span><button id="btnClearDraft" type="button">Xóa phiếu</button></div>
+    <div class="group-bar" id="groupBar"></div>
     <div class="search-box">
       <input type="search" id="q" placeholder="Gõ tên vật tư… (vd: bat khoa, ton noc)" autocomplete="off">
-      <div class="hint">Gõ không dấu cũng tìm được. Bấm vào vật tư để thêm vào phiếu.</div>
+      <div class="hint">Gõ không dấu cũng tìm được. Ô tìm luôn quét TOÀN BỘ danh mục, không phụ thuộc nhóm đang chọn.</div>
     </div>
     <div class="results" id="results"></div>
     <div id="newMaterialBar" class="new-material-bar"><button id="btnNewMaterial" class="new-material-btn">➕ Vật tư mới/chưa có trong danh mục<small>Tên, ĐVT, ngày và số lượng bắt buộc; MRVT/MRPL có thể bổ sung sau.</small></button></div>
@@ -273,6 +290,7 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
 
   <div class="stock-screen" id="stockScreen">
     <div class="vw-note">Số tồn được đọc từ snapshot nhanh; phiếu nhập/xuất vẫn là nguồn dữ liệu gốc.</div>
+    <div class="group-bar" id="stockGroupBar"></div>
     <div class="vw-search"><input type="search" id="vwq" placeholder="Tìm vật tư trong kho…" autocomplete="off"></div>
     <div class="vw-sec" id="vwStockTitle">TỒN KHO DP1</div>
     <div id="vwStockMeta" class="stock-meta">Chưa xác nhận dữ liệu với server.</div>
@@ -370,7 +388,7 @@ body.screen-write .stock-screen,body.screen-write .history-screen{display:none}
 <script>
 // ====== CẤU HÌNH — DÁN URL APPS SCRIPT VÀO ĐÂY (Bước deploy trong hướng dẫn) ======
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
-const APP_VERSION="2026.08.05-MR-v4.3.7-CATALOG-EDIT-GUARD";
+const APP_VERSION="2026.08.06-MR-v4.3.8-CATALOG-GROUP";
 const REQUEST_TIMEOUT_MS = 35000;
 // =================================================================================
 
@@ -381,7 +399,8 @@ const state = {
   pollTimer:null,pollBusy:false,pollDelay:10000,lastSyncAt:"",historyOffset:0,historyHasMore:false,historyLoading:false,
   historyUpdatePending:false,draftSaveTimer:null,suppressDraftSave:false,
   backdateMaxDays:7,serverDate:"",stockVerifiedAt:"",stockChangedAt:"",stockVisibleCount:20,stockPageSize:20,
-  stockRequestPromises:{},requestEpoch:0,stockSearchTimer:null,changedItemCodes:[],scrollPositions:{write:0,stock:0,history:0}
+  stockRequestPromises:{},requestEpoch:0,stockSearchTimer:null,changedItemCodes:[],scrollPositions:{write:0,stock:0,history:0},
+  group:"ALL",stockGroup:"ALL"
 };
 
 const DRAFT_PREFIX="mr_kho_draft_v436_";
@@ -486,8 +505,16 @@ function stripAccent(s){
 // ===== F1: cache danh sách đã stripAccent.
 // Bản cũ chạy normalize("NFD") cho TOÀN BỘ danh mục ở MỖI keystroke
 // -> nguyên nhân lag nặng nhất khi gõ tìm vật tư trên điện thoại.
+// v4.3.8 — thứ tự hiển thị nhóm. Nhãn dự phòng khi backend chưa gửi groupLabel.
+const GROUP_ORDER=["PHU_KIEN","TON_SAT","SAN_KIN_NUOC","SON_HOA_CHAT","KHI_HAN","DUNG_CU_BHLD","KHAC","CHO_MA"];
+const GROUP_LABELS={PHU_KIEN:"PHỤ KIỆN",TON_SAT:"TÔN & SẮT",SAN_KIN_NUOC:"SÀN & KÍN NƯỚC",
+  SON_HOA_CHAT:"SƠN & HÓA CHẤT",KHI_HAN:"KHÍ & HÀN",DUNG_CU_BHLD:"DỤNG CỤ & BHLĐ",KHAC:"KHÁC",CHO_MA:"CHỜ MÃ"};
+function groupLabelOf(g){return GROUP_LABELS[String(g||"").toUpperCase()]||GROUP_LABELS.KHAC;}
+function groupRank(g){const i=GROUP_ORDER.indexOf(String(g||"").toUpperCase());return i<0?GROUP_ORDER.length:i;}
+
 let catalogCache={depot:"",token:"",items:[]};
 function invalidateCatalogCache(){catalogCache={depot:"",token:"",items:[]};}
+function refreshGroupBars(){try{renderWriteGroupBar();renderStockGroupBar();}catch(_){}}
 function catalogItems(){
   const rows = state.viewData && state.viewData.stock ? (state.viewData.stock[state.depot] || []) : [];
   const token = state.depot+"|"+rows.length+"|"+state.latestSeq;
@@ -495,10 +522,49 @@ function catalogItems(){
   const items = rows.map(r=>({
     ma:String(r.ma||""),ten:String(r.ten||""),dvt:String(r.dvt||""),
     itemUid:String(r.itemUid||""),catalogStatus:String(r.catalogStatus||"ACTIVE"),tempCode:String(r.tempCode||""),
+    group:String(r.group||"KHAC").toUpperCase(),groupLabel:String(r.groupLabel||groupLabelOf(r.group)),
     key:stripAccent(String(r.ten||"")+" "+String(r.ma||""))
   }));
   catalogCache={depot:state.depot,token,items};
   return items;
+}
+
+// Thanh lọc nhóm dựng động từ dữ liệu thật; nhóm không có mã nào thì không hiện nút.
+function groupCounts(rows){
+  const c={};
+  (rows||[]).forEach(r=>{const g=String(r.group||"KHAC").toUpperCase();c[g]=(c[g]||0)+1;});
+  return c;
+}
+function renderGroupBar(barId,rows,current,onPick){
+  const bar=$(barId);if(!bar)return;
+  const counts=groupCounts(rows),total=(rows||[]).length;
+  const keys=Object.keys(counts).sort((a,b)=>groupRank(a)-groupRank(b));
+  bar.innerHTML="";
+  if(!total){return;}
+  const frag=document.createDocumentFragment();
+  const mk=(g,label,n)=>{
+    const b=document.createElement("button");
+    b.type="button";b.dataset.g=g;
+    b.className=(current===g?"on":"");
+    b.innerHTML=escapeHtml(label)+'<span class="n">'+n+'</span>';
+    b.onclick=()=>onPick(g);
+    frag.appendChild(b);
+  };
+  mk("ALL","TẤT CẢ",total);
+  keys.forEach(g=>mk(g,groupLabelOf(g),counts[g]));
+  bar.appendChild(frag);
+}
+function renderWriteGroupBar(){
+  const items=catalogItems();
+  if(state.group!=="ALL"&&!items.some(x=>x.group===state.group))state.group="ALL";
+  renderGroupBar("groupBar",items,state.group,g=>{state.group=g;renderWriteGroupBar();renderResults();});
+}
+function renderStockGroupBar(){
+  const rows=(state.viewData&&state.viewData.stock?(state.viewData.stock[state.depot]||[]):[]);
+  if(state.stockGroup!=="ALL"&&!rows.some(x=>String(x.group||"KHAC").toUpperCase()===state.stockGroup))state.stockGroup="ALL";
+  renderGroupBar("stockGroupBar",rows,state.stockGroup,g=>{
+    state.stockGroup=g;state.stockVisibleCount=state.stockPageSize;renderStockGroupBar();renderStock();
+  });
 }
 
 function randomId(prefix="id"){
@@ -597,6 +663,7 @@ async function applyDepotChange(next){
   state.pendingRequest=null;state.viewData=null;state.latestSeq=0;
   state.historyOffset=0;state.historyHasMore=false;state.historyUpdatePending=false;
   state.stockVisibleCount=state.stockPageSize;
+  state.group="ALL";state.stockGroup="ALL";
   invalidateCatalogCache();
   $("q").value="";$("vwq").value="";
   syncDepotButtons();
@@ -638,7 +705,7 @@ function setVersionState(version){
   state.versionOk=version===APP_VERSION;
   const sub=document.querySelector(".hd-sub");
   if(state.versionOk){
-    if(sub)sub.textContent="ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.7";
+    if(sub)sub.textContent="ICD Phúc Long — thao tác trực tiếp · hiện trường mượt · v4.3.8";
   }else{
     if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
     if(!state.versionWarned){
@@ -792,7 +859,7 @@ async function refreshStock(silent,bootstrap=false,options={}){
       const source=j.catalogSource?" · danh mục "+j.catalogSource:"";
       $("sessionNote").innerHTML="<b>Phiên đăng nhập:</b> "+escapeHtml(state.depot)+" · token chỉ lưu trong tab này"+escapeHtml(source);
       state.lastSyncAt=j.stockVerifiedAt||j.updated||new Date().toLocaleTimeString("vi-VN");setLiveStatus("online","Trực tuyến · xác nhận "+state.lastSyncAt);
-      renderResults();renderSlip();
+      refreshGroupBars();renderResults();renderSlip();
       if(state.screen==="stock"&&options.patchOnly&&Array.isArray(options.changedCodes)&&options.changedCodes.length){updateStockMeta();patchStockCards(options.changedCodes);}else renderActiveScreen();
       return true;
     }catch(err){
@@ -853,12 +920,31 @@ function renderResults(){
   const q = stripAccent($("q").value.trim());
   const box = $("results");
   box.innerHTML = "";
-  if(!q){ box.innerHTML = ""; return; }
   const items = catalogItems();
   if(!items.length){ box.innerHTML = '<div class="empty-note">Chưa tải được danh mục kho. Đăng nhập hoặc tải lại Xem kho.</div>'; return; }
-  const hits = items.filter(it => it.key.includes(q)).slice(0,20);
-  if(!hits.length){ box.innerHTML = '<div class="empty-note">Không tìm thấy — thử gõ ngắn hơn.</div>'; return; }
+
+  // v4.3.8: ô tìm quét TOÀN BỘ danh mục (không lọc nhóm) để không làm chậm thao tác quen thuộc.
+  // Khi ô tìm trống mà đang chọn một nhóm thì hiện danh sách của nhóm đó.
+  let hits, grouped=false;
+  if(q){
+    hits = items.filter(it => it.key.includes(q)).slice(0,20);
+    if(!hits.length){ box.innerHTML = '<div class="empty-note">Không tìm thấy — thử gõ ngắn hơn.</div>'; return; }
+  }else if(state.group!=="ALL"){
+    hits = items.filter(it => it.group===state.group).slice(0,60);
+    grouped = true;
+    if(!hits.length){ box.innerHTML = '<div class="empty-note">Nhóm này chưa có vật tư nào.</div>'; return; }
+  }else{
+    box.innerHTML = '<div class="empty-note">Chọn một nhóm ở trên, hoặc gõ tên vật tư để tìm nhanh.</div>';
+    return;
+  }
+
   const frag=document.createDocumentFragment();
+  if(grouped){
+    const h=document.createElement("div");
+    h.className="group-head";
+    h.textContent=groupLabelOf(state.group)+" — "+hits.length+" mã";
+    frag.appendChild(h);
+  }
   hits.forEach(it=>{
     const added = !!state.slip[it.ma];
     const s = stockItem(it.ma);
@@ -868,7 +954,9 @@ function renderResults(){
     const stockText = s ? " · Tồn: "+s.ton+" "+escapeHtml(s.dvt) : "";
     const catTag=it.catalogStatus!=="ACTIVE"?'<span class="pending-tag">'+escapeHtml(it.catalogStatus)+'</span>':'';
     // F5: escape tên/mã/ĐVT — tên vật tư nhập tay từ màn "Vật tư mới" đi thẳng vào innerHTML.
-    div.innerHTML = '<div><div class="nm">'+escapeHtml(it.ten)+catTag+'</div><div class="cd">'+escapeHtml(it.ma)+' · Đvt: '+escapeHtml(it.dvt)+stockText+'</div></div>'
+    // Khi tìm toàn danh mục, gắn nhãn nhóm để biết vật tư thuộc cụm nào.
+    const grpTag = (!grouped && it.group) ? '<span class="group-tag">'+escapeHtml(groupLabelOf(it.group))+'</span>' : '';
+    div.innerHTML = '<div><div class="nm">'+escapeHtml(it.ten)+catTag+grpTag+'</div><div class="cd">'+escapeHtml(it.ma)+' · Đvt: '+escapeHtml(it.dvt)+stockText+'</div></div>'
                   + '<button class="add">'+(out?"HẾT":(added?"✓":"+"))+'</button>';
     div.onclick = ()=>{
       // Dòng đã chọn: chạm lại để bỏ chọn, kể cả khi tồn vừa chuyển về 0.
@@ -1103,13 +1191,24 @@ $("btnMoreHistory").onclick=()=>loadHistory(false);
 $("btnRefreshHistory").onclick=()=>loadHistory(true);
 function historyAtTop(){return window.scrollY<180;}
 function renderHistoryUpdate(){$("historyUpdate").classList.toggle("show",state.screen==="history"&&state.historyUpdatePending);}
-function renderActiveScreen(){if(state.screen==="stock")renderStock();else if(state.screen==="history")renderHistory();else{renderResults();renderSlip();renderDraftNotice();}}
+function renderActiveScreen(){if(state.screen==="stock")renderStock();else if(state.screen==="history")renderHistory();else{renderWriteGroupBar();renderResults();renderSlip();renderDraftNotice();}}
 function renderStockSkeleton(){const box=$("vwStock");box.className="";box.innerHTML=Array.from({length:5},()=>'<div class="skeleton-row"></div>').join("");$("vwStockCount").textContent="Đang tải dữ liệu tồn…";$("btnMoreStock").hidden=true;}
 function updateStockMeta(){const d=state.viewData||{};$("vwStockTitle").textContent="TỒN KHO "+state.depot;const verified=state.stockVerifiedAt||d.stockVerifiedAt||"chưa có",changed=state.stockChangedAt||d.stockChangedAt||d.updated||"chưa có";$("vwStockMeta").innerHTML="Đã xác nhận với server: <b>"+escapeHtml(verified)+"</b><br>Lần thay đổi tồn gần nhất: <b>"+escapeHtml(changed)+"</b>";}
-function stockFilteredRows(){const d=state.viewData,dp=state.depot;if(!d||!d.stock)return[];const q=stripAccent($("vwq").value.trim());return(d.stock[dp]||[]).filter(r=>!q||stripAccent(r.ten+" "+r.ma+" "+(r.macu||"")).includes(q));}
-function stockRowHtml(r){const low=r.min>0&&r.ton<=r.min;return '<div><div class="nm">'+escapeHtml(r.ten)+(r.catalogStatus&&r.catalogStatus!=="ACTIVE"?'<span class="pending-tag">'+escapeHtml(r.catalogStatus)+'</span>':'')+(low?'<span class="low-tag">⚠ DƯỚI NGƯỠNG</span>':'')+'</div><div class="cd">'+escapeHtml(r.ma)+(r.macu?' ('+escapeHtml(r.macu)+')':'')+' · Nhập '+r.nhap+' · Xuất '+r.xuat+(r.min>0?' · Min '+r.min:'')+'</div></div><div class="ton">'+r.ton+' <small>'+escapeHtml(r.dvt)+'</small></div>';}
+function stockFilteredRows(){
+  const d=state.viewData,dp=state.depot;if(!d||!d.stock)return[];
+  const q=stripAccent($("vwq").value.trim());
+  return (d.stock[dp]||[]).filter(r=>{
+    if(state.stockGroup!=="ALL"&&String(r.group||"KHAC").toUpperCase()!==state.stockGroup)return false;
+    return !q||stripAccent(r.ten+" "+r.ma+" "+(r.macu||"")).includes(q);
+  });
+}
+function stockRowHtml(r){
+  const low=r.min>0&&r.ton<=r.min;
+  const grp=state.stockGroup==="ALL"?'<span class="group-tag">'+escapeHtml(groupLabelOf(r.group))+'</span>':'';
+  return '<div><div class="nm">'+escapeHtml(r.ten)+(r.catalogStatus&&r.catalogStatus!=="ACTIVE"?'<span class="pending-tag">'+escapeHtml(r.catalogStatus)+'</span>':'')+(low?'<span class="low-tag">⚠ DƯỚI NGƯỠNG</span>':'')+grp+'</div><div class="cd">'+escapeHtml(r.ma)+(r.macu?' ('+escapeHtml(r.macu)+')':'')+' · Nhập '+r.nhap+' · Xuất '+r.xuat+(r.min>0?' · Min '+r.min:'')+'</div></div><div class="ton">'+r.ton+' <small>'+escapeHtml(r.dvt)+'</small></div>';
+}
 function renderStock(){
-  const d=state.viewData;if(!d||!d.stock){renderStockSkeleton();return;}updateStockMeta();
+  const d=state.viewData;if(!d||!d.stock){renderStockSkeleton();return;}updateStockMeta();renderStockGroupBar();
   const rows=stockFilteredRows(),visible=rows.slice(0,state.stockVisibleCount),box=$("vwStock");box.className="";box.innerHTML="";
   $("vwStockCount").textContent=rows.length?("Đang hiển thị "+visible.length+"/"+rows.length+" mã"):"";
   $("btnMoreStock").hidden=visible.length>=rows.length;$("btnMoreStock").textContent="Xem thêm "+Math.min(state.stockPageSize,rows.length-visible.length)+" mã";
@@ -1131,7 +1230,7 @@ function renderHistory(){
   hb.appendChild(frag);
 }
 
-document.body.classList.add("screen-write");updateDirectNav();syncDepotButtons();applyDateBounds();restoreCurrentDraft();renderSlip();renderSlipHead();renderDraftNotice();
+document.body.classList.add("screen-write");updateDirectNav();syncDepotButtons();applyDateBounds();restoreCurrentDraft();renderSlip();renderSlipHead();renderDraftNotice();renderWriteGroupBar();
 if(requireSession(false)){restoreViewCache(state.depot);refreshStock(true,true);startLivePolling(true);}else showLogin("");
 </script>
 </body>
