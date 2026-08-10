@@ -308,7 +308,7 @@ window.addEventListener("online",()=>{if(getToken())startPoll();});
 window.addEventListener("offline",()=>{stopPoll();setLive("offline","Mất kết nối mạng");});
 
 // ===== TẢI FEED =====
-async function loadFeed(reset,silent){
+async function loadFeed(reset,silent,force){
   if(state.busy)return false;
   if(!getToken()){showLogin("");return false;}
   state.busy=true;
@@ -316,7 +316,7 @@ async function loadFeed(reset,silent){
   try{
     const j=await post({
       type:"DASHBOARD_FEED",depot:"MANAGER",accessToken:getToken(),
-      clientId:state.clientId,clientVersion:APP_VERSION,
+      clientId:state.clientId,clientVersion:APP_VERSION,force:force===true,
       filterDepot:$("fDepot").value,filterType:$("fType").value,
       date:dateVN($("fDate").value),
       limit:50,offset:reset?0:state.feedOffset
@@ -349,7 +349,7 @@ function dateVN(iso){
   const p=String(iso).split("-");
   return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:"";
 }
-$("btnRefresh").onclick=()=>{loadFeed(true);if(state.pane==="stock")loadStock(true);};
+$("btnRefresh").onclick=()=>{loadFeed(true,false,true);if(state.pane==="stock")loadStock(true);};
 
 // ===== THANH TRẠNG THÁI =====
 function renderStatus(){
