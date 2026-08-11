@@ -267,16 +267,18 @@ body.screen-checklist #writeDateRow,body.screen-checklist #backdateHint{display:
 .stock-alert-banner.show{display:block}.stock-alert-banner.red{background:#5F1B18;border-color:#E8756F;color:#FFE0DD}.stock-alert-banner.yellow{background:#5A430E;border-color:#F5A623;color:#FFF1C7}.stock-alert-banner.green{background:#153F2D;border-color:#4BB77B;color:#DDF7E8}.stock-alert-banner small{display:block;font-weight:600;opacity:.86;margin-top:2px}
 .stock-alert-filter{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px}.stock-alert-filter button{border:1.5px solid var(--line);border-radius:20px;background:var(--white);font-family:inherit;font-weight:800;font-size:11.5px;padding:8px 11px;cursor:pointer;color:var(--navy-2)}.stock-alert-filter button.on{background:var(--navy-2);color:var(--white);border-color:var(--navy-2)}
 .stock-row.alert-red{border-color:#D75B54;background:#FDF0EF}.stock-row.alert-yellow{border-color:#E1A62C;background:#FFF8E6}.stock-row.alert-green{border-color:#B8DCC8}.stock-row.alert-none{border-color:var(--line);background:#F8F8F6}.alert-chip{display:inline-block;margin-left:5px;border-radius:7px;padding:1px 6px;font-size:10px;font-weight:900;vertical-align:middle}.alert-chip.red{background:#B3261E;color:#fff}.alert-chip.yellow{background:#F5A623;color:#14263F}.alert-chip.green{background:#DDF1E5;color:#155F3C}.alert-chip.none{background:#E8E8E5;color:#6B7280}.proposal-chip{display:inline-block;margin-left:5px;border-radius:7px;padding:1px 6px;font-size:10px;font-weight:850;background:#E7EEF9;color:var(--navy-2);vertical-align:middle}
-.stock-actions{display:flex;align-items:center;gap:8px;margin-left:8px;flex-shrink:0}.stock-propose,.stock-view-proposal{border:0;border-radius:9px;font-family:inherit;font-weight:850;font-size:11.5px;padding:8px 10px;cursor:pointer;white-space:nowrap}.stock-propose{background:var(--amber);color:var(--navy)}.stock-view-proposal{background:#E7EEF9;color:var(--navy-2);border:1px solid #B8C7DE}.stock-propose:active,.stock-view-proposal:active{transform:translateY(1px)}
+.stock-actions{display:flex;align-items:center;gap:8px;margin-left:8px;flex-shrink:0}.stock-view-proposal{border:0;border-radius:9px;font-family:inherit;font-weight:850;font-size:11.5px;padding:8px 10px;cursor:pointer;white-space:nowrap;background:#E7EEF9;color:var(--navy-2);border:1px solid #B8C7DE}.stock-view-proposal:active{transform:translateY(1px)}
 .proposal-detail{text-align:left;background:var(--paper);border-radius:10px;padding:11px 12px;margin:10px 0 14px;font-size:13px;line-height:1.6}.proposal-detail b{color:var(--navy-2)}
-@media(max-width:420px){.stock-row{align-items:flex-start}.stock-actions{flex-direction:column;align-items:flex-end;gap:5px}.stock-propose{padding:7px 8px}}
+.stock-select{display:flex;align-items:center;gap:6px;border:1px solid #D8B24A;border-radius:9px;background:#FFF8E6;color:#6F4D00;font-family:inherit;font-weight:850;font-size:11.5px;padding:7px 9px;cursor:pointer;white-space:nowrap}.stock-select input{width:18px;height:18px;accent-color:var(--amber);cursor:pointer}.stock-select.selected{background:var(--amber);color:var(--navy);border-color:var(--amber-dark)}
+.stock-batch-bar{display:none;position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:46;width:min(492px,calc(100% - 28px));background:var(--navy);color:var(--white);border:1px solid #33456A;border-radius:14px;padding:9px 10px;box-shadow:0 6px 20px rgba(20,38,63,.28);gap:7px;align-items:center;flex-wrap:wrap}.stock-batch-bar.show{display:flex}.stock-batch-count{font-size:12px;font-weight:800;flex:1;min-width:94px}.stock-batch-bar button{border:0;border-radius:9px;font-family:inherit;font-weight:800;font-size:11.5px;padding:9px 10px;cursor:pointer}.stock-batch-all{background:#E7EEF9;color:var(--navy-2)}.stock-batch-clear{background:#FDE8E6;color:var(--danger)}.stock-batch-create{background:var(--amber);color:var(--navy);min-width:124px}.stock-batch-create:disabled{background:#536176;color:#B8C4D6;cursor:default}.stock-batch-hint{width:100%;font-size:10.5px;color:#B8C4D6;line-height:1.35}
+@media(max-width:420px){.stock-row{align-items:flex-start}.stock-actions{flex-direction:column;align-items:flex-end;gap:5px}.stock-batch-bar{bottom:6px}.stock-batch-create{flex:1}}
 </style>
 </head>
 <body>
 <header>
   <div class="hd-inner">
     <div class="hd-title">PHIẾU KHO VẬT TƯ <span class="hd-accent">M&amp;R</span></div>
-    <div class="hd-sub">ICD Phúc Long — thao tác trực tiếp · ALERT v4.5.1 · checklist 11 mục · core v4.3.9</div>
+    <div class="hd-sub">ICD Phúc Long — thao tác trực tiếp · ALERT v4.5.2 BATCH · checklist 11 mục · core v4.3.9</div>
     <div id="liveStatus" class="live-status stale"><span class="live-dot"></span><span id="liveStatusText">Đang khởi tạo…</span></div>
     <div id="cklBadge" class="ckl-badge">⚠ Chưa nộp checklist đầu ngày hôm nay.</div>
     <button id="stockAlertBanner" class="stock-alert-banner" type="button"></button>
@@ -361,6 +363,13 @@ body.screen-checklist #writeDateRow,body.screen-checklist #backdateHint{display:
       <button type="button" data-a="YELLOW">🟡 Vàng</button>
       <button type="button" data-a="GREEN">🟢 Xanh</button>
       <button type="button" data-a="NONE">⚪ Không cảnh báo</button>
+    </div>
+    <div id="stockProposalBatchBar" class="stock-batch-bar">
+      <div id="stockProposalBatchCount" class="stock-batch-count">Đã chọn 0 mã</div>
+      <button id="btnSelectAllProposal" class="stock-batch-all" type="button">Chọn tất cả lọc</button>
+      <button id="btnClearProposalSelection" class="stock-batch-clear" type="button">Bỏ chọn</button>
+      <button id="btnCreateBatchProposal" class="stock-batch-create" type="button" disabled>Lập đề xuất (0)</button>
+      <div class="stock-batch-hint">Chỉ chọn mã Đỏ/Vàng chưa có đề xuất trong 7 ngày. Khi lập phiếu, mỗi mã mặc định SL 1 để tổ trưởng tự chỉnh trước khi gửi.</div>
     </div>
     <div class="group-bar" id="stockGroupBar"></div>
     <div class="vw-search"><input type="search" id="vwq" placeholder="Tìm vật tư trong kho…" autocomplete="off"></div>
@@ -503,7 +512,7 @@ const state = {
   backdateMaxDays:7,serverDate:"",stockVerifiedAt:"",stockChangedAt:"",stockVisibleCount:20,stockPageSize:20,
   stockRequestPromises:{},requestEpoch:0,stockSearchTimer:null,changedItemCodes:[],
   scrollPositions:{write:0,stock:0,history:0,checklist:0},
-  group:"ALL",stockGroup:"ALL",stockAlertFilter:"ALL",stockAlertMetaBusy:false,stockAlertMetaRevision:"",stockAlertUsageComplete:true,stockAlertProposalComplete:true,
+  group:"ALL",stockGroup:"ALL",stockAlertFilter:"ALL",stockProposalSelection:{},stockAlertMetaBusy:false,stockAlertMetaRevision:"",stockAlertUsageComplete:true,stockAlertProposalComplete:true,
   cklToday:null,cklValues:{},cklSupplement:false,cklBusy:false,cklFormBuilt:false
 };
 
@@ -829,7 +838,7 @@ async function applyDepotChange(next){
   state.pendingRequest=null;state.viewData=null;state.latestSeq=0;
   state.historyOffset=0;state.historyHasMore=false;state.historyUpdatePending=false;
   state.stockVisibleCount=state.stockPageSize;
-  state.group="ALL";state.stockGroup="ALL";state.stockAlertFilter="ALL";state.stockAlertMetaRevision="";state.stockAlertUsageComplete=true;state.stockAlertProposalComplete=true;
+  state.group="ALL";state.stockGroup="ALL";state.stockAlertFilter="ALL";state.stockProposalSelection={};state.stockAlertMetaRevision="";state.stockAlertUsageComplete=true;state.stockAlertProposalComplete=true;
   state.cklToday=null;state.cklSupplement=false;resetChecklistValues();
   invalidateCatalogCache();
   $("q").value="";$("vwq").value="";
@@ -875,7 +884,7 @@ function setVersionState(version){
   state.versionOk=version===APP_VERSION;
   const sub=document.querySelector(".hd-sub");
   if(state.versionOk){
-    if(sub)sub.textContent="ICD Phúc Long — thao tác trực tiếp · ALERT v4.5.1 · checklist 11 mục · core v4.3.9";
+    if(sub)sub.textContent="ICD Phúc Long — thao tác trực tiếp · ALERT v4.5.2 BATCH · checklist 11 mục · core v4.3.9";
   }else{
     if(sub)sub.textContent="Lệch phiên bản — tạm khóa gửi phiếu";
     if(!state.versionWarned){
@@ -934,7 +943,7 @@ function applyScreenClass(){
   document.body.classList.toggle("screen-stock",state.screen==="stock");
   document.body.classList.toggle("screen-history",state.screen==="history");
   document.body.classList.toggle("screen-checklist",state.screen==="checklist");
-  updateDirectNav();renderDraftNotice();
+  updateDirectNav();renderDraftNotice();syncStockProposalBatchBar();
 }
 async function switchScreen(screen,type){
   state.scrollPositions[state.screen]=window.scrollY||0;
@@ -1358,17 +1367,52 @@ async function loadStockScreen(){
 }
 $("vwq").addEventListener("input",()=>{clearTimeout(state.stockSearchTimer);state.stockVisibleCount=state.stockPageSize;state.stockSearchTimer=setTimeout(renderStock,280);});
 $("btnMoreStock").onclick=()=>{state.stockVisibleCount+=state.stockPageSize;renderStock();};
-document.querySelectorAll("#stockAlertFilter button").forEach(b=>{b.onclick=()=>{document.querySelectorAll("#stockAlertFilter button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.stockAlertFilter=b.dataset.a||"ALL";state.stockVisibleCount=state.stockPageSize;renderStock();};});
-$("stockAlertBanner").onclick=async()=>{state.stockAlertFilter="ALERT";document.querySelectorAll("#stockAlertFilter button").forEach(x=>x.classList.toggle("on",x.dataset.a==="ALERT"));await switchScreen("stock","");};
-async function proposeStockItem(ma){
-  const item=stockItem(ma);if(!item)return;
-  await switchScreen("write","DEXUAT");
-  addItem(item);
-  requestAnimationFrame(()=>{const el=document.querySelector(".slip");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});});
+document.querySelectorAll("#stockAlertFilter button").forEach(b=>{b.onclick=()=>{document.querySelectorAll("#stockAlertFilter button").forEach(x=>x.classList.remove("on"));b.classList.add("on");state.stockAlertFilter=b.dataset.a||"ALL";state.stockVisibleCount=state.stockPageSize;clearStockProposalSelection(false);renderStock();};});
+$("stockAlertBanner").onclick=async()=>{state.stockAlertFilter="ALERT";clearStockProposalSelection(false);document.querySelectorAll("#stockAlertFilter button").forEach(x=>x.classList.toggle("on",x.dataset.a==="ALERT"));await switchScreen("stock","");};
+function proposalSelectable(r){
+  if(!r||String(r.catalogStatus||"ACTIVE").toUpperCase()==="INACTIVE")return false;
+  const level=stockAlertLevel(r);return (level==="RED"||level==="YELLOW")&&!r.recentProposal;
 }
+function selectedProposalCodes(){
+  const rows=state.viewData&&state.viewData.stock?(state.viewData.stock[state.depot]||[]):[];
+  const valid={};rows.forEach(r=>{if(state.stockProposalSelection[String(r.ma)]&&proposalSelectable(r))valid[String(r.ma)]=true;});
+  state.stockProposalSelection=valid;return Object.keys(valid);
+}
+function clearStockProposalSelection(render=true){state.stockProposalSelection={};if(render)renderStock();else syncStockProposalBatchBar();}
+function toggleStockProposalSelection(ma,on){
+  const item=stockItem(ma);if(!proposalSelectable(item))return;
+  if(on)state.stockProposalSelection[String(ma)]=true;else delete state.stockProposalSelection[String(ma)];
+  syncStockProposalBatchBar();
+  const row=[...document.querySelectorAll("#vwStock .stock-row")].find(x=>x.dataset.itemCode===String(ma));
+  if(row){const chk=row.querySelector(".stock-proposal-check");if(chk)chk.checked=!!state.stockProposalSelection[String(ma)];const lab=row.querySelector(".stock-select");if(lab)lab.classList.toggle("selected",!!state.stockProposalSelection[String(ma)]);}
+}
+function batchEligibleFilteredRows(){return stockFilteredRows().filter(proposalSelectable);}
+function selectAllStockProposalEligible(){const rows=batchEligibleFilteredRows();rows.forEach(r=>{state.stockProposalSelection[String(r.ma)]=true;});renderStock();}
+function syncStockProposalBatchBar(){
+  const bar=$("stockProposalBatchBar");if(!bar)return;
+  const codes=selectedProposalCodes(),eligible=batchEligibleFilteredRows();
+  const alertView=["ALERT","RED","YELLOW"].includes(state.stockAlertFilter);
+  bar.classList.toggle("show",state.screen==="stock"&&(alertView&&eligible.length>0||codes.length>0));
+  $("stockProposalBatchCount").textContent="Đã chọn "+codes.length+" mã";
+  $("btnCreateBatchProposal").textContent="Lập đề xuất ("+codes.length+")";$("btnCreateBatchProposal").disabled=codes.length===0;
+  $("btnSelectAllProposal").textContent="Chọn tất cả lọc ("+eligible.length+")";$("btnSelectAllProposal").disabled=eligible.length===0;
+}
+async function createBatchProposal(){
+  const codes=selectedProposalCodes();if(!codes.length)return;
+  const picked=codes.map(stockItem).filter(proposalSelectable);if(!picked.length){clearStockProposalSelection(true);return;}
+  await switchScreen("write","DEXUAT");
+  let added=0;
+  picked.forEach(it=>{if(!state.slip[it.ma]){state.slip[it.ma]={key:it.ma,ma:it.ma,ten:it.ten,dvt:it.dvt,qty:1,isNew:false,catalogStatus:it.catalogStatus||"ACTIVE"};added++;}});
+  state.stockProposalSelection={};syncStockProposalBatchBar();renderSlip();renderResults();scheduleDraftSave();
+  requestAnimationFrame(()=>{const el=document.querySelector(".slip");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});});
+  if(!added)alert("Các vật tư đã có sẵn trong phiếu Đề xuất hiện tại.");
+}
+$("btnSelectAllProposal").onclick=selectAllStockProposalEligible;
+$("btnClearProposalSelection").onclick=()=>clearStockProposalSelection(true);
+$("btnCreateBatchProposal").onclick=createBatchProposal;
 function showRecentProposal(ma){const item=stockItem(ma),rp=item&&item.recentProposal;if(!item||!rp)return;$("recentProposalTitle").textContent="Đề xuất gần nhất — "+item.ma;$("recentProposalBody").innerHTML='<b>'+escapeHtml(item.ten)+'</b><br>Ngày nghiệp vụ: '+escapeHtml(rp.businessDate||'—')+'<br>Người gửi: '+escapeHtml(rp.actor||'—')+'<br>Số lượng: <b>'+escapeHtml(String(rp.qty||0))+' '+escapeHtml(rp.dvt||item.dvt||'')+'</b><br>Txn ID: '+escapeHtml(rp.txnId||'—')+(rp.note?'<br>Ghi chú: '+escapeHtml(rp.note):'')+'<br><small>Trong '+STOCK_ALERT_PROPOSAL_DAYS+' ngày gần nhất. Nếu thật sự cần đề xuất bổ sung, vào tab Đề xuất và lập phiếu mới thủ công.</small>';$("ovRecentProposal").classList.add("show");}
 $("btnRecentProposalClose").onclick=()=>$("ovRecentProposal").classList.remove("show");$("ovRecentProposal").addEventListener("click",e=>{if(e.target===$("ovRecentProposal"))$("ovRecentProposal").classList.remove("show");});
-$("vwStock").addEventListener("click",e=>{const p=e.target.closest(".stock-propose");if(p){e.preventDefault();e.stopPropagation();proposeStockItem(p.dataset.ma);return;}const v=e.target.closest(".stock-view-proposal");if(v){e.preventDefault();e.stopPropagation();showRecentProposal(v.dataset.ma);}});
+$("vwStock").addEventListener("change",e=>{const c=e.target.closest(".stock-proposal-check");if(!c)return;toggleStockProposalSelection(c.dataset.ma,c.checked);});$("vwStock").addEventListener("click",e=>{const v=e.target.closest(".stock-view-proposal");if(v){e.preventDefault();e.stopPropagation();showRecentProposal(v.dataset.ma);}});
 let vwType="all";
 document.querySelectorAll("#vwTypes button").forEach(b=>{b.onclick=()=>{document.querySelectorAll("#vwTypes button").forEach(x=>x.classList.remove("active"));b.classList.add("active");vwType=b.dataset.t;loadHistory(true);};});
 $("vwDate").addEventListener("change",()=>{$("vwDateAll").classList.toggle("active",!$("vwDate").value);loadHistory(true);});
@@ -1401,23 +1445,23 @@ function stockFilteredRows(){
 function stockRowHtml(r){
   const level=stockAlertLevel(r),grp=state.stockGroup==="ALL"?'<span class="group-tag">'+escapeHtml(groupLabelOf(r.group))+'</span>':'';
   const rp=r.recentProposal||null,proposalTag=rp?'<span class="proposal-chip">🧾 Đã đề xuất '+escapeHtml(rp.businessDate||rp.createdAt||'')+'</span>':'';
-  let action='';if(level==="RED"||level==="YELLOW"){action=rp?'<button type="button" class="stock-view-proposal" data-ma="'+escapeHtml(r.ma)+'">Xem đề xuất</button>':'<button type="button" class="stock-propose" data-ma="'+escapeHtml(r.ma)+'">Đề xuất</button>';}
+  let action='';if(level==="RED"||level==="YELLOW"){if(rp)action='<button type="button" class="stock-view-proposal" data-ma="'+escapeHtml(r.ma)+'">Xem đề xuất</button>';else{const checked=!!state.stockProposalSelection[String(r.ma)];action='<label class="stock-select'+(checked?' selected':'')+'"><input type="checkbox" class="stock-proposal-check" data-ma="'+escapeHtml(r.ma)+'"'+(checked?' checked':'')+'><span>Chọn</span></label>';}}
   const reason=r.alertReasonLabel?(' · '+escapeHtml(r.alertReasonLabel)):'';
   return '<div><div class="nm">'+escapeHtml(r.ten)+(r.catalogStatus&&r.catalogStatus!=="ACTIVE"?'<span class="pending-tag">'+escapeHtml(r.catalogStatus)+'</span>':'')+stockAlertChip(r)+proposalTag+grp+'</div><div class="cd">'+escapeHtml(r.ma)+(r.macu?' ('+escapeHtml(r.macu)+')':'')+' · Nhập '+r.nhap+' · Xuất '+r.xuat+' · Min '+(Number(r.min)||0)+reason+'</div></div><div class="stock-actions"><div class="ton">'+r.ton+' <small>'+escapeHtml(r.dvt)+'</small></div>'+action+'</div>';
 }
 function renderStock(){
-  const d=state.viewData;if(!d||!d.stock){renderStockSkeleton();return;}updateStockMeta();renderStockAlertBanner();renderStockGroupBar();
+  const d=state.viewData;if(!d||!d.stock){renderStockSkeleton();syncStockProposalBatchBar();return;}updateStockMeta();renderStockAlertBanner();renderStockGroupBar();
   const rows=stockFilteredRows(),visible=rows.slice(0,state.stockVisibleCount),box=$("vwStock");box.className="";box.innerHTML="";
   $("vwStockCount").textContent=rows.length?("Đang hiển thị "+visible.length+"/"+rows.length+" mã"):"";
   $("btnMoreStock").hidden=visible.length>=rows.length;$("btnMoreStock").textContent="Xem thêm "+Math.min(state.stockPageSize,rows.length-visible.length)+" mã";
-  if(!rows.length){box.innerHTML='<div class="vw-load">Không có vật tư khớp.</div>';return;}
+  if(!rows.length){box.innerHTML='<div class="vw-load">Không có vật tư khớp.</div>';syncStockProposalBatchBar();return;}
   const frag=document.createDocumentFragment();
   visible.forEach(r=>{const div=document.createElement("div"),level=stockAlertLevel(r);div.className="stock-row alert-"+level.toLowerCase();div.dataset.itemKey=stockKey(r);div.dataset.itemCode=String(r.ma||"");div.innerHTML=stockRowHtml(r);frag.appendChild(div);});
-  box.appendChild(frag);
+  box.appendChild(frag);syncStockProposalBatchBar();
 }
 function patchStockCards(codes){
   const changed=new Set((codes||[]).map(String)),rows=state.viewData&&state.viewData.stock?(state.viewData.stock[state.depot]||[]):[];updateStockMeta();
-  let needsFull=false;changed.forEach(code=>{const r=rows.find(x=>String(x.ma)===code||stockKey(x)===code);if(!r)return;const el=[...document.querySelectorAll("#vwStock .stock-row")].find(x=>x.dataset.itemCode===String(r.ma)||x.dataset.itemKey===stockKey(r));if(el){const level=stockAlertLevel(r);el.className="stock-row updated alert-"+level.toLowerCase();el.innerHTML=stockRowHtml(r);setTimeout(()=>el.classList.remove("updated"),1300);}else{const filtered=stockFilteredRows(),idx=filtered.findIndex(x=>String(x.ma)===String(r.ma)||stockKey(x)===stockKey(r));if(idx>=0&&idx<state.stockVisibleCount)needsFull=true;}});if(needsFull)renderStock();
+  let needsFull=false;changed.forEach(code=>{const r=rows.find(x=>String(x.ma)===code||stockKey(x)===code);if(!r)return;const el=[...document.querySelectorAll("#vwStock .stock-row")].find(x=>x.dataset.itemCode===String(r.ma)||x.dataset.itemKey===stockKey(r));if(el){const level=stockAlertLevel(r);el.className="stock-row updated alert-"+level.toLowerCase();el.innerHTML=stockRowHtml(r);setTimeout(()=>el.classList.remove("updated"),1300);}else{const filtered=stockFilteredRows(),idx=filtered.findIndex(x=>String(x.ma)===String(r.ma)||stockKey(x)===stockKey(r));if(idx>=0&&idx<state.stockVisibleCount)needsFull=true;}});if(needsFull)renderStock();else syncStockProposalBatchBar();
 }
 function renderHistory(){
   renderHistoryUpdate();const d=state.viewData||{},hist=Array.isArray(d.historyRows)?d.historyRows:[],hb=$("vwHist");hb.className="";hb.innerHTML="";
