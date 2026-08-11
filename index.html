@@ -592,6 +592,43 @@ function applyDateBounds(){const server=state.serverDate||localIsoDate(new Date(
 function applyRuntimeMeta(j){if(!j)return;if(j.serverDate)state.serverDate=String(j.serverDate);if(j.backdateMaxDays!==undefined)state.backdateMaxDays=Math.max(0,Number(j.backdateMaxDays)||0);if(j.stockVerifiedAt)state.stockVerifiedAt=String(j.stockVerifiedAt);if(j.stockChangedAt)state.stockChangedAt=String(j.stockChangedAt);const d=ensureViewData();d.serverDate=state.serverDate;d.backdateMaxDays=state.backdateMaxDays;d.stockVerifiedAt=state.stockVerifiedAt;d.stockChangedAt=state.stockChangedAt;applyDateBounds();}
 function mergeStockPayload(j,depot=state.depot){applyRuntimeMeta(j);const d=ensureViewData();d.stock[depot]=(j.stock&&j.stock[depot])||[];d.updated=j.updated||d.updated;d.stockChangedAt=j.stockChangedAt||j.updated||d.stockChangedAt;d.stockVerifiedAt=j.stockVerifiedAt||d.stockVerifiedAt;state.stockChangedAt=d.stockChangedAt||state.stockChangedAt;state.stockVerifiedAt=d.stockVerifiedAt||state.stockVerifiedAt;d.catalogSource=j.catalogSource||d.catalogSource;d.version=j.version||d.version;d.latestSeq=Number(j.latestSeq||d.latestSeq||0);state.latestSeq=d.latestSeq;invalidateCatalogCache();saveViewCache(depot,d);}
 function stockKey(r){return String((r&&r.itemUid)||(r&&r.ma)||"");}
+
+// v4.5.1 HF1 — restore shared frontend helpers accidentally dropped during ALERT CALIBRATION merge.
+function escapeHtml(value){
+  return String(value == null ? "" : value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+function stripAccent(s){
+  return String(s == null ? "" : s)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/đ/g,"d")
+    .replace(/Đ/g,"D")
+    .toLowerCase();
+}
+function applyAffectedStock(rows){
+  if(!Array.isArray(rows)||!rows.length)return;
+  const d=ensureViewData(),list=d.stock[state.depot]||[],changed=[];
+  rows.forEach(r=>{
+    const key=stockKey(r);
+    const idx=list.findIndex(x=>stockKey(x)===key||String(x.ma)===String(r.ma));
+    if(idx>=0)list[idx]={...list[idx],...r};else list.push(r);
+    changed.push(String(r.ma||key));
+  });
+  d.stock[state.depot]=list;
+  state.stockChangedAt=new Date().toLocaleString("vi-VN");
+  d.stockChangedAt=state.stockChangedAt;
+  invalidateCatalogCache();
+  saveViewCache(state.depot,d);
+  renderStockAlertBanner();
+  renderResults();
+  renderSlip();
+  if(state.screen==="stock")patchStockCards(changed);
+}
 const STOCK_ALERT_BUFFER=2;
 const STOCK_ALERT_USAGE_DAYS=30;
 const STOCK_ALERT_PROPOSAL_DAYS=7;
