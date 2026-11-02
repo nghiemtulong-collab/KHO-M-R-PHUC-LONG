@@ -64,6 +64,20 @@ body{font-family:"Segoe UI Variable Text","Aptos","Segoe UI",system-ui,-apple-sy
 @media(max-width:1120px){.v49-kpis{grid-template-columns:repeat(3,1fr)}.v49-flow-grid{grid-template-columns:1fr 1fr}.v49-grid-2{grid-template-columns:1fr}.v49-grid-equal{grid-template-columns:1fr}}
 @media(max-width:680px){.v49-kpis{grid-template-columns:1fr 1fr}.v49-flow-grid{grid-template-columns:1fr}.v49-card{padding:13px}.v49-canvas{height:280px}.v49-tabs button{min-width:132px}}
 
+
+/* v4.9.2 catalog manager */
+.catalog-list{display:grid;gap:7px;margin:10px 0}
+.catalog-entry{display:grid;grid-template-columns:80px minmax(100px,1fr) 90px 70px;gap:10px;align-items:center;border:1px solid var(--stroke);background:#fff;border-radius:10px;padding:10px 12px;text-align:left;cursor:pointer;width:100%;color:var(--text)}
+.catalog-entry:hover{background:#F4F8FE;border-color:#9DB6D5}
+.catalog-entry b{color:var(--brand);font-size:12.5px}
+.catalog-entry span{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.catalog-entry small{font-size:11px;color:var(--text-2)}
+.catalog-info{font-size:12px;color:var(--text-2);margin:8px 0}
+.catalog-stock{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 14px}
+.catalog-stock>div{border:1px solid var(--stroke);border-radius:9px;padding:10px 12px;background:#F7FAFE}
+.catalog-stock b{display:block;font-size:13px;color:var(--brand)}
+.catalog-stock small{color:var(--text-2);font-size:11px}
+@media(max-width:600px){.catalog-entry{grid-template-columns:70px 1fr}.catalog-entry small{display:none}}
 </style>
 
 <style>
@@ -130,9 +144,10 @@ th{font-size:11.5px;letter-spacing:.15px;text-transform:none;font-weight:750}td{
 <header>
   <div class="hd-inner">
     <div class="hd-title">DASHBOARD KHO VẬT TƯ <span class="hd-accent">M&amp;R</span>
-      <span class="hd-sub">ICD Phúc Long — điều hành kho · phân tích · can thiệp quản lý · v4.9.1</span>
+      <span class="hd-sub">ICD Phúc Long — điều hành kho · phân tích · can thiệp quản lý · v4.9.2</span>
     </div>
     <div id="live" class="live stale"><span class="live-dot"></span><span id="liveText">Đang khởi tạo…</span></div>
+    <button class="hd-btn" id="btnManageCatalog">Quản lý vật tư</button>
     <button class="hd-btn hd-btn-accent" id="btnAddMaterial">+ Mã vật tư</button>
     <button class="hd-btn" id="btnRefresh">Làm mới</button>
     <button class="hd-btn" id="btnLogout">Thoát</button>
@@ -140,7 +155,7 @@ th{font-size:11.5px;letter-spacing:.15px;text-transform:none;font-weight:750}td{
 </header>
 
 <div class="wrap">
-  <div class="disclaimer">Dữ liệu lấy từ hệ thống và không thay thế kiểm kê thực tế. <b>Manager Control</b> có toàn quyền sửa/xóa phiếu và quản lý mã vật tư; thao tác ghi luôn yêu cầu nhập lại PIN_MANAGER. Xóa hẳn sẽ dọn dữ liệu nguồn và phát tombstone để hệ thống báo cáo nội bộ loại bản sao ở chu kỳ sync kế tiếp.</div>
+  <div class="disclaimer">Dữ liệu lấy từ hệ thống và không thay thế kiểm kê thực tế. <b>Manager Control</b> có toàn quyền sửa/xóa phiếu và quản lý mã vật tư; thao tác ghi luôn yêu cầu nhập lại PIN_MANAGER. Xóa hẳn phát tombstone để báo cáo loại bản sao; Quản lý vật tư chỉ sửa metadata và snapshot, không ghi đè giao dịch immutable.</div>
 
   <div class="status-grid">
     <div class="stat" id="statAction"><div class="k">Cần xử lý</div><div class="v">—</div><div class="s">Đang tải…</div></div>
@@ -248,7 +263,7 @@ th{font-size:11.5px;letter-spacing:.15px;text-transform:none;font-weight:750}td{
 <script>
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
 const APP_VERSION="2026.08.10-MR-v4.3.9-DAILY-CHECKLIST";
-const DASHBOARD_UI_REV="v4.9.1-MANAGER-PURGE-CATALOG-VERIFY";
+const DASHBOARD_UI_REV="v4.9.2-MATERIAL-EDIT-SYNC-GUARD";
 const REQUEST_TIMEOUT_MS=40000;
 const POLL_MS=60000;
 const $=id=>document.getElementById(id);
@@ -271,7 +286,7 @@ function typeName(t){return ({XUAT:"XUẤT",NHAP:"NHẬP",DEXUAT:"ĐỀ XUẤT",
 function typeTag(t){const m={XUAT:["xuat","XUẤT"],NHAP:["nhap","NHẬP"],DEXUAT:["dexuat","ĐỀ XUẤT"],CHECKLIST:["checklist","CHECKLIST"]};const x=m[t]||["checklist",t];return '<span class="tag '+x[0]+'">'+escapeHtml(x[1])+'</span>';}
 function dpTag(dp){return dp?'<span class="tag '+(dp==="DP1"?"dp1":"dp3")+'">'+escapeHtml(dp)+'</span>':"";}
 
-async function post(payload){const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),REQUEST_TIMEOUT_MS);try{const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload),cache:"no-store",signal:ctl.signal});try{return await res.json();}catch(_){throw new Error("Backend trả dữ liệu không hợp lệ.");}}finally{clearTimeout(timer);}}
+async function post(payload){const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),/^DASHBOARD_MANAGER_/.test(String(payload&&payload.type||""))?90000:REQUEST_TIMEOUT_MS);try{const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload),cache:"no-store",signal:ctl.signal});try{return await res.json();}catch(_){throw new Error("Backend trả dữ liệu không hợp lệ.");}}finally{clearTimeout(timer);}}
 function authPayload(extra){return Object.assign({accessToken:getToken(),clientId:state.clientId,clientVersion:APP_VERSION,dashboardClientRev:DASHBOARD_UI_REV},extra||{});}
 function handleAccess(j){if(isAccessError(j&&j.status)){clearToken();showLogin((j&&j.message)||"Phiên đăng nhập đã hết hạn.");return false;}if(j&&j.status==="version_mismatch"){setLive("offline","Lệch phiên bản — Ctrl+F5");return false;}return true;}
 
@@ -513,8 +528,109 @@ function catalogGroupOptions(meta,selected){return (meta.groups||[]).map(g=>'<op
 function parseNonNegativeField(id,label){const raw=String($(id).value??'').trim();if(raw==='')return 0;const n=Number(raw);if(!Number.isFinite(n)||n<0)throw new Error(label+' phải là số không âm.');return n;}
 async function openAddMaterial(){try{const m=await loadCatalogMeta(true);managerOpen('Thêm mã vật tư','Tự đồng bộ DP1 + DP3 + Master','<div class="mgr-err" id="mgrErr"></div><div class="mgr-info">Mã mới được tạo cho cả hai depot với tồn ban đầu = 0. Không tự sinh tồn.</div><div class="mgr-grid"><div class="mgr-field"><label>Mã vật tư *</label><input id="catCode" value="'+escapeHtml(m.suggestedCode||'')+'"></div><div class="mgr-field"><label>Mã kế toán *</label><input id="catAcc" placeholder="MRPL..."></div><div class="mgr-field full"><label>Tên vật tư *</label><input id="catName"></div><div class="mgr-field"><label>Đơn vị tính *</label><input id="catUnit" placeholder="Cái, Lit, Tấm..."></div><div class="mgr-field"><label>Nhóm *</label><select id="catGroup">'+catalogGroupOptions(m,'KHAC')+'</select></div><div class="mgr-field"><label>Ngưỡng Min DP1</label><input id="catMin1" type="number" min="0" value="0"></div><div class="mgr-field"><label>Ngưỡng Min DP3</label><input id="catMin3" type="number" min="0" value="0"></div><div class="mgr-field full"><label>Lý do thêm mã *</label><textarea id="catReason"></textarea></div><div class="mgr-field full"><label>Nhập lại PIN_MANAGER *</label><input id="catPin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••••"></div></div><div class="mgr-actions"><button class="mgr-btn" id="catCancel">Hủy</button><button class="mgr-btn primary" id="catSubmit">Thêm cho cả DP1 + DP3</button></div>');$('catCancel').onclick=managerClose;$('catSubmit').onclick=submitAddMaterial;}catch(e){alert(e.message||'Không mở được form thêm mã.');}}
 async function submitAddMaterial(){if(state.managerBusy)return;try{mgrError('');const payload={type:'DASHBOARD_MANAGER_ADD_MATERIAL',depot:'MANAGER',itemCode:$('catCode').value.trim().toUpperCase(),accountingCode:$('catAcc').value.trim().toUpperCase(),itemName:$('catName').value.trim(),unit:$('catUnit').value.trim(),group:$('catGroup').value,minDP1:parseNonNegativeField('catMin1','Ngưỡng Min DP1'),minDP3:parseNonNegativeField('catMin3','Ngưỡng Min DP3'),reason:$('catReason').value.trim(),managerPin:$('catPin').value.trim()};if(!payload.itemCode||!payload.accountingCode||!payload.itemName||!payload.unit)throw new Error('Điền đủ mã vật tư, mã kế toán, tên và ĐVT.');if(!payload.reason)throw new Error('Nhập lý do thêm mã.');if(!payload.managerPin)throw new Error('Nhập lại PIN_MANAGER.');state.managerBusy=true;$('catSubmit').disabled=true;const j=await post(authPayload(payload));if(!handleAccess(j))return;if(j.status!=='ok')throw new Error(j.message||'Không thêm được mã.');state.catalogMeta=null;clearManagerCaches();$('ovManager').classList.remove('show');await loadFeed(true,false,true);await loadStock(true);if(state.pane==='analytics')await loadAnalytics(true);const v=j.verification||{};alert(j.message+'\nXác minh: DP1 '+(v.dp1?'OK':'?')+' · DP3 '+(v.dp3?'OK':'?')+' · Master '+(v.master?'OK':'?')+' · Snapshot '+(v.snapshotDP1&&v.snapshotDP3?'OK':'?')+(j.warning?'\n'+j.warning:'')+'\nBáo cáo nội bộ: nhận mã mới ở chu kỳ sync kế tiếp.');}catch(e){mgrError(e.message||'Lỗi không xác định.');}finally{state.managerBusy=false;if($('catSubmit'))$('catSubmit').disabled=false;}}
-async function openUpdateMaterial(){const d=state.materialData;if(!d)return;try{const m=await loadCatalogMeta(false);managerOpen('Quản lý mã vật tư',d.itemCode+' — đồng bộ DP1 + DP3 + Master','<div class="mgr-err" id="mgrErr"></div><div class="mgr-info">Có thể sửa tên, mã kế toán, nhóm và ngưỡng Min. ĐVT chỉ được đổi khi mã chưa có lịch sử giao dịch.</div><div class="mgr-grid"><div class="mgr-field"><label>Mã vật tư</label><input id="upCode" value="'+escapeHtml(d.itemCode)+'" disabled></div><div class="mgr-field"><label>Mã kế toán *</label><input id="upAcc" value="'+escapeHtml(d.accountingCode||'')+'"></div><div class="mgr-field full"><label>Tên vật tư *</label><input id="upName" value="'+escapeHtml(d.itemName||'')+'"></div><div class="mgr-field"><label>Đơn vị tính *</label><input id="upUnit" value="'+escapeHtml(d.unit||'')+'"></div><div class="mgr-field"><label>Nhóm *</label><select id="upGroup">'+catalogGroupOptions(m,d.group||'KHAC')+'</select></div><div class="mgr-field"><label>Ngưỡng Min DP1</label><input id="upMin1" type="number" min="0" value="'+escapeHtml(d.minDP1||0)+'"></div><div class="mgr-field"><label>Ngưỡng Min DP3</label><input id="upMin3" type="number" min="0" value="'+escapeHtml(d.minDP3||0)+'"></div><div class="mgr-field full"><label>Lý do chỉnh danh mục *</label><textarea id="upReason"></textarea></div><div class="mgr-field full"><label>Nhập lại PIN_MANAGER *</label><input id="upPin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••••"></div></div><div class="mgr-actions"><button class="mgr-btn" id="upCancel">Hủy</button><button class="mgr-btn primary" id="upSubmit">Lưu và đồng bộ</button></div>');$('upCancel').onclick=managerClose;$('upSubmit').onclick=submitUpdateMaterial;}catch(e){alert(e.message||'Không mở được form quản lý mã.');}}
-async function submitUpdateMaterial(){if(state.managerBusy)return;try{mgrError('');const p={type:'DASHBOARD_MANAGER_UPDATE_MATERIAL',depot:'MANAGER',itemCode:$('upCode').value,itemName:$('upName').value.trim(),accountingCode:$('upAcc').value.trim().toUpperCase(),unit:$('upUnit').value.trim(),group:$('upGroup').value,minDP1:parseNonNegativeField('upMin1','Ngưỡng Min DP1'),minDP3:parseNonNegativeField('upMin3','Ngưỡng Min DP3'),reason:$('upReason').value.trim(),managerPin:$('upPin').value.trim()};if(!p.reason)throw new Error('Nhập lý do chỉnh danh mục.');if(!p.managerPin)throw new Error('Nhập lại PIN_MANAGER.');state.managerBusy=true;$('upSubmit').disabled=true;const j=await post(authPayload(p));if(!handleAccess(j))return;if(j.status!=='ok')throw new Error(j.message||'Không cập nhật được mã.');clearManagerCaches();state.catalogMeta=null;$('ovManager').classList.remove('show');closeMaterial();await loadFeed(true,false,true);if(state.pane==='stock'||state.pane==='alerts')await loadStock(true);if(state.pane==='analytics')await loadAnalytics(true);alert(j.message+(j.warning?'\n'+j.warning:''));}catch(e){mgrError(e.message||'Lỗi không xác định.');}finally{state.managerBusy=false;if($('upSubmit'))$('upSubmit').disabled=false;}}
+
+// ===== Manager Catalog v4.9.2: authoritative edit with immutable-sync guard =====
+state.catalogEditor=null;state.catalogIndex=null;
+async function loadCatalogIndex(force){
+  if(state.catalogIndex&&!force)return state.catalogIndex;
+  const j=await post(authPayload({type:'DASHBOARD_MANAGER_MATERIAL_INDEX',depot:'MANAGER'}));
+  if(!handleAccess(j))throw new Error('Phiên quản lý đã hết hạn.');
+  if(j.status!=='ok')throw new Error(j.message||'Không tải được danh mục Master.');
+  state.catalogIndex=j;return j;
+}
+async function openCatalogManager(){
+  try{
+    managerOpen('Quản lý vật tư','DP1 + DP3 + Master · sửa metadata không thay lịch sử',
+      '<div class="mgr-info">Chọn một mã để sửa tên, mã kế toán, nhóm và ngưỡng từng kho. Đổi MRVT/ĐVT chỉ khi mã chưa có giao dịch. Không chỉnh TXN_LOG hoặc *_RESP.</div>'+ 
+      '<div class="mgr-grid"><div class="mgr-field full"><label>Tìm mã MRVT, MRPL hoặc tên vật tư</label><input id="catalogQuery" type="search" placeholder="Ví dụ: MRVT20, MRPL575, sơn..."></div></div>'+ 
+      '<div class="catalog-info" id="catalogCount">Đang tải danh mục…</div><div class="catalog-list" id="catalogItems"><div class="spinner"></div></div>'+ 
+      '<div class="mgr-actions"><button class="mgr-btn" id="catalogRepair">Đối chiếu lại nhóm snapshot</button><button class="mgr-btn primary" id="catalogClose">Đóng</button></div>');
+    const idx=await loadCatalogIndex(true);$('catalogCount').textContent='Tìm trong '+idx.count+' mã vật tư';
+    const render=()=>{
+      const q=stripAccent($('catalogQuery').value.trim()),all=idx.items||[];
+      const matches=all.filter(x=>!q||stripAccent([x.code,x.name,x.accountingCode].join(' ')).includes(q));
+      $('catalogCount').textContent='Khớp '+matches.length+'/'+all.length+' mã · chọn để sửa';
+      $('catalogItems').innerHTML=matches.slice(0,50).map(x=>'<button type="button" class="catalog-entry" data-code="'+escapeHtml(x.code)+'"><b>'+escapeHtml(x.code)+'</b><span>'+escapeHtml(x.name)+'</span><small>'+escapeHtml(x.accountingCode)+'</small><small>'+escapeHtml(x.unit)+'</small></button>').join('')||'<div class="empty">Không tìm thấy vật tư.</div>';
+      $('catalogItems').querySelectorAll('.catalog-entry').forEach(b=>b.onclick=()=>openCatalogMaterial(b.dataset.code));
+    };
+    $('catalogQuery').addEventListener('input',render);render();
+    $('catalogClose').onclick=managerClose;
+    $('catalogRepair').onclick=openRepairCatalogGroups;
+  }catch(e){if($('catalogItems'))$('catalogItems').innerHTML='<div class="mgr-warning">'+escapeHtml(e.message||'Lỗi tải danh mục')+'</div>';else alert(e.message||'Không mở được quản lý vật tư.');}
+}
+async function openCatalogMaterial(ma){
+  if(state.managerBusy)return;
+  managerOpen('Hồ sơ vật tư · '+ma,'Đang đối chiếu DP1 / DP3 / Master…','<div class="spinner"></div>');
+  try{
+    const j=await post(authPayload({type:'DASHBOARD_MANAGER_MATERIAL_DETAIL',depot:'MANAGER',itemCode:ma}));
+    if(!handleAccess(j))return;if(j.status!=='ok')throw new Error(j.message||'Không đọc được hồ sơ.');
+    state.catalogEditor=j;
+    const d=j.item||{},h=j.history||{},stock=j.stock||{},renameOK=j.codeRenameAllowed===true;
+    managerOpen('Sửa vật tư · '+d.itemCode,d.itemName+' · đồng bộ cùng mã cho hai depot',
+      '<div class="mgr-err" id="mgrErr"></div><div class="mgr-info"><b>Phạm vi ghi:</b> DANH_MUC_DP1, DANH_MUC_DP3, DM_VAT_TU_MASTER, Catalog Inbox (nếu liên quan), danh sách dropdown và rebuild snapshot. Không sửa lịch sử giao dịch.</div>'+ 
+      (h.total?'<div class="mgr-warning"><b>Đã có '+escapeHtml(String(h.total))+' dòng giao dịch:</b> khóa đổi mã MRVT và ĐVT. Đổi mã có lịch sử yêu cầu hợp đồng ánh xạ riêng ở PRJ-01.</div>':'<div class="mgr-info">Chưa ghi nhận lịch sử ở 6 sheet nghiệp vụ. Có thể đổi mã/ĐVT với preflight và kiểm tra toàn vẹn.</div>')+
+      '<div class="catalog-stock"><div><b>DP1: '+escapeHtml(fmtNum((stock.DP1||{}).stock))+' '+escapeHtml(d.unit||'')+'</b><small>Nhập '+escapeHtml(fmtNum((stock.DP1||{}).inQty))+' · Xuất '+escapeHtml(fmtNum((stock.DP1||{}).outQty))+'</small></div><div><b>DP3: '+escapeHtml(fmtNum((stock.DP3||{}).stock))+' '+escapeHtml(d.unit||'')+'</b><small>Nhập '+escapeHtml(fmtNum((stock.DP3||{}).inQty))+' · Xuất '+escapeHtml(fmtNum((stock.DP3||{}).outQty))+'</small></div></div>'+ 
+      '<div class="mgr-grid"><div class="mgr-field"><label>Mã MRVT hiện tại</label><input id="upCode" value="'+escapeHtml(d.itemCode)+'" readonly></div><div class="mgr-field"><label>Mã MRVT mới'+(renameOK?'':' (khóa vì có giao dịch)')+'</label><input id="upNewCode" value="'+escapeHtml(d.itemCode)+'" '+(renameOK?'':'readonly')+'></div>'+ 
+      '<div class="mgr-field full"><label>Tên vật tư *</label><input id="upName" value="'+escapeHtml(d.itemName)+'"></div>'+ 
+      '<div class="mgr-field"><label>Mã kế toán *</label><input id="upAcc" value="'+escapeHtml(d.accountingCode)+'"></div>'+ 
+      '<div class="mgr-field"><label>Đơn vị tính *</label><input id="upUnit" value="'+escapeHtml(d.unit)+'" '+(j.unitChangeAllowed?'':'readonly')+'></div>'+ 
+      '<div class="mgr-field"><label>Nhóm vật tư *</label><select id="upGroup"></select></div>'+ 
+      '<div class="mgr-field"><label>Min DP1</label><input id="upMin1" type="number" min="0" step="any" value="'+escapeHtml(d.minDP1)+'"></div>'+ 
+      '<div class="mgr-field"><label>Min DP3</label><input id="upMin3" type="number" min="0" step="any" value="'+escapeHtml(d.minDP3)+'"></div>'+ 
+      '<div class="mgr-field full"><label>Lý do cập nhật *</label><textarea id="upReason" placeholder="Ghi rõ nguyên nhân thay đổi..."></textarea></div>'+ 
+      '<div class="mgr-field full"><label>Nhập lại PIN_MANAGER *</label><input id="upPin" type="password" autocomplete="off" inputmode="numeric" placeholder="••••••"></div></div>'+ 
+      '<div class="mgr-actions"><button class="mgr-btn" id="upBack">Quay lại</button><button class="mgr-btn primary" id="upSubmit">Lưu và đối chiếu DP1 + DP3</button></div>');
+    const meta=await loadCatalogMeta(false);$('upGroup').innerHTML=catalogGroupOptions(meta,d.group||'KHAC');$('upGroup').value=d.group||'KHAC';
+    $('upBack').onclick=openCatalogManager;$('upSubmit').onclick=submitUpdateMaterial;
+  }catch(e){managerOpen('Lỗi đọc hồ sơ',ma,'<div class="mgr-warning">'+escapeHtml(e.message||'Không rõ lỗi')+'</div><div class="mgr-actions"><button class="mgr-btn" id="editBack">Quay lại</button></div>');$('editBack').onclick=openCatalogManager;}
+}
+async function openUpdateMaterial(){const d=state.materialData;if(d&&d.itemCode)await openCatalogMaterial(d.itemCode);}
+async function submitUpdateMaterial(){
+  if(state.managerBusy)return;
+  try{
+    mgrError('');const d=state.catalogEditor;if(!d||!d.etag)throw new Error('Thiếu đối chiếu trước khi sửa; mở lại hồ sơ.');
+    const p={type:'DASHBOARD_MANAGER_UPDATE_MATERIAL',depot:'MANAGER',itemCode:d.item.itemCode,
+      newItemCode:$('upNewCode').value.trim().toUpperCase(),itemName:$('upName').value.trim(),
+      accountingCode:$('upAcc').value.trim().toUpperCase(),unit:$('upUnit').value.trim(),group:$('upGroup').value,
+      minDP1:parseNonNegativeField('upMin1','Min DP1'),minDP3:parseNonNegativeField('upMin3','Min DP3'),
+      reason:$('upReason').value.trim(),managerPin:$('upPin').value.trim(),expectedEtag:d.etag};
+    if(!p.reason||!p.managerPin)throw new Error('Cần lý do và PIN_MANAGER.');
+    if(!p.itemName||!p.accountingCode||!p.unit)throw new Error('Không để trống thông tin bắt buộc.');
+    if((p.newItemCode!==p.itemCode||p.unit!==d.item.unit)&&Number((d.history||{}).total)>0)throw new Error('Không đổi mã/ĐVT đã có lịch sử; cần quy trình chuyển đổi riêng.');
+    const msg='Kiểm tra trước khi lưu:\n'+p.itemCode+' → '+p.newItemCode+'\n'+d.item.itemName+' → '+p.itemName+'\nĐVT: '+d.item.unit+' → '+p.unit+'\nLưu đồng bộ DP1 + DP3 + Master?';
+    if(!confirm(msg))return;
+    state.managerBusy=true;$('upSubmit').disabled=true;
+    const j=await post(authPayload(p));if(!handleAccess(j))return;
+    if(j.status!=='ok')throw new Error(j.message||'Không thể cập nhật hồ sơ.');
+    clearManagerCaches();state.catalogMeta=null;state.catalogIndex=null;state.catalogEditor=null;
+    $('ovManager').classList.remove('show');closeMaterial();
+    await loadFeed(true,false,true);await loadStock(true);if(state.pane==='analytics')await loadAnalytics(true);
+    const v=j.verification||{};alert(j.message+'\nSnapshot: '+(v.snapshotDP1&&v.snapshotDP3?'đã kiểm tra DP1 + DP3':'không xác nhận')+'\nPRJ-01: chờ đối chiếu sau chu kỳ sync; không thay dữ liệu giao dịch.');
+  }catch(e){mgrError(e.message||'Lỗi không xác định.');}
+  finally{state.managerBusy=false;if($('upSubmit'))$('upSubmit').disabled=false;}
+}
+function openRepairCatalogGroups(){
+  managerOpen('Đồng bộ nhóm vật tư trong snapshot','Chỉ rebuild DP1 + DP3; không ghi vào TXN_LOG hoặc *_RESP',
+    '<div class="mgr-err" id="mgrErr"></div><div class="mgr-warning">Yêu cầu Backend LEGACY group patch đã được Save và Web App triển khai trước. Nếu chưa có patch, không thực hiện.</div>'+ 
+    '<div class="mgr-grid"><div class="mgr-field full"><label>Lý do đối chiếu *</label><textarea id="repairReason">Đồng bộ nhóm vật tư từ Master vào snapshot DP1 + DP3</textarea></div><div class="mgr-field full"><label>PIN_MANAGER *</label><input id="repairPin" type="password" autocomplete="off"></div></div>'+ 
+    '<div class="mgr-actions"><button class="mgr-btn" id="repairCancel">Hủy</button><button class="mgr-btn primary" id="repairSubmit">Rebuild và kiểm tra</button></div>');
+  $('repairCancel').onclick=openCatalogManager;
+  $('repairSubmit').onclick=async()=>{
+    if(state.managerBusy)return;
+    try{
+      mgrError('');const pin=$('repairPin').value,reason=$('repairReason').value.trim();
+      if(!pin||!reason)throw new Error('Nhập PIN và lý do.');
+      if(!confirm('Rebuild snapshot DP1 + DP3 từ danh mục hiện tại? Không thay giao dịch.'))return;
+      state.managerBusy=true;$('repairSubmit').disabled=true;
+      const j=await post(authPayload({type:'DASHBOARD_MANAGER_REBUILD_GROUP_SNAPSHOT',depot:'MANAGER',managerPin:pin,reason}));
+      if(!handleAccess(j))return;if(j.status!=='ok')throw new Error(j.message||'Rebuild snapshot chưa hoàn tất.');
+      clearManagerCaches();await loadFeed(true,false,true);await loadStock(true);
+      $('ovManager').classList.remove('show');alert(j.message+'\nPRJ-01: chờ chu kỳ sync tiếp theo.');
+    }catch(e){mgrError(e.message||'Lỗi không xác định.');}
+    finally{state.managerBusy=false;if($('repairSubmit'))$('repairSubmit').disabled=false;}
+  };
+}
+$('btnManageCatalog').onclick=openCatalogManager;
 $('btnAddMaterial').onclick=openAddMaterial;
 
 // Transaction detail v4.8: show effective state + manager actions.
