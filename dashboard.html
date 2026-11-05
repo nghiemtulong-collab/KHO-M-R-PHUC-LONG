@@ -78,6 +78,24 @@ body{font-family:"Segoe UI Variable Text","Aptos","Segoe UI",system-ui,-apple-sy
 .catalog-stock b{display:block;font-size:13px;color:var(--brand)}
 .catalog-stock small{color:var(--text-2);font-size:11px}
 @media(max-width:600px){.catalog-entry{grid-template-columns:70px 1fr}.catalog-entry small{display:none}}
+
+/* ===== Monthly Excel report v4.9.3 ===== */
+.mr-export-button{background:#1F7D51!important;color:#fff!important;border-color:#1F7D51!important;font-weight:800!important}
+.mr-export-button:hover{background:#16623E!important}
+.mr-export-card{background:#fff;border-radius:16px;width:min(550px,100%);max-height:92vh;overflow:auto;box-shadow:0 20px 75px rgba(0,0,0,.27)}
+.mr-export-head{background:#203A63;color:#fff;padding:17px 20px;display:flex;align-items:start;gap:12px;justify-content:space-between}
+.mr-export-head h2{font-size:17px;font-weight:850}.mr-export-head p{color:#C8D6E7;font-size:12px;margin-top:3px}
+.mr-export-head button{border:0;color:#fff;background:transparent;font-size:26px;line-height:1;cursor:pointer}
+.mr-export-content{padding:20px}.mr-export-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mr-export-fields label{display:grid;gap:6px;font-size:12px;color:#596579;font-weight:800}
+.mr-export-fields select,.mr-export-fields input{width:100%;padding:11px 10px;border:1px solid #CDD7E4;border-radius:9px;background:#fff;color:#172033;font-weight:650}
+.mr-export-structure{display:grid;gap:8px;margin-top:16px}.mr-export-structure>div{border:1px solid #D8E2ED;background:#F8FAFD;border-radius:10px;padding:10px 12px}
+.mr-export-structure b,.mr-export-structure span{display:block;font-size:12px}.mr-export-structure b{color:#203A63}.mr-export-structure span{font-weight:400;color:#697A8D;margin-top:2px}
+.mr-export-hint{font-size:12px;line-height:1.6;color:#52647C;margin:12px 0}.mr-export-status{padding:10px 12px;border-radius:9px;border:1px solid #B8CBDC;background:#F6F9FE;color:#254466;font-size:12px;min-height:42px}
+.mr-export-status.ok{background:#F0FAF4;border-color:#9DD7B3;color:#1A693F}.mr-export-status.bad{background:#FFF4F1;border-color:#E5AEA8;color:#A02F25}
+.mr-export-submit{display:block;width:100%;margin-top:13px;border:0;border-radius:10px;background:#1F7D51;color:#fff;padding:12px 16px;font-size:14px;font-weight:850;cursor:pointer}
+.mr-export-submit:disabled{opacity:.55;cursor:wait}
+@media(max-width:550px){.mr-export-fields{grid-template-columns:1fr}.mr-export-content{padding:15px}}
 </style>
 
 <style>
@@ -144,7 +162,7 @@ th{font-size:11.5px;letter-spacing:.15px;text-transform:none;font-weight:750}td{
 <header>
   <div class="hd-inner">
     <div class="hd-title">DASHBOARD KHO VẬT TƯ <span class="hd-accent">M&amp;R</span>
-      <span class="hd-sub">ICD Phúc Long — điều hành kho · phân tích · can thiệp quản lý · v4.9.2</span>
+      <span class="hd-sub">ICD Phúc Long — điều hành kho · phân tích · can thiệp quản lý · v4.9.3</span>
     </div>
     <div id="live" class="live stale"><span class="live-dot"></span><span id="liveText">Đang khởi tạo…</span></div>
     <button class="hd-btn" id="btnManageCatalog">Quản lý vật tư</button>
@@ -213,6 +231,7 @@ th{font-size:11.5px;letter-spacing:.15px;text-transform:none;font-weight:750}td{
       <select id="anaUnit" title="ĐVT dùng cho biểu đồ"><option value="ALL">ĐVT biểu đồ: tự động</option></select>
       <input id="anaSearch" type="search" placeholder="Tìm mã hoặc tên vật tư…" style="min-width:200px">
       <button id="anaCurrent" type="button">Tháng hiện tại</button>
+      <button id="btnExportExcel" type="button" class="mr-export-button"><span aria-hidden="true">⇩</span> Xuất Excel</button>
       <span class="scope" id="anaScope">Phân tích theo tháng đã chọn.</span>
     </div>
     <div class="ana-view-tabs v49-tabs" id="anaViews" aria-label="Các màn hình phân tích">
@@ -260,6 +279,32 @@ th{font-size:11.5px;letter-spacing:.15px;text-transform:none;font-weight:750}td{
   </div>
 </div>
 
+<div class="overlay" id="ovExport">
+  <div class="mr-export-card" role="dialog" aria-modal="true" aria-labelledby="expTitle">
+    <div class="mr-export-head">
+      <div><h2 id="expTitle">Xuất Excel tổng hợp vật tư</h2><p>Chọn riêng Depot 1 hoặc Depot 3 và tháng nghiệp vụ.</p></div>
+      <button type="button" id="expClose" aria-label="Đóng">×</button>
+    </div>
+    <div class="mr-export-content">
+      <div class="mr-export-fields">
+        <label>Depot
+          <select id="expDepot"><option value="DP1">Depot 1 (DP1)</option><option value="DP3">Depot 3 (DP3)</option></select>
+        </label>
+        <label>Tháng báo cáo
+          <input type="month" id="expMonth" required>
+        </label>
+      </div>
+      <div class="mr-export-structure">
+        <div><b>Sheet 1 — TỔNG HỢP XUẤT</b><span>Gộp số lượng và số lượt theo mã vật tư</span></div>
+        <div><b>Sheet 2 — TỔNG HỢP NHẬP</b><span>Gộp số lượng và số lượt theo mã vật tư</span></div>
+      </div>
+      <p class="mr-export-hint">Lọc theo <strong>ngày nghiệp vụ</strong> (kể cả phiếu ghi lùi ngày). Không cộng phiếu đã hủy, điều chỉnh tồn hoặc giao dịch chưa hoàn tất. Chỉ đọc, không ghi dữ liệu kho.</p>
+      <div id="expStatus" class="mr-export-status" aria-live="polite">Chọn depot và tháng báo cáo.</div>
+      <button type="button" id="expSubmit" class="mr-export-submit">Tải file .xlsx</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbz8Aw9UYepdqkgIbpw01iwB5eWq8pdkxGkPGkb5YXGLWP6jXcQEMdmyUEyzvmnX4KmA2w/exec";
 const APP_VERSION="2026.08.10-MR-v4.3.9-DAILY-CHECKLIST";
@@ -286,7 +331,7 @@ function typeName(t){return ({XUAT:"XUẤT",NHAP:"NHẬP",DEXUAT:"ĐỀ XUẤT",
 function typeTag(t){const m={XUAT:["xuat","XUẤT"],NHAP:["nhap","NHẬP"],DEXUAT:["dexuat","ĐỀ XUẤT"],CHECKLIST:["checklist","CHECKLIST"]};const x=m[t]||["checklist",t];return '<span class="tag '+x[0]+'">'+escapeHtml(x[1])+'</span>';}
 function dpTag(dp){return dp?'<span class="tag '+(dp==="DP1"?"dp1":"dp3")+'">'+escapeHtml(dp)+'</span>':"";}
 
-async function post(payload){const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),/^DASHBOARD_MANAGER_/.test(String(payload&&payload.type||""))?90000:REQUEST_TIMEOUT_MS);try{const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload),cache:"no-store",signal:ctl.signal});try{return await res.json();}catch(_){throw new Error("Backend trả dữ liệu không hợp lệ.");}}finally{clearTimeout(timer);}}
+async function post(payload){const ctl=new AbortController();const timer=setTimeout(()=>ctl.abort(),/^(DASHBOARD_MANAGER_|DASHBOARD_EXPORT_MONTHLY)/.test(String(payload&&payload.type||""))?90000:REQUEST_TIMEOUT_MS);try{const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(payload),cache:"no-store",signal:ctl.signal});try{return await res.json();}catch(_){throw new Error("Backend trả dữ liệu không hợp lệ.");}}finally{clearTimeout(timer);}}
 function authPayload(extra){return Object.assign({accessToken:getToken(),clientId:state.clientId,clientVersion:APP_VERSION,dashboardClientRev:DASHBOARD_UI_REV},extra||{});}
 function handleAccess(j){if(isAccessError(j&&j.status)){clearToken();showLogin((j&&j.message)||"Phiên đăng nhập đã hết hạn.");return false;}if(j&&j.status==="version_mismatch"){setLive("offline","Lệch phiên bản — Ctrl+F5");return false;}return true;}
 
@@ -673,6 +718,221 @@ function drawMaterialCharts(d){const mode=state.materialMode||'OUT',m=d.monthSer
 
 // Escape closes Manager modal as well.
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('ovManager').classList.contains('show'))managerClose();});
+
+// ==================== MONTHLY XLSX EXPORT — v4.9.3 ====================
+// Offline XLSX builder (ZIP STORE): no third-party CDN, no data sent to third parties.
+const MREX_XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+function mrExXml_(value) {
+  return String(value == null ? '' : value)
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+function mrExColumn_(index) {
+  let n = index + 1, out = '';
+  while (n) { n--; out = String.fromCharCode(65 + n % 26) + out; n = Math.floor(n / 26); }
+  return out;
+}
+
+function mrExCell_(col, row, value, style) {
+  const ref = mrExColumn_(col) + row, s = Number.isInteger(style) ? ' s="' + style + '"' : '';
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new Error('Excel từ chối số lượng không hợp lệ tại ' + ref);
+    return '<c r="' + ref + '"' + s + '><v>' + value + '</v></c>';
+  }
+  const str = String(value == null ? '' : value).slice(0, 32767);
+  return '<c r="' + ref + '"' + s + ' t="inlineStr"><is><t xml:space="preserve">' + mrExXml_(str) + '</t></is></c>';
+}
+
+function mrExRow_(rowNum, cells, styles) {
+  return '<row r="' + rowNum + '">' + cells.map((v, i) => mrExCell_(i, rowNum, v, styles?.[i])).join('') + '</row>';
+}
+
+function mrExDateVN_(iso) {
+  const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? m[3] + '/' + m[2] + '/' + m[1] : String(iso || '');
+}
+
+function mrExSheetXml_(section, report) {
+  const rows = Array.isArray(section.rows) ? section.rows : [];
+  if (rows.length > 50000) throw new Error('Báo cáo quá 50.000 mã vật tư.');
+  const depot = report.depot, month = report.month;
+  const kind = section.kind === 'NHAP' ? 'NHẬP' : 'XUẤT';
+  const tag = month.slice(5, 7) + '/' + month.slice(0, 4);
+  const dateInfo = report.currentMonth ? ' (lũy kế đến thời điểm xuất)' : '';
+  const body = [
+    mrExRow_(1, ['TỔNG HỢP ' + kind + ' VẬT TƯ — ' + depot], [1]),
+    mrExRow_(2, ['KỲ BÁO CÁO: ' + tag + dateInfo], [3]),
+    mrExRow_(3, ['Ngày nghiệp vụ • Lập lúc: ' + String(report.generatedAt || '') + ' • Một mã/ĐVT = một dòng'], [3]),
+    mrExRow_(5, ['STT', 'Mã vật tư', 'Tên vật tư', 'ĐVT', 'Tổng số lượng', 'Số lượt', 'Ngày đầu', 'Ngày cuối'], [2,2,2,2,2,2,2,2]),
+  ];
+  rows.forEach((r, i) => {
+    const qty = Number(r.qty), count = Number(r.transactions);
+    if (!Number.isFinite(qty) || !Number.isInteger(count) || count < 0) throw new Error('Dòng Excel ' + (i + 1) + ' có số liệu không hợp lệ.');
+    body.push(mrExRow_(6 + i, [i + 1, r.code, r.name, r.unit, qty, count, mrExDateVN_(r.firstDate), mrExDateVN_(r.lastDate)], [4,0,0,0,4,4,0,0]));
+  });
+  if (!rows.length) body.push(mrExRow_(6, ['Không phát sinh ' + kind.toLowerCase() + ' trong tháng ' + tag], [3]));
+  const end = 5 + Math.max(1, rows.length);
+  body.push(mrExRow_(end + 2, ['SỐ MÃ: ' + rows.length + ' • SỐ PHIẾU: ' + (section.txnCount || 0) + ' • SỐ LƯỢT DÒNG: ' + (section.sourceLines || 0)], [3]));
+  if (section.skippedAdjustmentLines) body.push(mrExRow_(end + 3, ['Không bao gồm ' + section.skippedAdjustmentLines + ' dòng điều chỉnh tồn.'], [3]));
+  const merges = ['A1:H1','A2:H2','A3:H3','A' + (end + 2) + ':H' + (end + 2)];
+  if (!rows.length) merges.push('A6:H6');
+  if (section.skippedAdjustmentLines) merges.push('A' + (end + 3) + ':H' + (end + 3));
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<sheetViews><sheetView workbookViewId="0"><pane ySplit="5" topLeftCell="A6" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A6" sqref="A6"/></sheetView></sheetViews>' +
+    '<sheetFormatPr defaultRowHeight="17"/>' +
+    '<cols><col min="1" max="1" width="7" customWidth="1"/><col min="2" max="2" width="18" customWidth="1"/>' +
+    '<col min="3" max="3" width="70" customWidth="1"/><col min="4" max="4" width="15" customWidth="1"/>' +
+    '<col min="5" max="5" width="19" customWidth="1"/><col min="6" max="6" width="14" customWidth="1"/>' +
+    '<col min="7" max="8" width="18" customWidth="1"/></cols>' +
+    '<sheetData>' + body.join('') + '</sheetData>' +
+    '<mergeCells count="' + merges.length + '">' + merges.map(x => '<mergeCell ref="' + x + '"/>').join('') + '</mergeCells>' +
+    (rows.length ? '<autoFilter ref="A5:H' + (rows.length + 5) + '"/>' : '') +
+    '<pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>' +
+    '<pageSetup orientation="landscape" paperSize="9" fitToWidth="1" fitToHeight="0"/>' +
+    '</worksheet>';
+}
+
+function mrExStyleXml_() {
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+    '<numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0.######"/></numFmts>' +
+    '<fonts count="3"><font><sz val="11"/><name val="Aptos"/></font>' +
+    '<font><b/><sz val="13"/><color rgb="FFFFFFFF"/><name val="Aptos"/></font>' +
+    '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Aptos"/></font></fonts>' +
+    '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF203A63"/><bgColor indexed="64"/></patternFill></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFE9F0F9"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+    '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>' +
+    '<border><left/><right/><top/><bottom style="thin"><color rgb="FFD9E2EE"/></bottom><diagonal/></border></borders>' +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>' +
+    '<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1"/>' +
+    '<xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/>' +
+    '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"><alignment horizontal="right"/></xf></cellXfs>' +
+    '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+    '</styleSheet>';
+}
+
+const MR_EX_CRC_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); table[n] = c >>> 0; }
+  return table;
+})();
+function mrExCRC_(bytes) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) crc = MR_EX_CRC_TABLE[(crc ^ bytes[i]) & 255] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function mrEx16_(arr, off, n) { arr[off] = n & 255; arr[off + 1] = (n >>> 8) & 255; }
+function mrEx32_(arr, off, n) { mrEx16_(arr, off, n); mrEx16_(arr, off + 2, n >>> 16); }
+function mrExJoin_(parts) {
+  const n = parts.reduce((a, b) => a + b.length, 0), out = new Uint8Array(n);
+  let off = 0;
+  parts.forEach(x => { out.set(x, off); off += x.length; });
+  return out;
+}
+function mrExZipStore_(files) {
+  if (files.length > 100) throw new Error('Quá nhiều tệp nội bộ Excel.');
+  const enc = new TextEncoder(), localParts = [], centralParts = [];
+  let offset = 0;
+  files.forEach(([name, xml]) => {
+    const fn = enc.encode(name), data = enc.encode(xml), crc = mrExCRC_(data);
+    if (data.length > 80000000) throw new Error('Sheet Excel quá lớn.');
+    const lh = new Uint8Array(30 + fn.length);
+    mrEx32_(lh, 0, 0x04034B50); mrEx16_(lh, 4, 20); mrEx16_(lh, 6, 0x0800); mrEx16_(lh, 8, 0);
+    mrEx32_(lh, 14, crc); mrEx32_(lh, 18, data.length); mrEx32_(lh, 22, data.length);
+    mrEx16_(lh, 26, fn.length); lh.set(fn, 30);
+    localParts.push(lh, data);
+    const ch = new Uint8Array(46 + fn.length);
+    mrEx32_(ch, 0, 0x02014B50); mrEx16_(ch, 4, 20); mrEx16_(ch, 6, 20);
+    mrEx16_(ch, 8, 0x0800); mrEx16_(ch, 10, 0); mrEx32_(ch, 16, crc);
+    mrEx32_(ch, 20, data.length); mrEx32_(ch, 24, data.length); mrEx16_(ch, 28, fn.length);
+    mrEx32_(ch, 42, offset); ch.set(fn, 46); centralParts.push(ch);
+    offset += lh.length + data.length;
+  });
+  const central = mrExJoin_(centralParts), eocd = new Uint8Array(22);
+  mrEx32_(eocd, 0, 0x06054B50); mrEx16_(eocd, 8, files.length); mrEx16_(eocd, 10, files.length);
+  mrEx32_(eocd, 12, central.length); mrEx32_(eocd, 16, offset);
+  return new Blob([...localParts, central, eocd], { type: MREX_XLSX_MIME });
+}
+
+function mrExMakeWorkbook_(report) {
+  if (!report || report.status !== 'ok' || !/^(DP1|DP3)$/.test(report.depot) ||
+    !/^\d{4}-(0[1-9]|1[0-2])$/.test(report.month) || !report.xuat || !report.nhap) {
+    throw new Error('Payload xuất Excel chưa đầy đủ hoặc không hợp lệ.');
+  }
+  const ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  const wb = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<workbook xmlns="' + ns + '" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+    '<sheets><sheet name="TONG_HOP_XUAT" sheetId="1" r:id="rId1"/><sheet name="TONG_HOP_NHAP" sheetId="2" r:id="rId2"/></sheets></workbook>';
+  const files = [
+    ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'],
+    ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+    ['xl/workbook.xml',wb],
+    ['xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
+    ['xl/styles.xml',mrExStyleXml_()],
+    ['xl/worksheets/sheet1.xml',mrExSheetXml_(report.xuat, report)],
+    ['xl/worksheets/sheet2.xml',mrExSheetXml_(report.nhap, report)],
+  ];
+  return mrExZipStore_(files);
+}
+
+function mrExOpen_() {
+  if (!getToken()) { showLogin('Cần đăng nhập Manager trước khi xuất Excel.'); return; }
+  const m = analyticsSelection().month || clientCurrentMonth();
+  $('expMonth').value = m;
+  $('expMonth').max = clientCurrentMonth();
+  $('expDepot').value = 'DP1';
+  $('expStatus').textContent = 'Chọn tháng và depot. Báo cáo có hai sheet tổng hợp Nhập / Xuất.';
+  $('expStatus').className = 'mr-export-status';
+  $('ovExport').classList.add('show');
+}
+function mrExClose_() {
+  if (mrExBusy) return;
+  $('ovExport').classList.remove('show');
+}
+let mrExBusy = false;
+async function mrExSubmit_() {
+  if (mrExBusy) return;
+  const depot = $('expDepot').value, month = $('expMonth').value;
+  if (!/^(DP1|DP3)$/.test(depot) || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || month > clientCurrentMonth()) {
+    $('expStatus').textContent = 'Depot hoặc tháng báo cáo không hợp lệ.';
+    $('expStatus').className = 'mr-export-status bad';
+    return;
+  }
+  mrExBusy = true;
+  $('expSubmit').disabled = true; $('expClose').disabled = true;
+  $('expStatus').textContent = 'Đang đọc và đối chiếu toàn bộ phiếu Nhập/Xuất trong tháng…';
+  $('expStatus').className = 'mr-export-status';
+  try {
+    const j = await post(authPayload({type:'DASHBOARD_EXPORT_MONTHLY',depot:'MANAGER',exportDepot:depot,month}));
+    if (!handleAccess(j)) return;
+    if (j.status !== 'ok') throw new Error(j.message || 'Không tổng hợp được dữ liệu Nhập/Xuất.');
+    if (j.depot !== depot || j.month !== month) throw new Error('Backend trả sai depot hoặc kỳ báo cáo.');
+    const blob = mrExMakeWorkbook_(j), filename = 'KHO_MR_' + depot + '_' + month.replace('-', '') + '.xlsx';
+    const link = document.createElement('a'), url = URL.createObjectURL(blob);
+    link.href = url; link.download = filename; document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    $('expStatus').textContent = 'Đã tạo ' + filename + ' · Xuất ' + j.xuat.itemCount + ' mã / ' + j.xuat.txnCount + ' phiếu · Nhập ' + j.nhap.itemCount + ' mã / ' + j.nhap.txnCount + ' phiếu.';
+    $('expStatus').className = 'mr-export-status ok';
+  } catch (err) {
+    $('expStatus').textContent = err.message || 'Không tạo được file Excel.';
+    $('expStatus').className = 'mr-export-status bad';
+  } finally {
+    mrExBusy = false; $('expSubmit').disabled = false; $('expClose').disabled = false;
+  }
+}
+$('btnExportExcel').onclick = mrExOpen_;
+$('expClose').onclick = mrExClose_;
+$('expSubmit').onclick = mrExSubmit_;
+$('ovExport').addEventListener('click', e => { if (e.target === $('ovExport')) mrExClose_(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('ovExport').classList.contains('show')) mrExClose_(); });
+// ================= END MONTHLY XLSX EXPORT =================
 
 </script>
 
