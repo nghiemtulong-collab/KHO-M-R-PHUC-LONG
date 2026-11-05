@@ -162,7 +162,7 @@ th{font-size:11.5px;letter-spacing:.15px;text-transform:none;font-weight:750}td{
 <header>
   <div class="hd-inner">
     <div class="hd-title">DASHBOARD KHO VẬT TƯ <span class="hd-accent">M&amp;R</span>
-      <span class="hd-sub">ICD Phúc Long — điều hành kho · phân tích · can thiệp quản lý · v4.9.3</span>
+      <span class="hd-sub">ICD Phúc Long — điều hành kho · phân tích · can thiệp quản lý · v4.9.3.1</span>
     </div>
     <div id="live" class="live stale"><span class="live-dot"></span><span id="liveText">Đang khởi tạo…</span></div>
     <button class="hd-btn" id="btnManageCatalog">Quản lý vật tư</button>
@@ -719,7 +719,7 @@ function drawMaterialCharts(d){const mode=state.materialMode||'OUT',m=d.monthSer
 // Escape closes Manager modal as well.
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('ovManager').classList.contains('show'))managerClose();});
 
-// ==================== MONTHLY XLSX EXPORT — v4.9.3 ====================
+// ==================== MONTHLY XLSX EXPORT — v4.9.3.1 (OOXML ORDER FIX) ====================
 // Offline XLSX builder (ZIP STORE): no third-party CDN, no data sent to third parties.
 const MREX_XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
@@ -789,8 +789,9 @@ function mrExSheetXml_(section, report) {
     '<col min="5" max="5" width="19" customWidth="1"/><col min="6" max="6" width="14" customWidth="1"/>' +
     '<col min="7" max="8" width="18" customWidth="1"/></cols>' +
     '<sheetData>' + body.join('') + '</sheetData>' +
-    '<mergeCells count="' + merges.length + '">' + merges.map(x => '<mergeCell ref="' + x + '"/>').join('') + '</mergeCells>' +
+    // OOXML CT_Worksheet requires autoFilter before mergeCells. Excel desktop enforces this ordering.
     (rows.length ? '<autoFilter ref="A5:H' + (rows.length + 5) + '"/>' : '') +
+    '<mergeCells count="' + merges.length + '">' + merges.map(x => '<mergeCell ref="' + x + '"/>').join('') + '</mergeCells>' +
     '<pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>' +
     '<pageSetup orientation="landscape" paperSize="9" fitToWidth="1" fitToHeight="0"/>' +
     '</worksheet>';
